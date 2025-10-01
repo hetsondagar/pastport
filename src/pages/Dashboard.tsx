@@ -1,75 +1,104 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, Calendar, Grid, List } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter, Calendar, Grid, List, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import apiClient from '@/lib/api';
 import CapsuleCard from '@/components/CapsuleCard';
 import Navigation from '@/components/Navigation';
 
-// Sample data
-const sampleCapsules = [
-  {
-    id: '1',
-    title: 'College Memories',
-    emoji: '🎓',
-    unlockDate: new Date('2024-12-25'),
-    isLocked: true,
-    hasRiddle: false,
-    isShared: true,
-    preview: 'A collection of photos and memories from my freshman year...'
-  },
-  {
-    id: '2',
-    title: 'Birthday Wishes',
-    emoji: '🎂',
-    unlockDate: new Date('2024-06-15'),
-    isLocked: false,
-    hasRiddle: true,
-    isShared: false,
-    preview: 'Happy birthday to future me! Hope you achieved all your goals...'
-  },
-  {
-    id: '3',
-    title: 'Study Abroad Adventure',
-    emoji: '✈️',
-    unlockDate: new Date('2025-03-20'),
-    isLocked: true,
-    hasRiddle: true,
-    isShared: true,
-    preview: 'Photos and stories from my semester in Barcelona...'
-  },
-  {
-    id: '4',
-    title: 'New Year Resolutions',
-    emoji: '🎯',
-    unlockDate: new Date('2024-01-01'),
-    isLocked: false,
-    hasRiddle: false,
-    isShared: false,
-    preview: 'My goals for this year and thoughts about the future...'
-  }
-];
-
 const Dashboard = () => {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [capsules, setCapsules] = useState([]);
+  const [stats, setStats] = useState({
+    totalCapsules: 0,
+    lockedCapsules: 0,
+    unlockedCapsules: 0,
+    sharedCapsules: 0
+  });
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<'all' | 'locked' | 'unlocked'>('all');
 
-  const filteredCapsules = sampleCapsules.filter(capsule => {
-    const matchesSearch = capsule.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = 
-      filterStatus === 'all' || 
-      (filterStatus === 'locked' && capsule.isLocked) || 
-      (filterStatus === 'unlocked' && !capsule.isLocked);
-    
-    return matchesSearch && matchesFilter;
-  });
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
+  // Load capsules and stats
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadCapsules();
+      loadStats();
+    }
+  }, [isAuthenticated, filterStatus, searchTerm]);
+
+  const loadCapsules = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.getCapsules({
+        status: filterStatus,
+        search: searchTerm,
+        page: 1,
+        limit: 50
+      });
+      
+      if (response.success) {
+        setCapsules(response.data.capsules);
+      }
+    } catch (error) {
+      console.error('Failed to load capsules:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load capsules. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const response = await apiClient.getCapsuleStats();
+      if (response.success) {
+        setStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    }
+  };
 
   const handleCapsuleClick = (id: string) => {
-    console.log('Opening capsule:', id);
     // TODO: Navigate to capsule detail view
+    console.log('Opening capsule:', id);
   };
+
+  // Filter capsules locally for better UX
+  const filteredCapsules = capsules.filter(capsule => {
+    const matchesSearch = capsule.title.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading your capsules...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,7 +108,7 @@ const Dashboard = () => {
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gradient mb-4">
+            <h1 className="text-4xl app-name-bold text-gradient mb-4">
               Your Time Capsules
             </h1>
             <p className="text-muted-foreground text-lg">
@@ -90,19 +119,19 @@ const Dashboard = () => {
           {/* Stats Cards */}
           <div className="grid md:grid-cols-4 gap-4 mb-8">
             <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-primary">4</div>
+              <div className="text-2xl font-bold text-primary">{stats.totalCapsules}</div>
               <div className="text-sm text-muted-foreground">Total Capsules</div>
             </div>
             <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-accent">2</div>
+              <div className="text-2xl font-bold text-accent">{stats.lockedCapsules}</div>
               <div className="text-sm text-muted-foreground">Locked</div>
             </div>
             <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-secondary">2</div>
+              <div className="text-2xl font-bold text-secondary">{stats.unlockedCapsules}</div>
               <div className="text-sm text-muted-foreground">Unlocked</div>
             </div>
             <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-gradient">2</div>
+              <div className="text-2xl font-bold text-gradient">{stats.sharedCapsules}</div>
               <div className="text-sm text-muted-foreground">Shared</div>
             </div>
           </div>
@@ -181,9 +210,16 @@ const Dashboard = () => {
           <div className={`grid ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
             {filteredCapsules.map((capsule) => (
               <CapsuleCard
-                key={capsule.id}
-                {...capsule}
-                onClick={() => handleCapsuleClick(capsule.id)}
+                key={capsule._id}
+                id={capsule._id}
+                title={capsule.title}
+                emoji={capsule.emoji}
+                unlockDate={new Date(capsule.unlockDate)}
+                isLocked={!capsule.isUnlocked}
+                hasRiddle={capsule.hasRiddle}
+                isShared={capsule.sharedWith && capsule.sharedWith.length > 0}
+                preview={capsule.isUnlocked ? capsule.message : 'This capsule is locked until the unlock date...'}
+                onClick={() => handleCapsuleClick(capsule._id)}
               />
             ))}
           </div>

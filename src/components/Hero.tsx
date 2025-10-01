@@ -25,8 +25,17 @@ const Hero = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center max-w-4xl mx-auto">
+          {/* App Title Image */}
+          <div className="mb-8">
+            <img 
+              src="/title.png" 
+              alt="PastPort - Digital Time Capsules" 
+              className="h-16 md:h-20 mx-auto"
+            />
+          </div>
+
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl app-name-bold mb-6 leading-tight">
             Store your{' '}
             <span className="text-gradient-glow animate-gradient">memories</span>
             <br />

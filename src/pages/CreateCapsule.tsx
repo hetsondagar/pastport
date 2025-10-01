@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, Upload, Users, Puzzle, Sparkles, ArrowLeft } from 'lucide-react';
-import Navigation from '@/components/Navigation';
+import { Calendar, Upload, Users, Puzzle, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import apiClient from '@/lib/api';
+import Navigation from '@/components/Navigation';
 
 const CreateCapsule = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -22,15 +25,23 @@ const CreateCapsule = () => {
     unlockDate: '',
     hasRiddle: false,
     riddle: '',
-    riddeAnswer: '',
+    riddleAnswer: '',
     isShared: false,
     tags: [] as string[]
   });
+  const [loading, setLoading] = useState(false);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const emojiOptions = ['📝', '🎓', '🎂', '✈️', '❤️', '🎯', '🌟', '📸', '🎵', '🎮', '🏆', '🌈'];
   const tagOptions = ['Personal', 'Friends', 'Family', 'School', 'Travel', 'Goals', 'Memories'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title || !formData.message || !formData.unlockDate) {
@@ -42,7 +53,7 @@ const CreateCapsule = () => {
       return;
     }
 
-    if (formData.hasRiddle && (!formData.riddle || !formData.riddeAnswer)) {
+    if (formData.hasRiddle && (!formData.riddle || !formData.riddleAnswer)) {
       toast({
         title: "Incomplete Riddle",
         description: "Please provide both riddle question and answer.",
@@ -51,16 +62,42 @@ const CreateCapsule = () => {
       return;
     }
 
-    // Simulate capsule creation
-    toast({
-      title: "Capsule Created! ✨",
-      description: "Your time capsule has been safely stored and will unlock on the specified date.",
-    });
+    setLoading(true);
+    try {
+      const response = await apiClient.createCapsule({
+        title: formData.title,
+        message: formData.message,
+        emoji: formData.emoji,
+        unlockDate: formData.unlockDate,
+        hasRiddle: formData.hasRiddle,
+        riddle: formData.riddle,
+        riddleAnswer: formData.riddleAnswer,
+        tags: formData.tags,
+        category: 'personal',
+        isPublic: formData.isShared
+      });
 
-    // Navigate back to dashboard
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 2000);
+      if (response.success) {
+        toast({
+          title: "Capsule Created! ✨",
+          description: "Your time capsule has been safely stored and will unlock on the specified date.",
+        });
+
+        // Navigate back to dashboard
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to create capsule:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create capsule. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleTag = (tag: string) => {
@@ -89,7 +126,7 @@ const CreateCapsule = () => {
               Back to Dashboard
             </Button>
             
-            <h1 className="text-4xl font-bold text-gradient mb-4">
+            <h1 className="text-4xl app-name-bold text-gradient mb-4">
               Create Time Capsule
             </h1>
             <p className="text-muted-foreground text-lg">
@@ -239,8 +276,8 @@ const CreateCapsule = () => {
                       <Label htmlFor="riddleAnswer">Answer</Label>
                       <Input
                         id="riddleAnswer"
-                        value={formData.riddeAnswer}
-                        onChange={(e) => setFormData(prev => ({ ...prev, riddeAnswer: e.target.value }))}
+                        value={formData.riddleAnswer}
+                        onChange={(e) => setFormData(prev => ({ ...prev, riddleAnswer: e.target.value }))}
                         placeholder="What's the answer?"
                         className="glass-card border-white/10 mt-2"
                       />
@@ -281,9 +318,19 @@ const CreateCapsule = () => {
               <Button
                 type="submit"
                 className="btn-glow flex-1"
+                disabled={loading}
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Create Capsule
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Create Capsule
+                  </>
+                )}
               </Button>
             </div>
           </form>

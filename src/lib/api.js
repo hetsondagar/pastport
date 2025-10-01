@@ -1,0 +1,295 @@
+// API client for PastPort backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+class ApiClient {
+  constructor() {
+    this.baseURL = API_BASE_URL;
+    this.token = localStorage.getItem('token');
+  }
+
+  // Set authentication token
+  setToken(token) {
+    this.token = token;
+    if (token) {
+      localStorage.setItem('token', token);
+    } else {
+      localStorage.removeItem('token');
+    }
+  }
+
+  // Get authentication headers
+  getHeaders(includeAuth = true) {
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    if (includeAuth && this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    return headers;
+  }
+
+  // Make HTTP request
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      headers: this.getHeaders(options.includeAuth !== false),
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Request failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
+  // Authentication endpoints
+  async register(userData) {
+    const response = await this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+      includeAuth: false,
+    });
+
+    if (response.success && response.data.token) {
+      this.setToken(response.data.token);
+    }
+
+    return response;
+  }
+
+  async login(credentials) {
+    const response = await this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+      includeAuth: false,
+    });
+
+    if (response.success && response.data.token) {
+      this.setToken(response.data.token);
+    }
+
+    return response;
+  }
+
+  async logout() {
+    this.setToken(null);
+  }
+
+  async getCurrentUser() {
+    return this.request('/auth/me');
+  }
+
+  async updateProfile(profileData) {
+    return this.request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  async updatePreferences(preferences) {
+    return this.request('/auth/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  async changePassword(passwordData) {
+    return this.request('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify(passwordData),
+    });
+  }
+
+  async searchUsers(query, limit = 10) {
+    return this.request(`/auth/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+  }
+
+  // Capsule endpoints
+  async getCapsules(filters = {}) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    return this.request(`/capsules${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getCapsule(id) {
+    return this.request(`/capsules/${id}`);
+  }
+
+  async createCapsule(capsuleData) {
+    const formData = new FormData();
+    
+    // Add text fields
+    Object.entries(capsuleData).forEach(([key, value]) => {
+      if (key !== 'media' && value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
+      }
+    });
+
+    // Add media file if present
+    if (capsuleData.media) {
+      formData.append('media', capsuleData.media);
+    }
+
+    return this.request('/capsules', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        // Don't set Content-Type for FormData, let browser set it
+      },
+      body: formData,
+    });
+  }
+
+  async updateCapsule(id, capsuleData) {
+    return this.request(`/capsules/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(capsuleData),
+    });
+  }
+
+  async deleteCapsule(id) {
+    return this.request(`/capsules/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async unlockCapsule(id, answer = null) {
+    return this.request(`/capsules/${id}/unlock`, {
+      method: 'POST',
+      body: JSON.stringify({ answer }),
+    });
+  }
+
+  async addReaction(capsuleId, emoji) {
+    return this.request(`/capsules/${capsuleId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
+    });
+  }
+
+  async addComment(capsuleId, text) {
+    return this.request(`/capsules/${capsuleId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+  }
+
+  async getCapsuleStats() {
+    return this.request('/capsules/stats');
+  }
+
+  // User endpoints
+  async getUserProfile(userId) {
+    return this.request(`/users/${userId}`);
+  }
+
+  async getUserFriends(userId) {
+    return this.request(`/users/${userId}/friends`);
+  }
+
+  async getUserBadges(userId) {
+    return this.request(`/users/${userId}/badges`);
+  }
+
+  async getUserCapsules(userId, filters = {}) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    return this.request(`/users/${userId}/capsules${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async sendFriendRequest(userId) {
+    return this.request(`/users/${userId}/friend-request`, {
+      method: 'POST',
+    });
+  }
+
+  async respondToFriendRequest(requestId, action) {
+    return this.request(`/users/friend-requests/${requestId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ action }),
+    });
+  }
+
+  async removeFriend(userId) {
+    return this.request(`/users/${userId}/friends`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getFriendRequests() {
+    return this.request('/users/friend-requests');
+  }
+
+  // Notification endpoints
+  async getNotifications(filters = {}) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    return this.request(`/notifications${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async markNotificationAsRead(notificationId) {
+    return this.request(`/notifications/${notificationId}/read`, {
+      method: 'PUT',
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request('/notifications/read-all', {
+      method: 'PUT',
+    });
+  }
+
+  async deleteNotification(notificationId) {
+    return this.request(`/notifications/${notificationId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getUnreadCount() {
+    return this.request('/notifications/unread-count');
+  }
+}
+
+// Create and export a singleton instance
+const apiClient = new ApiClient();
+
+// Initialize token from localStorage on app start
+const savedToken = localStorage.getItem('token');
+if (savedToken) {
+  apiClient.setToken(savedToken);
+}
+
+export default apiClient;
