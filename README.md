@@ -1,73 +1,56 @@
-# Welcome to your Lovable project
+# PastPort - Time Capsule Web Application
 
-## Project info
+A full-stack time capsule and memory keeper web application built with React and Node.js.
 
-**URL**: https://lovable.dev/projects/46849a5c-25e7-464e-8387-518e1f979f0e
+## Project Structure
 
-## How can I edit this code?
+```
+pastport/
+├── frontend/          # React frontend application
+│   ├── src/          # Source code
+│   ├── public/       # Static assets
+│   └── package.json  # Frontend dependencies
+├── backend/          # Node.js backend API
+│   ├── controllers/  # Route controllers
+│   ├── models/       # Database models
+│   ├── routes/       # API routes
+│   └── package.json  # Backend dependencies
+└── README.md         # This file
+```
 
-There are several ways of editing your application.
+## Quick Start
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/46849a5c-25e7-464e-8387-518e1f979f0e) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Backend Setup
+```bash
+cd backend
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Features
 
-**Use GitHub Codespaces**
+- 🔐 **Secure Authentication** - JWT tokens with refresh token support
+- 📦 **Time Capsules** - Create and manage time capsules
+- 🔒 **Riddle Protection** - Secure capsules with custom riddles
+- 👥 **Social Features** - Friends, notifications, and sharing
+- 📱 **Responsive Design** - Works on all devices
+- 🚀 **Production Ready** - Docker, testing, and deployment configs
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Documentation
 
-## What technologies are used for this project?
+- **Backend API**: `/api-docs` (Swagger documentation)
+- **Deployment**: See `backend/DEPLOY.md`
+- **Frontend**: See `frontend/README.md`
 
-This project is built with:
+## Tech Stack
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/46849a5c-25e7-464e-8387-518e1f979f0e) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Frontend**: React, TypeScript, Tailwind CSS, Vite
+**Backend**: Node.js, Express, MongoDB, JWT, Joi validation
+**Deployment**: Docker, Render, Railway support

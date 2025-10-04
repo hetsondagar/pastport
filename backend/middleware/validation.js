@@ -1,89 +1,75 @@
-import { body, validationResult } from 'express-validator';
+import Joi from 'joi';
 
-// Handle validation errors
-export const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array()
+/**
+ * Generic validation middleware factory
+ * @param {Joi.ObjectSchema} schema - Joi validation schema
+ * @param {string} property - Request property to validate ('body', 'query', 'params')
+ * @returns {Function} Express middleware function
+ */
+export const validate = (schema, property = 'body') => {
+  return (req, res, next) => {
+    const { error, value } = schema.validate(req[property], {
+      abortEarly: false, // Show all validation errors
+      stripUnknown: true, // Remove unknown properties
+      convert: true // Convert types when possible
     });
-  }
-  next();
+
+    if (error) {
+      const errorDetails = error.details.map(detail => ({
+        field: detail.path.join('.'),
+        message: detail.message,
+        value: detail.context?.value
+      }));
+
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errorDetails
+      });
+    }
+
+    // Replace the original property with the validated and sanitized value
+    req[property] = value;
+    next();
+  };
 };
 
-// User validation rules
-export const validateUser = [
-  body('name')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Name must be between 2 and 50 characters'),
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-  handleValidationErrors
-];
+/**
+ * Validate request body
+ * @param {Joi.ObjectSchema} schema - Joi validation schema
+ * @returns {Function} Express middleware function
+ */
+export const validateBody = (schema) => validate(schema, 'body');
 
-// Login validation rules
-export const validateLogin = [
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
-  handleValidationErrors
-];
+/**
+ * Validate request query parameters
+ * @param {Joi.ObjectSchema} schema - Joi validation schema
+ * @returns {Function} Express middleware function
+ */
+export const validateQuery = (schema) => validate(schema, 'query');
 
-// Capsule validation rules
-export const validateCapsule = [
-  body('title')
-    .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Title must be between 1 and 100 characters'),
-  body('message')
-    .trim()
-    .isLength({ min: 1, max: 5000 })
-    .withMessage('Message must be between 1 and 5000 characters'),
-  body('unlockDate')
-    .isISO8601()
-    .withMessage('Please provide a valid unlock date'),
-  body('emoji')
-    .optional()
-    .isLength({ min: 1, max: 10 })
-    .withMessage('Emoji must be between 1 and 10 characters'),
-  body('tags')
-    .optional()
-    .isArray()
-    .withMessage('Tags must be an array'),
-  body('hasRiddle')
-    .optional()
-    .isBoolean()
-    .withMessage('hasRiddle must be a boolean'),
-  body('riddle')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Riddle must be less than 500 characters'),
-  body('riddleAnswer')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Riddle answer must be less than 100 characters'),
-  handleValidationErrors
-];
+/**
+ * Validate request path parameters
+ * @param {Joi.ObjectSchema} schema - Joi validation schema
+ * @returns {Function} Express middleware function
+ */
+export const validateParams = (schema) => validate(schema, 'params');
 
-// Riddle answer validation
-export const validateRiddleAnswer = [
-  body('answer')
-    .trim()
-    .notEmpty()
-    .withMessage('Answer is required'),
-  handleValidationErrors
-];
+/**
+ * Validate MongoDB ObjectId format
+ * @param {string} field - Field name to validate
+ * @returns {Function} Express middleware function
+ */
+export const validateObjectId = (field = 'id') => {
+  const schema = Joi.object({
+    [field]: Joi.string()
+      .pattern(/^[0-9a-fA-F]{24}$/)
+      .required()
+      .messages({
+        'string.pattern.base': `Invalid ${field} format`,
+        'any.required': `${field} is required`
+      })
+  });
+
+  return validateParams(schema);
+};

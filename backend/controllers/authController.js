@@ -33,8 +33,16 @@ export const register = async (req, res, next) => {
       category: 'milestone'
     });
 
-    // Generate token
+    // Generate tokens
     const token = generateToken(user._id);
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Save refresh token
+    await user.addRefreshToken(refreshToken);
 
     res.status(201).json({
       success: true,
@@ -48,7 +56,8 @@ export const register = async (req, res, next) => {
           badges: user.badges,
           stats: user.stats
         },
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -93,8 +102,16 @@ export const login = async (req, res, next) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate token
+    // Generate tokens
     const token = generateToken(user._id);
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Save refresh token
+    await user.addRefreshToken(refreshToken);
 
     res.json({
       success: true,
@@ -110,7 +127,8 @@ export const login = async (req, res, next) => {
           stats: user.stats,
           preferences: user.preferences
         },
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -298,6 +316,95 @@ export const deactivateAccount = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Account deactivated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Refresh token
+// @route   POST /api/auth/refresh
+// @access  Public
+export const refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token is required'
+      });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      });
+    }
+
+    // Check if refresh token exists in user's tokens
+    const tokenExists = user.refreshTokens.some(rt => rt.token === refreshToken);
+    if (!tokenExists) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      });
+    }
+
+    // Generate new access token
+    const newToken = generateToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: {
+        token: newToken
+      }
+    });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      });
+    }
+    next(error);
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+export const logout = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Remove specific refresh token if provided
+    if (refreshToken) {
+      await user.removeRefreshToken(refreshToken);
+    } else {
+      // Remove all refresh tokens
+      user.refreshTokens = [];
+      await user.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
     });
   } catch (error) {
     next(error);

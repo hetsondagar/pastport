@@ -4,10 +4,18 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import xss from 'xss-clean';
+import mongoSanitize from 'express-mongo-sanitize';
 import dotenv from 'dotenv';
 
 // Import database connection
 import connectDB from './config/database.js';
+
+// Import logger
+import logger from './config/logger.js';
+
+// Import Swagger
+import { specs, swaggerUi } from './config/swagger.js';
 
 // Import scheduler
 import { startScheduler } from './utils/scheduler.js';
@@ -96,15 +104,28 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// Data sanitization against XSS
+app.use(xss());
+
 // Compression middleware
 app.use(compression());
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
+  app.use(morgan('dev', { stream: logger.stream }));
 } else {
-  app.use(morgan('combined'));
+  app.use(morgan('combined', { stream: logger.stream }));
 }
+
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'PastPort API Documentation'
+}));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -142,10 +163,10 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  console.log(`🚀 PastPort API Server running on port ${PORT}`);
-  console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  logger.info(`🚀 PastPort API Server running on port ${PORT}`);
+  logger.info(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+  logger.info(`📊 Health check: http://localhost:${PORT}/health`);
   
   // Start scheduler for notifications and reminders
   startScheduler();
@@ -153,7 +174,7 @@ const server = app.listen(PORT, () => {
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
-  console.log(`Error: ${err.message}`);
+  logger.error(`Unhandled Rejection: ${err.message}`);
   // Close server & exit process
   server.close(() => {
     process.exit(1);
@@ -162,7 +183,7 @@ process.on('unhandledRejection', (err, promise) => {
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  console.log(`Error: ${err.message}`);
+  logger.error(`Uncaught Exception: ${err.message}`);
   process.exit(1);
 });
 

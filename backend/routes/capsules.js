@@ -11,7 +11,13 @@ import {
   getCapsuleStats
 } from '../controllers/capsuleController.js';
 import { protect } from '../middleware/auth.js';
-import { validateCapsule, validateRiddleAnswer } from '../middleware/validation.js';
+import { validateBody, validateParams } from '../middleware/validation.js';
+import { 
+  createCapsuleSchema, 
+  updateCapsuleSchema, 
+  solveRiddleSchema,
+  addCommentSchema 
+} from '../validators/capsule.js';
 import { uploadSingle, handleUploadError } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -22,12 +28,12 @@ router.use(protect);
 // Routes
 router.get('/', getCapsules);
 router.get('/stats', getCapsuleStats);
-router.get('/:id', getCapsule);
-router.post('/', uploadSingle, handleUploadError, validateCapsule, createCapsule);
-router.put('/:id', validateCapsule, updateCapsule);
-router.delete('/:id', deleteCapsule);
-router.post('/:id/unlock', validateRiddleAnswer, unlockCapsule);
-router.post('/:id/reactions', addReaction);
-router.post('/:id/comments', addComment);
+router.get('/:id', validateParams({ id: 'string' }), getCapsule);
+router.post('/', uploadSingle, handleUploadError, validateBody(createCapsuleSchema), createCapsule);
+router.put('/:id', validateParams({ id: 'string' }), validateBody(updateCapsuleSchema), updateCapsule);
+router.delete('/:id', validateParams({ id: 'string' }), deleteCapsule);
+router.post('/:id/unlock', validateParams({ id: 'string' }), validateBody(solveRiddleSchema), unlockCapsule);
+router.post('/:id/reactions', validateParams({ id: 'string' }), addReaction);
+router.post('/:id/comments', validateParams({ id: 'string' }), validateBody(addCommentSchema), addComment);
 
 export default router;

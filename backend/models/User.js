@@ -129,6 +129,22 @@ const userSchema = new mongoose.Schema({
       default: Date.now
     }
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  refreshTokens: [{
+    token: {
+      type: String,
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      expires: 604800 // 7 days
+    }
+  }],
   isActive: {
     type: Boolean,
     default: true
@@ -181,6 +197,23 @@ userSchema.methods.addBadge = function(badgeData) {
 // Check if user has badge
 userSchema.methods.hasBadge = function(badgeName) {
   return this.badges.some(badge => badge.name === badgeName);
+};
+
+// Add refresh token
+userSchema.methods.addRefreshToken = function(token) {
+  this.refreshTokens.push({ token });
+  return this.save();
+};
+
+// Remove refresh token
+userSchema.methods.removeRefreshToken = function(token) {
+  this.refreshTokens = this.refreshTokens.filter(rt => rt.token !== token);
+  return this.save();
+};
+
+// Check if user is admin
+userSchema.methods.isAdmin = function() {
+  return this.role === 'admin';
 };
 
 // Get user's public profile (without sensitive data)

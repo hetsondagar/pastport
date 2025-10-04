@@ -1,10 +1,19 @@
+import logger from '../config/logger.js';
+
 // Global error handler middleware
 export const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
-  // Log error
-  console.error(err);
+  // Log error with Winston
+  logger.error({
+    message: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method,
+    ip: req.ip,
+    userAgent: req.get('User-Agent')
+  });
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {

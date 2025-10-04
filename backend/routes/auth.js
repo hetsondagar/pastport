@@ -7,23 +7,36 @@ import {
   updatePreferences,
   changePassword,
   deactivateAccount,
-  searchUsers
+  searchUsers,
+  refreshToken,
+  logout
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
-import { validateUser, validateLogin } from '../middleware/validation.js';
+import { validateBody, validateQuery } from '../middleware/validation.js';
+import { 
+  registerSchema, 
+  loginSchema, 
+  updateProfileSchema, 
+  updatePreferencesSchema, 
+  changePasswordSchema, 
+  refreshTokenSchema,
+  searchUsersSchema 
+} from '../validators/auth.js';
 
 const router = express.Router();
 
 // Public routes
-router.post('/register', validateUser, register);
-router.post('/login', validateLogin, login);
+router.post('/register', validateBody(registerSchema), register);
+router.post('/login', validateBody(loginSchema), login);
+router.post('/refresh', validateBody(refreshTokenSchema), refreshToken);
 
 // Protected routes
 router.get('/me', protect, getMe);
-router.put('/profile', protect, updateProfile);
-router.put('/preferences', protect, updatePreferences);
-router.put('/change-password', protect, changePassword);
+router.post('/logout', protect, logout);
+router.put('/profile', protect, validateBody(updateProfileSchema), updateProfile);
+router.put('/preferences', protect, validateBody(updatePreferencesSchema), updatePreferences);
+router.put('/change-password', protect, validateBody(changePasswordSchema), changePassword);
 router.put('/deactivate', protect, deactivateAccount);
-router.get('/search', protect, searchUsers);
+router.get('/search', protect, validateQuery(searchUsersSchema), searchUsers);
 
 export default router;
