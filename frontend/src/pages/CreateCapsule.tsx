@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, Upload, Users, Puzzle, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
+import { Calendar, Upload, Users, Puzzle, Sparkles, ArrowLeft, Loader2, BookOpen, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
@@ -33,6 +33,7 @@ const CreateCapsule = () => {
     tags: [] as string[]
   });
   const [loading, setLoading] = useState(false);
+  const [createMode, setCreateMode] = useState<'capsule' | 'journal'>('capsule');
 
   // Redirect if not authenticated
   useEffect(() => {

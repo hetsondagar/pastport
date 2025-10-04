@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { Clock, User, Settings, LogOut, Menu, X, Bell } from 'lucide-react';
+import { Clock, User, Settings, LogOut, Menu, X, Bell, BookOpen } from 'lucide-react';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,6 +29,9 @@ const Navigation = () => {
             <div className="hidden md:flex items-center space-x-6">
               <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
                 Dashboard
+              </Link>
+              <Link to="/journal" className="text-foreground hover:text-primary transition-colors">
+                Daily Journal
               </Link>
               <Link to="/create" className="text-foreground hover:text-primary transition-colors">
                 Create
@@ -118,6 +121,9 @@ const Navigation = () => {
                 <>
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
                     Dashboard
+                  </Link>
+                  <Link to="/journal" className="text-foreground hover:text-primary transition-colors">
+                    Daily Journal
                   </Link>
                   <Link to="/create" className="text-foreground hover:text-primary transition-colors">
                     Create

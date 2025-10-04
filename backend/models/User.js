@@ -141,6 +141,14 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  journalStreakCount: {
+    type: Number,
+    default: 0
+  },
+  lastJournalDate: {
+    type: Date,
+    default: null
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],

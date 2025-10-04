@@ -29,6 +29,7 @@ import capsuleRoutes from './routes/capsules.js';
 import userRoutes from './routes/users.js';
 import notificationRoutes from './routes/notifications.js';
 import lotteryRoutes from './routes/lottery.js';
+import journalRoutes from './routes/journal.js';
 
 // Load environment variables
 dotenv.config();
@@ -144,6 +145,7 @@ app.use('/api/capsules', capsuleRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/lottery', lotteryRoutes);
+app.use('/api/journal', journalRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

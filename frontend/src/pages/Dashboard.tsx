@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Calendar, Grid, List, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, Grid, List, Loader2, BookOpen, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
@@ -24,6 +25,11 @@ const Dashboard = () => {
     unlockedCapsules: 0,
     sharedCapsules: 0
   });
+  const [journalStats, setJournalStats] = useState({
+    streakCount: 0,
+    totalEntries: 0,
+    lastEntryDate: null
+  });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -41,6 +47,7 @@ const Dashboard = () => {
     if (isAuthenticated) {
       loadCapsules();
       loadStats();
+      loadJournalStats();
     }
   }, [isAuthenticated, filterStatus, searchTerm]);
 
@@ -77,6 +84,17 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Failed to load stats:', error);
+    }
+  };
+
+  const loadJournalStats = async () => {
+    try {
+      const response = await apiClient.getJournalStreak();
+      if (response.success) {
+        setJournalStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load journal stats:', error);
     }
   };
 
@@ -139,9 +157,57 @@ const Dashboard = () => {
           </div>
 
           {/* Fun Features Widgets */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
             <StreakWidget />
             <LotteryWidget />
+            
+            {/* Mini Journal Summary */}
+            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl hover:bg-background/95 transition-all duration-300">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500">
+                      <BookOpen className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">Journal Streak</h3>
+                      <p className="text-sm text-gray-300">Daily writing</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-400">
+                      {journalStats.streakCount}
+                    </div>
+                    <div className="text-xs text-gray-400">days</div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-300">Total Entries</span>
+                    <span className="text-white font-medium">{journalStats.totalEntries}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-300">Last Entry</span>
+                    <span className="text-white font-medium">
+                      {journalStats.lastEntryDate 
+                        ? new Date(journalStats.lastEntryDate).toLocaleDateString()
+                        : 'Never'
+                      }
+                    </span>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={() => navigate('/journal')}
+                  className="w-full mt-3 btn-glow"
+                  size="sm"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  View Journal
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Controls */}

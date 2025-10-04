@@ -1,5 +1,6 @@
 import LotteryCapsule from '../models/LotteryCapsule.js';
 import User from '../models/User.js';
+import { getRandomQuote } from '../utils/quotes.js';
 
 // @desc    Get active lottery capsule for user
 // @route   GET /api/lottery

@@ -309,6 +309,42 @@ class ApiClient {
       body: JSON.stringify({ answer }),
     });
   }
+
+  // Journal endpoints
+  async getJournalStreak() {
+    return this.request('/journal/streak');
+  }
+
+  async getMonthEntries(userId, year, month) {
+    return this.request(`/journal/${userId}/month/${year}/${month}`);
+  }
+
+  async createJournalEntry(entryData) {
+    return this.request('/journal', {
+      method: 'POST',
+      body: JSON.stringify(entryData),
+    });
+  }
+
+  async updateJournalEntry(id, entryData) {
+    return this.request(`/journal/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(entryData),
+    });
+  }
+
+  async deleteJournalEntry(id) {
+    return this.request(`/journal/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async unlockJournalEntry(id, answer = '') {
+    return this.request(`/journal/${id}/unlock`, {
+      method: 'PATCH',
+      body: JSON.stringify({ answer }),
+    });
+  }
 }
 
 // Create and export a singleton instance
