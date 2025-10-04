@@ -12,12 +12,51 @@ export const createCapsuleSchema = Joi.object({
       'string.min': 'Title must be at least 3 characters',
       'string.max': 'Title cannot exceed 100 characters'
     }),
-  description: Joi.string()
+  message: Joi.string()
     .trim()
-    .max(1000)
+    .min(1)
+    .max(5000)
+    .required()
+    .messages({
+      'string.empty': 'Message is required',
+      'string.min': 'Message must be at least 1 character',
+      'string.max': 'Message cannot exceed 5000 characters'
+    }),
+  emoji: Joi.string()
+    .trim()
+    .max(10)
+    .optional()
+    .default('📝')
+    .messages({
+      'string.max': 'Emoji cannot exceed 10 characters'
+    }),
+  mood: Joi.string()
+    .valid('happy', 'sad', 'excited', 'angry', 'calm', 'neutral')
+    .optional()
+    .default('neutral')
+    .messages({
+      'any.only': 'Mood must be one of: happy, sad, excited, angry, calm, neutral'
+    }),
+  lockType: Joi.string()
+    .valid('time', 'riddle')
+    .optional()
+    .default('time')
+    .messages({
+      'any.only': 'Lock type must be either time or riddle'
+    }),
+  riddleQuestion: Joi.string()
+    .trim()
+    .max(500)
     .optional()
     .messages({
-      'string.max': 'Description cannot exceed 1000 characters'
+      'string.max': 'Riddle question cannot exceed 500 characters'
+    }),
+  riddleAnswer: Joi.string()
+    .trim()
+    .max(100)
+    .optional()
+    .messages({
+      'string.max': 'Riddle answer cannot exceed 100 characters'
     }),
   unlockDate: Joi.date()
     .greater('now')
@@ -36,36 +75,6 @@ export const createCapsuleSchema = Joi.object({
       'array.max': 'Cannot have more than 10 tags',
       'string.max': 'Each tag cannot exceed 30 characters'
     }),
-  riddle: Joi.object({
-    question: Joi.string()
-      .trim()
-      .min(10)
-      .max(500)
-      .required()
-      .messages({
-        'string.empty': 'Riddle question is required',
-        'string.min': 'Riddle question must be at least 10 characters',
-        'string.max': 'Riddle question cannot exceed 500 characters'
-      }),
-    answer: Joi.string()
-      .trim()
-      .min(1)
-      .max(100)
-      .required()
-      .messages({
-        'string.empty': 'Riddle answer is required',
-        'string.min': 'Riddle answer must be at least 1 character',
-        'string.max': 'Riddle answer cannot exceed 100 characters'
-      }),
-    hints: Joi.array()
-      .items(Joi.string().trim().max(200))
-      .max(3)
-      .optional()
-      .messages({
-        'array.max': 'Cannot have more than 3 hints',
-        'string.max': 'Each hint cannot exceed 200 characters'
-      })
-  }).optional(),
   media: Joi.array()
     .items(Joi.object({
       type: Joi.string()
@@ -119,13 +128,26 @@ export const updateCapsuleSchema = Joi.object({
       'string.min': 'Title must be at least 3 characters',
       'string.max': 'Title cannot exceed 100 characters'
     }),
-  description: Joi.string()
+  message: Joi.string()
     .trim()
-    .max(1000)
+    .max(5000)
     .optional()
     .allow('')
     .messages({
-      'string.max': 'Description cannot exceed 1000 characters'
+      'string.max': 'Message cannot exceed 5000 characters'
+    }),
+  emoji: Joi.string()
+    .trim()
+    .max(10)
+    .optional()
+    .messages({
+      'string.max': 'Emoji cannot exceed 10 characters'
+    }),
+  mood: Joi.string()
+    .valid('happy', 'sad', 'excited', 'angry', 'calm', 'neutral')
+    .optional()
+    .messages({
+      'any.only': 'Mood must be one of: happy, sad, excited, angry, calm, neutral'
     }),
   isPublic: Joi.boolean()
     .optional(),

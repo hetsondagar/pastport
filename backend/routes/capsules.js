@@ -12,7 +12,7 @@ import {
 } from '../controllers/capsuleController.js';
 import { attemptRiddle } from '../controllers/riddleController.js';
 import { protect } from '../middleware/auth.js';
-import { validateBody, validateParams } from '../middleware/validation.js';
+import { validateBody, validateParams, validateFormData } from '../middleware/validation.js';
 import { 
   createCapsuleSchema, 
   updateCapsuleSchema, 
@@ -30,7 +30,7 @@ router.use(protect);
 router.get('/', getCapsules);
 router.get('/stats', getCapsuleStats);
 router.get('/:id', validateParams({ id: 'string' }), getCapsule);
-router.post('/', uploadSingle, handleUploadError, validateBody(createCapsuleSchema), createCapsule);
+router.post('/', uploadSingle, handleUploadError, validateFormData(createCapsuleSchema), createCapsule);
 router.put('/:id', validateParams({ id: 'string' }), validateBody(updateCapsuleSchema), updateCapsule);
 router.delete('/:id', validateParams({ id: 'string' }), deleteCapsule);
 router.post('/:id/unlock', validateParams({ id: 'string' }), validateBody(solveRiddleSchema), unlockCapsule);
