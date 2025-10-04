@@ -23,13 +23,11 @@ export const registerSchema = Joi.object({
   password: Joi.string()
     .min(6)
     .max(128)
-    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)'))
     .required()
     .messages({
       'string.empty': 'Password is required',
       'string.min': 'Password must be at least 6 characters',
-      'string.max': 'Password cannot exceed 128 characters',
-      'string.pattern.base': 'Password must contain at least one lowercase letter, one uppercase letter, and one number'
+      'string.max': 'Password cannot exceed 128 characters'
     }),
   confirmPassword: Joi.string()
     .valid(Joi.ref('password'))
@@ -149,8 +147,8 @@ export const updateProfileSchema = Joi.object({
       'string.max': 'Bio cannot exceed 500 characters'
     }),
   avatar: Joi.string()
-    .uri()
     .optional()
+    .allow('')
     .messages({
       'string.uri': 'Avatar must be a valid URL'
     })

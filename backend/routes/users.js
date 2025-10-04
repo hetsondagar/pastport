@@ -9,6 +9,7 @@ import {
   getUserBadges,
   getUserCapsules
 } from '../controllers/userController.js';
+import { getUserStreak } from '../controllers/streakController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -21,6 +22,7 @@ router.get('/:id', getUserProfile);
 router.get('/:id/friends', getUserFriends);
 router.get('/:id/badges', getUserBadges);
 router.get('/:id/capsules', getUserCapsules);
+router.get('/:id/streak', getUserStreak);
 
 // Friend management routes
 router.post('/:id/friend-request', sendFriendRequest);

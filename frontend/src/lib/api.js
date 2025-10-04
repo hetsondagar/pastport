@@ -281,6 +281,34 @@ class ApiClient {
   async getUnreadCount() {
     return this.request('/notifications/unread-count');
   }
+
+  // Streak endpoints
+  async getUserStreak(userId) {
+    return this.request(`/users/${userId}/streak`);
+  }
+
+  // Lottery endpoints
+  async getLotteryCapsule() {
+    return this.request('/lottery');
+  }
+
+  async unlockLotteryCapsule(id) {
+    return this.request(`/lottery/${id}/unlock`, {
+      method: 'PATCH',
+    });
+  }
+
+  async getLotteryHistory(page = 1, limit = 10) {
+    return this.request(`/lottery/history?page=${page}&limit=${limit}`);
+  }
+
+  // Riddle endpoints
+  async attemptRiddle(capsuleId, answer) {
+    return this.request(`/capsules/${capsuleId}/attempt`, {
+      method: 'POST',
+      body: JSON.stringify({ answer }),
+    });
+  }
 }
 
 // Create and export a singleton instance

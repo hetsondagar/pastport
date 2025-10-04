@@ -1,14 +1,18 @@
+import { useState } from 'react';
 import { Clock, Lock, Unlock, Users, Puzzle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import RiddleUnlock from './RiddleUnlock';
 
 interface CapsuleCardProps {
   id: string;
   title: string;
   emoji: string;
+  mood?: string;
   unlockDate: Date;
   isLocked: boolean;
-  hasRiddle: boolean;
+  lockType?: string;
+  riddleQuestion?: string;
   isShared: boolean;
   preview?: string;
   onClick: () => void;
@@ -17,13 +21,42 @@ interface CapsuleCardProps {
 const CapsuleCard = ({
   title,
   emoji,
+  mood,
   unlockDate,
   isLocked,
-  hasRiddle,
+  lockType,
+  riddleQuestion,
   isShared,
   preview,
   onClick
 }: CapsuleCardProps) => {
+  const [showRiddleUnlock, setShowRiddleUnlock] = useState(false);
+
+  const getMoodEmoji = (mood: string) => {
+    const moodEmojis: { [key: string]: string } = {
+      happy: '🌞',
+      sad: '😢',
+      excited: '🎉',
+      angry: '😡',
+      calm: '🌙',
+      neutral: '😐'
+    };
+    return moodEmojis[mood] || '😐';
+  };
+
+  const handleUnlockClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (lockType === 'riddle' && riddleQuestion) {
+      setShowRiddleUnlock(true);
+    } else {
+      onClick();
+    }
+  };
+
+  const handleRiddleSuccess = (capsuleData: any) => {
+    setShowRiddleUnlock(false);
+    onClick();
+  };
   const now = new Date();
   const timeUntilUnlock = unlockDate.getTime() - now.getTime();
   const daysUntilUnlock = Math.ceil(timeUntilUnlock / (1000 * 60 * 60 * 24));
@@ -57,13 +90,18 @@ const CapsuleCard = ({
               <span className="text-sm text-muted-foreground">
                 {unlockDate.toLocaleDateString()}
               </span>
+              {mood && (
+                <span className="text-lg" title={`Mood: ${mood}`}>
+                  {getMoodEmoji(mood)}
+                </span>
+              )}
             </div>
           </div>
         </div>
         
         <div className="flex space-x-1">
-          {hasRiddle && (
-            <Badge variant="secondary" className="bg-accent/20 text-accent">
+          {lockType === 'riddle' && (
+            <Badge variant="secondary" className="bg-purple-500/20 text-purple-400">
               <Puzzle className="w-3 h-3 mr-1" />
               Riddle
             </Badge>
@@ -98,13 +136,19 @@ const CapsuleCard = ({
       {/* Action Button */}
       <Button 
         className={`w-full ${isLocked ? 'btn-glass' : 'btn-glow'}`}
-        disabled={isLocked && timeUntilUnlock > 0}
+        disabled={isLocked && timeUntilUnlock > 0 && lockType !== 'riddle'}
+        onClick={handleUnlockClick}
       >
         {isLocked ? (
           timeUntilUnlock > 0 ? (
             <>
               <Lock className="w-4 h-4 mr-2" />
               Locked
+            </>
+          ) : lockType === 'riddle' ? (
+            <>
+              <Puzzle className="w-4 h-4 mr-2" />
+              Solve Riddle
             </>
           ) : (
             <>
@@ -119,6 +163,16 @@ const CapsuleCard = ({
           </>
         )}
       </Button>
+
+      {/* Riddle Unlock Modal */}
+      {showRiddleUnlock && riddleQuestion && (
+        <RiddleUnlock
+          capsuleId={id}
+          riddleQuestion={riddleQuestion}
+          onSuccess={handleRiddleSuccess}
+          onClose={() => setShowRiddleUnlock(false)}
+        />
+      )}
     </div>
   );
 };

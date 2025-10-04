@@ -72,6 +72,9 @@ const AuthForm = () => {
     
     if (password && password.length < 6) {
       errors.password = 'Password must be at least 6 characters';
+    } else if (password && password.length >= 6) {
+      // Clear password error if it meets minimum requirements
+      errors.password = '';
     }
     
     // Confirm password validation
@@ -88,7 +91,7 @@ const AuthForm = () => {
            registerData.password && 
            registerData.confirmPassword &&
            !Object.values(validationErrors).some(error => error !== '') &&
-           Object.values(passwordStrength).every(requirement => requirement);
+           passwordStrength.length; // Only require minimum length, not all requirements
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -135,7 +138,8 @@ const AuthForm = () => {
     const result = await register({
       name: registerData.name,
       email: registerData.email,
-      password: registerData.password
+      password: registerData.password,
+      confirmPassword: registerData.confirmPassword
     });
 
     if (result.success) {
@@ -421,7 +425,11 @@ const AuthForm = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full btn-glow transition-all duration-200"
+                  className={`w-full transition-all duration-200 ${
+                    isFormValid() 
+                      ? 'btn-glow bg-primary hover:bg-primary/90' 
+                      : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  }`}
                   disabled={loading || !isFormValid()}
                 >
                   {loading ? (
@@ -429,8 +437,13 @@ const AuthForm = () => {
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Creating account...
                     </>
+                  ) : isFormValid() ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Create Account
+                    </>
                   ) : (
-                    'Create Account'
+                    'Complete all fields to continue'
                   )}
                 </Button>
               </form>

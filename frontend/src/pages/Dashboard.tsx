@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
 import CapsuleCard from '@/components/CapsuleCard';
 import Navigation from '@/components/Navigation';
+import StreakWidget from '@/components/StreakWidget';
+import LotteryWidget from '@/components/LotteryWidget';
 
 const Dashboard = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -134,6 +136,12 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-gradient">{stats.sharedCapsules}</div>
               <div className="text-sm text-muted-foreground">Shared</div>
             </div>
+          </div>
+
+          {/* Fun Features Widgets */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <StreakWidget />
+            <LotteryWidget />
           </div>
 
           {/* Controls */}

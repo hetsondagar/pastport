@@ -124,10 +124,22 @@ const userSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
+    lotteryCapsulesUnlocked: {
+      type: Number,
+      default: 0
+    },
     joinedAt: {
       type: Date,
       default: Date.now
     }
+  },
+  streakCount: {
+    type: Number,
+    default: 0
+  },
+  lastCapsuleDate: {
+    type: Date,
+    default: null
   },
   role: {
     type: String,

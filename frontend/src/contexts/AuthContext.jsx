@@ -100,6 +100,74 @@ export const AuthProvider = ({ children }) => {
     }));
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiClient.updateProfile(profileData);
+      
+      if (response.success) {
+        updateUser(response.data.user);
+        return { success: true, data: response.data };
+      } else {
+        setError(response.message || 'Profile update failed');
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Profile update failed';
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePreferences = async (preferences) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiClient.updatePreferences(preferences);
+      
+      if (response.success) {
+        updateUser({ preferences: response.data.preferences });
+        return { success: true, data: response.data };
+      } else {
+        setError(response.message || 'Preferences update failed');
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Preferences update failed';
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const changePassword = async (passwordData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiClient.changePassword(passwordData);
+      
+      if (response.success) {
+        return { success: true, data: response.data };
+      } else {
+        setError(response.message || 'Password change failed');
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Password change failed';
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearError = () => {
     setError(null);
   };
@@ -112,6 +180,9 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
+    updateProfile,
+    updatePreferences,
+    changePassword,
     clearError,
     isAuthenticated: !!user
   };

@@ -18,6 +18,24 @@ const capsuleSchema = new mongoose.Schema({
     default: '📝',
     maxlength: [10, 'Emoji cannot be more than 10 characters']
   },
+  mood: {
+    type: String,
+    enum: ['happy', 'sad', 'excited', 'angry', 'calm', 'neutral'],
+    default: 'neutral'
+  },
+  lockType: {
+    type: String,
+    enum: ['time', 'riddle'],
+    default: 'time'
+  },
+  riddleQuestion: {
+    type: String,
+    default: null
+  },
+  riddleAnswer: {
+    type: String,
+    default: null
+  },
   creator: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

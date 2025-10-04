@@ -154,9 +154,10 @@ export const createCapsule = async (req, res, next) => {
       title,
       message,
       emoji = '📝',
+      mood = 'neutral',
       unlockDate,
-      hasRiddle = false,
-      riddle,
+      lockType = 'time',
+      riddleQuestion,
       riddleAnswer,
       tags = [],
       category = 'personal',
@@ -180,6 +181,8 @@ export const createCapsule = async (req, res, next) => {
       title,
       message,
       emoji,
+      mood,
+      lockType,
       creator: userId,
       unlockDate: unlockDateObj,
       tags,
@@ -191,13 +194,10 @@ export const createCapsule = async (req, res, next) => {
       }))
     };
 
-    // Add riddle if provided
-    if (hasRiddle && riddle && riddleAnswer) {
-      capsuleData.hasRiddle = true;
-      capsuleData.riddle = {
-        question: riddle,
-        answer: riddleAnswer.toLowerCase().trim()
-      };
+    // Add riddle if lockType is riddle
+    if (lockType === 'riddle' && riddleQuestion && riddleAnswer) {
+      capsuleData.riddleQuestion = riddleQuestion;
+      capsuleData.riddleAnswer = riddleAnswer.toLowerCase().trim();
     }
 
     // Add media if uploaded
@@ -219,14 +219,62 @@ export const createCapsule = async (req, res, next) => {
       $inc: { 'stats.capsulesCreated': 1 }
     });
 
-    // Add creation badge if first capsule
+    // Update streak logic
     const user = await User.findById(userId);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Reset time to start of day for comparison
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    
+    if (user.lastCapsuleDate) {
+      const lastCapsuleDate = new Date(user.lastCapsuleDate);
+      const lastCapsuleStart = new Date(lastCapsuleDate.getFullYear(), lastCapsuleDate.getMonth(), lastCapsuleDate.getDate());
+      
+      if (lastCapsuleStart.getTime() === yesterdayStart.getTime()) {
+        // Streak continues - increment streak
+        user.streakCount += 1;
+      } else if (lastCapsuleStart.getTime() === todayStart.getTime()) {
+        // Already created a capsule today - do nothing
+        // Keep current streak count
+      } else {
+        // Streak broken - reset to 1
+        user.streakCount = 1;
+      }
+    } else {
+      // First capsule - start streak
+      user.streakCount = 1;
+    }
+    
+    user.lastCapsuleDate = todayStart;
+    await user.save();
+
+    // Add creation badge if first capsule
     if (user.stats.capsulesCreated === 1) {
       await user.addBadge({
         name: 'First Capsule',
         description: 'Created your first time capsule!',
         icon: '🎯',
         category: 'creation'
+      });
+    }
+    
+    // Add streak badges
+    if (user.streakCount === 7) {
+      await user.addBadge({
+        name: 'Week Warrior',
+        description: '7-day capsule streak!',
+        icon: '🔥',
+        category: 'streak'
+      });
+    } else if (user.streakCount === 30) {
+      await user.addBadge({
+        name: 'Monthly Master',
+        description: '30-day capsule streak!',
+        icon: '💎',
+        category: 'streak'
       });
     }
 

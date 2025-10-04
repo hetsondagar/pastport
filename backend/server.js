@@ -28,6 +28,7 @@ import authRoutes from './routes/auth.js';
 import capsuleRoutes from './routes/capsules.js';
 import userRoutes from './routes/users.js';
 import notificationRoutes from './routes/notifications.js';
+import lotteryRoutes from './routes/lottery.js';
 
 // Load environment variables
 dotenv.config();
@@ -142,6 +143,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/capsules', capsuleRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/lottery', lotteryRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

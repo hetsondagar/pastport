@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
 import Navigation from '@/components/Navigation';
+import MoodPicker from '@/components/MoodPicker';
+import LockTypeSelector from '@/components/LockTypeSelector';
 
 const CreateCapsule = () => {
   const navigate = useNavigate();
@@ -22,9 +24,10 @@ const CreateCapsule = () => {
     title: '',
     message: '',
     emoji: '📝',
+    mood: 'neutral',
     unlockDate: '',
-    hasRiddle: false,
-    riddle: '',
+    lockType: 'time',
+    riddleQuestion: '',
     riddleAnswer: '',
     isShared: false,
     tags: [] as string[]
@@ -53,7 +56,7 @@ const CreateCapsule = () => {
       return;
     }
 
-    if (formData.hasRiddle && (!formData.riddle || !formData.riddleAnswer)) {
+    if (formData.lockType === 'riddle' && (!formData.riddleQuestion || !formData.riddleAnswer)) {
       toast({
         title: "Incomplete Riddle",
         description: "Please provide both riddle question and answer.",
@@ -68,9 +71,10 @@ const CreateCapsule = () => {
         title: formData.title,
         message: formData.message,
         emoji: formData.emoji,
+        mood: formData.mood,
         unlockDate: formData.unlockDate,
-        hasRiddle: formData.hasRiddle,
-        riddle: formData.riddle,
+        lockType: formData.lockType,
+        riddleQuestion: formData.riddleQuestion,
         riddleAnswer: formData.riddleAnswer,
         tags: formData.tags,
         category: 'personal',
@@ -165,6 +169,12 @@ const CreateCapsule = () => {
                   </div>
                 </div>
 
+                {/* Mood Selection */}
+                <MoodPicker
+                  selectedMood={formData.mood}
+                  onMoodChange={(mood) => setFormData(prev => ({ ...prev, mood }))}
+                />
+
                 {/* Title */}
                 <div>
                   <Label htmlFor="title">Title *</Label>
@@ -207,6 +217,16 @@ const CreateCapsule = () => {
                     />
                   </div>
                 </div>
+
+                {/* Lock Type Selection */}
+                <LockTypeSelector
+                  lockType={formData.lockType}
+                  onLockTypeChange={(lockType) => setFormData(prev => ({ ...prev, lockType }))}
+                  riddleQuestion={formData.riddleQuestion}
+                  onRiddleQuestionChange={(riddleQuestion) => setFormData(prev => ({ ...prev, riddleQuestion }))}
+                  riddleAnswer={formData.riddleAnswer}
+                  onRiddleAnswerChange={(riddleAnswer) => setFormData(prev => ({ ...prev, riddleAnswer }))}
+                />
               </CardContent>
             </Card>
 
