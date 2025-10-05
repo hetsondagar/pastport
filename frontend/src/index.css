@@ -5,6 +5,227 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dynamic Gradient Nebula Background */
+.bg-animated {
+  background: linear-gradient(120deg, #0a0a20, #1b003d, #230047, #2d0052, #1a0033);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  25% { background-position: 100% 25%; }
+  50% { background-position: 100% 50%; }
+  75% { background-position: 0% 75%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Enhanced Nebula with Stars */
+.bg-nebula {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%),
+    linear-gradient(120deg, #0a0a20, #1b003d, #230047, #2d0052, #1a0033);
+  background-size: 400% 400%, 400% 400%, 400% 400%, 400% 400%;
+  animation: gradientShift 15s ease infinite, nebulaFloat 20s ease-in-out infinite;
+}
+
+@keyframes nebulaFloat {
+  0%, 100% { 
+    background-position: 0% 50%, 100% 25%, 50% 75%, 0% 50%; 
+  }
+  33% { 
+    background-position: 100% 25%, 0% 75%, 100% 50%, 100% 25%; 
+  }
+  66% { 
+    background-position: 50% 75%, 50% 25%, 0% 50%, 50% 75%; 
+  }
+}
+
+/* Subtle Starfield Overlay */
+.bg-stars {
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(2px 2px at 160px 30px, #fff, transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: starTwinkle 3s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Glass Galaxy Effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-enhanced {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(120, 60, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.capsule-energy-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.capsule-energy-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(120, 60, 255, 0.1) 0%,
+    rgba(120, 60, 255, 0.05) 30%,
+    transparent 70%
+  );
+  animation: energyPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes energyPulse {
+  0%, 100% { 
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, 
+    rgba(120, 60, 255, 0.8) 0%,
+    rgba(200, 100, 255, 0.6) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 4px 15px rgba(120, 60, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(120, 60, 255, 0.4),
+    0 0 20px rgba(120, 60, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-glow:hover::before {
+  left: 100%;
+}
+
+/* Enhanced Button Effects */
+.btn-glass {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.btn-glass:hover {
+  transform: translateY(-1px) rotate(1deg);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.2),
+    0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.btn-glass::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+.btn-glass:hover::after {
+  width: 200px;
+  height: 200px;
+}
+
+/* Ripple Effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+.btn-ripple:active::before {
+  animation: ripple 0.6s ease-out;
+}
+
 /* Gamification Animations */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -15,6 +236,12 @@
 @keyframes bounce-gentle {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
+}
+
+@keyframes bounce-once {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
 }
 
 @keyframes pulse-glow {
@@ -39,6 +266,10 @@
 
 .animate-bounce-gentle {
   animation: bounce-gentle 1s ease-in-out infinite;
+}
+
+.animate-bounce-once {
+  animation: bounce-once 0.6s ease-out;
 }
 
 .animate-pulse-glow {

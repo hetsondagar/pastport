@@ -345,6 +345,35 @@ class ApiClient {
       body: JSON.stringify({ answer }),
     });
   }
+
+  // Memory API methods
+  async getMemories() {
+    return this.request('/memories', 'GET');
+  }
+
+  async getMemory(id) {
+    return this.request(`/memories/${id}`, 'GET');
+  }
+
+  async createMemory(memoryData) {
+    return this.request('/memories', 'POST', memoryData);
+  }
+
+  async updateMemory(id, memoryData) {
+    return this.request(`/memories/${id}`, 'PUT', memoryData);
+  }
+
+  async deleteMemory(id) {
+    return this.request(`/memories/${id}`, 'DELETE');
+  }
+
+  async getRelatedMemories(id) {
+    return this.request(`/memories/${id}/related`, 'GET');
+  }
+
+  async getMemoriesByCategory(category) {
+    return this.request(`/memories/category/${category}`, 'GET');
+  }
 }
 
 // Create and export a singleton instance

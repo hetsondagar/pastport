@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Calendar, Flame, BookOpen, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
+import Navigation from '@/components/Navigation';
 import MonthlyCardView from '@/components/MonthlyCardView';
 import JournalEntryModal from '@/components/JournalEntryModal';
+import AnimatedCounter from '@/components/AnimatedCounter';
 
 interface JournalEntry {
   _id: string;
@@ -49,12 +52,12 @@ const DailyJournal = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl">
           <CardContent className="p-8 text-center">
-            <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">Please log in</h2>
-            <p className="text-gray-400">You need to be logged in to access your journal.</p>
+            <p className="text-muted-foreground">You need to be logged in to access your journal.</p>
           </CardContent>
         </Card>
       </div>
@@ -62,89 +65,92 @@ const DailyJournal = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <div className="container mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Daily Journal</h1>
-            <p className="text-gray-300">Track your daily thoughts and create time capsules</p>
-          </div>
-          <Button
-            onClick={handleNewEntry}
-            className="btn-glow"
+    <div className="min-h-screen">
+      <Navigation />
+      
+      <div className="pt-24 pb-12">
+        <div className="container mx-auto px-4">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            New Entry
-          </Button>
+            <h1 className="text-4xl app-name-bold text-gradient mb-4">
+              Daily Journal
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Track your daily thoughts and create time capsules
+            </p>
+          </motion.div>
+
+          {/* Stats Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="grid md:grid-cols-4 gap-4 mb-8"
+          >
+            <div className="glass-card-enhanced p-4 text-center">
+              <AnimatedCounter 
+                value={0} 
+                className="text-2xl font-bold text-primary"
+              />
+              <div className="text-sm text-muted-foreground">Day Streak</div>
+            </div>
+            <div className="glass-card-enhanced p-4 text-center">
+              <AnimatedCounter 
+                value={0} 
+                className="text-2xl font-bold text-accent"
+              />
+              <div className="text-sm text-muted-foreground">Total Entries</div>
+            </div>
+            <div className="glass-card-enhanced p-4 text-center">
+              <AnimatedCounter 
+                value={0} 
+                className="text-2xl font-bold text-secondary"
+              />
+              <div className="text-sm text-muted-foreground">Time Capsules</div>
+            </div>
+            <div className="glass-card-enhanced p-4 text-center">
+              <Button
+                onClick={handleNewEntry}
+                className="w-full btn-glow"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Entry
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Monthly Calendar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl shadow-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Calendar className="w-5 h-5" />
+                  Monthly View
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MonthlyCardView onEntryClick={handleEntryClick} />
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Journal Entry Modal */}
+          <JournalEntryModal
+            entry={selectedEntry}
+            date={selectedDate}
+            isOpen={isModalOpen}
+            onClose={handleModalClose}
+            onSave={handleSave}
+          />
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500">
-                  <Flame className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">0</p>
-                  <p className="text-sm text-gray-300">Day Streak</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500">
-                  <BookOpen className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">0</p>
-                  <p className="text-sm text-gray-300">Total Entries</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500">
-                  <Lock className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">0</p>
-                  <p className="text-sm text-gray-300">Time Capsules</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Monthly Calendar */}
-        <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <Calendar className="w-5 h-5" />
-              Monthly View
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MonthlyCardView onEntryClick={handleEntryClick} />
-          </CardContent>
-        </Card>
-
-        {/* Journal Entry Modal */}
-        <JournalEntryModal
-          entry={selectedEntry}
-          date={selectedDate}
-          isOpen={isModalOpen}
-          onClose={handleModalClose}
-          onSave={handleSave}
-        />
       </div>
     </div>
   );

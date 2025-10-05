@@ -69,6 +69,11 @@ const capsuleSchema = new mongoose.Schema({
     required: [true, 'Please add an unlock date'],
     validate: {
       validator: function(value) {
+        // Only validate if capsule is not unlocked
+        // This allows riddle capsules to have past unlock dates
+        if (this.isUnlocked) {
+          return true;
+        }
         return value > new Date();
       },
       message: 'Unlock date must be in the future'

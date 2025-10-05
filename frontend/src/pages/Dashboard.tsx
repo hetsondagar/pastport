@@ -12,6 +12,7 @@ import CapsuleCard from '@/components/CapsuleCard';
 import Navigation from '@/components/Navigation';
 import StreakWidget from '@/components/StreakWidget';
 import LotteryWidget from '@/components/LotteryWidget';
+import AnimatedCounter from '@/components/AnimatedCounter';
 
 const Dashboard = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -76,6 +77,11 @@ const Dashboard = () => {
     }
   };
 
+  const handleCapsuleUnlock = () => {
+    // Refresh capsules after unlock
+    loadCapsules();
+  };
+
   const loadStats = async () => {
     try {
       const response = await apiClient.getCapsuleStats();
@@ -111,7 +117,7 @@ const Dashboard = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">Loading your capsules...</p>
@@ -121,7 +127,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
       
       <div className="pt-24 pb-12">
@@ -138,20 +144,32 @@ const Dashboard = () => {
 
           {/* Stats Cards */}
           <div className="grid md:grid-cols-4 gap-4 mb-8">
-            <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-primary">{stats.totalCapsules}</div>
+            <div className="glass-card-enhanced p-4 text-center">
+              <AnimatedCounter 
+                value={stats.totalCapsules} 
+                className="text-2xl font-bold text-primary"
+              />
               <div className="text-sm text-muted-foreground">Total Capsules</div>
             </div>
-            <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-accent">{stats.lockedCapsules}</div>
+            <div className="glass-card-enhanced p-4 text-center">
+              <AnimatedCounter 
+                value={stats.lockedCapsules} 
+                className="text-2xl font-bold text-accent"
+              />
               <div className="text-sm text-muted-foreground">Locked</div>
             </div>
-            <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-secondary">{stats.unlockedCapsules}</div>
+            <div className="glass-card-enhanced p-4 text-center">
+              <AnimatedCounter 
+                value={stats.unlockedCapsules} 
+                className="text-2xl font-bold text-secondary"
+              />
               <div className="text-sm text-muted-foreground">Unlocked</div>
             </div>
-            <div className="glass-card p-4 text-center">
-              <div className="text-2xl font-bold text-gradient">{stats.sharedCapsules}</div>
+            <div className="glass-card-enhanced p-4 text-center">
+              <AnimatedCounter 
+                value={stats.sharedCapsules} 
+                className="text-2xl font-bold text-gradient"
+              />
               <div className="text-sm text-muted-foreground">Shared</div>
             </div>
           </div>
@@ -298,6 +316,7 @@ const Dashboard = () => {
                 onClick={() => handleCapsuleClick(capsule._id)}
                 failedAttempts={capsule.failedAttempts}
                 lockoutUntil={capsule.lockoutUntil ? new Date(capsule.lockoutUntil) : undefined}
+                onUnlock={handleCapsuleUnlock}
               />
             ))}
           </div>

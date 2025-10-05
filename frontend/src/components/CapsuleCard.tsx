@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import RiddleUnlock from './RiddleUnlock';
 import apiClient from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 
 interface CapsuleCardProps {
   id: string;
@@ -20,6 +21,7 @@ interface CapsuleCardProps {
   onClick: () => void;
   failedAttempts?: number;
   lockoutUntil?: Date;
+  onUnlock?: () => void;
 }
 
 const CapsuleCard = ({
@@ -35,7 +37,8 @@ const CapsuleCard = ({
   preview,
   onClick,
   failedAttempts = 0,
-  lockoutUntil
+  lockoutUntil,
+  onUnlock
 }: CapsuleCardProps) => {
   const [showRiddleUnlock, setShowRiddleUnlock] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
@@ -68,8 +71,13 @@ const CapsuleCard = ({
             title: "🎉 Capsule Unlocked!",
             description: "Your time capsule has been unlocked successfully!",
           });
-          // Refresh the page or update the capsule state
-          window.location.reload();
+          // Call the onUnlock callback to refresh the capsule data
+          if (onUnlock) {
+            onUnlock();
+          } else {
+            // Fallback to page reload
+            window.location.reload();
+          }
         } else {
           toast({
             title: "Unlock Failed",
@@ -91,7 +99,13 @@ const CapsuleCard = ({
 
   const handleRiddleSuccess = (capsuleData: any) => {
     setShowRiddleUnlock(false);
-    onClick();
+    // Call the onUnlock callback to refresh the capsule data
+    if (onUnlock) {
+      onUnlock();
+    } else {
+      // Fallback to page reload
+      window.location.reload();
+    }
   };
   const now = new Date();
   const timeUntilUnlock = unlockDate.getTime() - now.getTime();
@@ -111,7 +125,23 @@ const CapsuleCard = ({
   };
 
   return (
-    <div className="capsule-card group" onClick={onClick}>
+    <motion.div 
+      className="capsule-card group glass-card-enhanced capsule-energy-glow" 
+      onClick={onClick}
+      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ 
+        duration: 0.5, 
+        ease: "easeOut",
+        delay: Math.random() * 0.2 // Staggered animation
+      }}
+      whileHover={{ 
+        scale: 1.02,
+        y: -2,
+        transition: { duration: 0.2 }
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -222,7 +252,7 @@ const CapsuleCard = ({
           onClose={() => setShowRiddleUnlock(false)}
         />
       )}
-    </div>
+    </motion.div>
   );
 };
 

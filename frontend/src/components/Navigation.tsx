@@ -33,6 +33,9 @@ const Navigation = () => {
               <Link to="/journal" className="text-foreground hover:text-primary transition-colors">
                 Daily Journal
               </Link>
+              <Link to="/memories/constellation" className="text-foreground hover:text-primary transition-colors">
+                Constellation
+              </Link>
               <Link to="/create" className="text-foreground hover:text-primary transition-colors">
                 Create
               </Link>
@@ -124,6 +127,9 @@ const Navigation = () => {
                   </Link>
                   <Link to="/journal" className="text-foreground hover:text-primary transition-colors">
                     Daily Journal
+                  </Link>
+                  <Link to="/memories/constellation" className="text-foreground hover:text-primary transition-colors">
+                    Constellation
                   </Link>
                   <Link to="/create" className="text-foreground hover:text-primary transition-colors">
                     Create

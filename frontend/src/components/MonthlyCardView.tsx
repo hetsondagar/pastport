@@ -244,7 +244,7 @@ const MonthlyCardView = ({ onEntryClick }: MonthlyCardViewProps) => {
             <Card
               key={index}
               className={`h-16 cursor-pointer transition-all duration-200 hover:scale-105 ${status.color} ${
-                status.type === 'missed' ? 'animate-bounce' : ''
+                status.type === 'missed' ? 'animate-bounce-once' : ''
               }`}
               onClick={() => handleCardClick(date)}
             >
