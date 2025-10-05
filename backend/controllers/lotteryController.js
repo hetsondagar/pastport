@@ -14,25 +14,15 @@ export const getLotteryCapsule = async (req, res, next) => {
 
     // If no active lottery capsule, create one
     if (!lotteryCapsule) {
-      // Check if it's a new week (Sunday or first login of week)
-      const now = new Date();
-      const dayOfWeek = now.getDay(); // 0 = Sunday
+      // Always create a lottery capsule if none exists
+      const types = ['quote', 'surprise'];
+      const randomType = types[Math.floor(Math.random() * types.length)];
+      lotteryCapsule = await LotteryCapsule.createLotteryCapsule(userId, randomType);
       
-      // Create lottery capsule on Sunday or if user hasn't had one this week
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - dayOfWeek);
-      startOfWeek.setHours(0, 0, 0, 0);
-
-      const lastLotteryCapsule = await LotteryCapsule.findOne({
-        userId,
-        createdAt: { $gte: startOfWeek }
-      });
-
-      if (!lastLotteryCapsule) {
-        // Create new lottery capsule
-        const types = ['quote', 'surprise'];
-        const randomType = types[Math.floor(Math.random() * types.length)];
-        lotteryCapsule = await LotteryCapsule.createLotteryCapsule(userId, randomType);
+      // For testing: create a lottery capsule that's ready to unlock immediately
+      if (process.env.NODE_ENV === 'development') {
+        lotteryCapsule.unlockDate = new Date(); // Set to now for immediate unlock
+        await lotteryCapsule.save();
       }
     }
 

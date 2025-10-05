@@ -36,6 +36,14 @@ const capsuleSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  failedAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockoutUntil: {
+    type: Date,
+    default: null
+  },
   creator: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -372,21 +380,42 @@ capsuleSchema.methods.unlock = function(userId) {
   }));
 };
 
+// Check if capsule is locked due to failed attempts
+capsuleSchema.methods.isLockedDueToAttempts = function() {
+  if (this.lockoutUntil && new Date() < this.lockoutUntil) {
+    return true;
+  }
+  return false;
+};
+
+// Get lockout time remaining
+capsuleSchema.methods.getLockoutTimeRemaining = function() {
+  if (this.lockoutUntil && new Date() < this.lockoutUntil) {
+    return this.lockoutUntil - new Date();
+  }
+  return 0;
+};
+
 // Get capsule preview (for locked capsules)
 capsuleSchema.methods.getPreview = function() {
   return {
     _id: this._id,
     title: this.title,
     emoji: this.emoji,
+    mood: this.mood,
     unlockDate: this.unlockDate,
     isUnlocked: this.isUnlocked,
+    lockType: this.lockType,
+    riddleQuestion: this.riddleQuestion,
     hasRiddle: this.hasRiddle,
     tags: this.tags,
     category: this.category,
     daysUntilUnlock: this.daysUntilUnlock,
     creator: this.creator,
     sharedWith: this.sharedWith,
-    createdAt: this.createdAt
+    createdAt: this.createdAt,
+    failedAttempts: this.failedAttempts,
+    lockoutUntil: this.lockoutUntil
   };
 };
 

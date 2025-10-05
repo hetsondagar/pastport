@@ -39,6 +39,17 @@ export const attemptRiddle = async (req, res, next) => {
       });
     }
 
+    // Check if capsule is locked due to failed attempts
+    if (capsule.isLockedDueToAttempts()) {
+      const lockoutTimeRemaining = capsule.getLockoutTimeRemaining();
+      const hoursRemaining = Math.ceil(lockoutTimeRemaining / (1000 * 60 * 60));
+      
+      return res.status(400).json({
+        success: false,
+        message: `Capsule is locked due to too many failed attempts. Try again in ${hoursRemaining} hours.`
+      });
+    }
+
     // Check if answer is correct
     const userAnswer = answer.toLowerCase().trim();
     const correctAnswer = capsule.riddleAnswer.toLowerCase().trim();
@@ -69,11 +80,34 @@ export const attemptRiddle = async (req, res, next) => {
         }
       });
     } else {
-      // Wrong answer
+      // Wrong answer - increment failed attempts
+      capsule.failedAttempts += 1;
+      
+      // Check if we need to lock the capsule
+      if (capsule.failedAttempts >= 5) {
+        // Lock the capsule for 24 hours
+        const lockoutUntil = new Date();
+        lockoutUntil.setHours(lockoutUntil.getHours() + 24);
+        capsule.lockoutUntil = lockoutUntil;
+        capsule.failedAttempts = 0; // Reset counter
+        
+        await capsule.save();
+        
+        return res.status(400).json({
+          success: false,
+          message: 'Too many failed attempts! Capsule is now locked for 24 hours.',
+          attempts: 5,
+          locked: true
+        });
+      }
+      
+      await capsule.save();
+      
       res.json({
         success: false,
-        message: 'Incorrect answer. Try again!',
-        attempts: capsule.attempts || 0
+        message: `Incorrect answer. ${5 - capsule.failedAttempts} attempts remaining.`,
+        attempts: capsule.failedAttempts,
+        remaining: 5 - capsule.failedAttempts
       });
     }
   } catch (error) {

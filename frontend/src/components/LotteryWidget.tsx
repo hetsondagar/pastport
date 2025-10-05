@@ -48,8 +48,12 @@ const LotteryWidget = () => {
     try {
       setLoading(true);
       const response = await apiClient.getLotteryCapsule();
+      console.log('Lottery capsule response:', response);
       if (response.success) {
         setLotteryCapsule(response.data);
+        console.log('Lottery capsule loaded:', response.data);
+      } else {
+        console.error('Failed to load lottery capsule:', response.message);
       }
     } catch (error) {
       console.error('Failed to load lottery capsule:', error);
@@ -63,7 +67,9 @@ const LotteryWidget = () => {
 
     try {
       setUnlocking(true);
+      console.log('Attempting to unlock lottery capsule:', lotteryCapsule.id);
       const response = await apiClient.unlockLotteryCapsule(lotteryCapsule.id);
+      console.log('Unlock response:', response);
       
       if (response.success) {
         // Show confetti effect
@@ -79,6 +85,7 @@ const LotteryWidget = () => {
           content: response.data.content
         } : null);
       } else {
+        console.error('Unlock failed:', response.message);
         toast({
           title: "Not Ready Yet",
           description: response.message || "Capsule not ready to unlock",
@@ -86,9 +93,10 @@ const LotteryWidget = () => {
         });
       }
     } catch (error) {
+      console.error('Unlock error:', error);
       toast({
         title: "Unlock Failed",
-        description: "Failed to unlock lottery capsule",
+        description: error.message || "Failed to unlock lottery capsule",
         variant: "destructive"
       });
     } finally {

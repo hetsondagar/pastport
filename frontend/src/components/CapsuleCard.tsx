@@ -3,6 +3,8 @@ import { Clock, Lock, Unlock, Users, Puzzle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import RiddleUnlock from './RiddleUnlock';
+import apiClient from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface CapsuleCardProps {
   id: string;
@@ -16,9 +18,12 @@ interface CapsuleCardProps {
   isShared: boolean;
   preview?: string;
   onClick: () => void;
+  failedAttempts?: number;
+  lockoutUntil?: Date;
 }
 
 const CapsuleCard = ({
+  id,
   title,
   emoji,
   mood,
@@ -28,9 +33,13 @@ const CapsuleCard = ({
   riddleQuestion,
   isShared,
   preview,
-  onClick
+  onClick,
+  failedAttempts = 0,
+  lockoutUntil
 }: CapsuleCardProps) => {
   const [showRiddleUnlock, setShowRiddleUnlock] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const { toast } = useToast();
 
   const getMoodEmoji = (mood: string) => {
     const moodEmojis: { [key: string]: string } = {
@@ -44,12 +53,39 @@ const CapsuleCard = ({
     return moodEmojis[mood] || '😐';
   };
 
-  const handleUnlockClick = (e: React.MouseEvent) => {
+  const handleUnlockClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (lockType === 'riddle' && riddleQuestion) {
       setShowRiddleUnlock(true);
     } else {
-      onClick();
+      // Unlock the capsule
+      try {
+        setUnlocking(true);
+        const response = await apiClient.unlockCapsule(id);
+        
+        if (response.success) {
+          toast({
+            title: "🎉 Capsule Unlocked!",
+            description: "Your time capsule has been unlocked successfully!",
+          });
+          // Refresh the page or update the capsule state
+          window.location.reload();
+        } else {
+          toast({
+            title: "Unlock Failed",
+            description: response.message || "Failed to unlock capsule",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Unlock Failed",
+          description: "Failed to unlock capsule. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setUnlocking(false);
+      }
     }
   };
 
@@ -59,6 +95,9 @@ const CapsuleCard = ({
   };
   const now = new Date();
   const timeUntilUnlock = unlockDate.getTime() - now.getTime();
+  
+  // Check if capsule is locked due to failed attempts
+  const isLockedDueToAttempts = lockoutUntil && now < lockoutUntil;
   const daysUntilUnlock = Math.ceil(timeUntilUnlock / (1000 * 60 * 60 * 24));
 
   const formatCountdown = () => {
@@ -136,11 +175,21 @@ const CapsuleCard = ({
       {/* Action Button */}
       <Button 
         className={`w-full ${isLocked ? 'btn-glass' : 'btn-glow'}`}
-        disabled={isLocked && timeUntilUnlock > 0 && lockType !== 'riddle'}
+        disabled={isLocked && (timeUntilUnlock > 0 && lockType !== 'riddle' || isLockedDueToAttempts) || unlocking}
         onClick={handleUnlockClick}
       >
-        {isLocked ? (
-          timeUntilUnlock > 0 ? (
+        {unlocking ? (
+          <>
+            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            Unlocking...
+          </>
+        ) : isLocked ? (
+          isLockedDueToAttempts ? (
+            <>
+              <Lock className="w-4 h-4 mr-2" />
+              Locked (Too Many Attempts)
+            </>
+          ) : timeUntilUnlock > 0 ? (
             <>
               <Lock className="w-4 h-4 mr-2" />
               Locked

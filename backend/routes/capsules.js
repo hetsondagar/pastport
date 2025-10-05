@@ -12,7 +12,7 @@ import {
 } from '../controllers/capsuleController.js';
 import { attemptRiddle } from '../controllers/riddleController.js';
 import { protect } from '../middleware/auth.js';
-import { validateBody, validateParams, validateFormData } from '../middleware/validation.js';
+import { validateBody, validateParams, validateFormData, validateObjectId } from '../middleware/validation.js';
 import { 
   createCapsuleSchema, 
   updateCapsuleSchema, 
@@ -26,16 +26,16 @@ const router = express.Router();
 // All routes are protected
 router.use(protect);
 
-// Routes
+// Routes - specific routes first
 router.get('/', getCapsules);
 router.get('/stats', getCapsuleStats);
-router.get('/:id', validateParams({ id: 'string' }), getCapsule);
 router.post('/', uploadSingle, handleUploadError, validateFormData(createCapsuleSchema), createCapsule);
-router.put('/:id', validateParams({ id: 'string' }), validateBody(updateCapsuleSchema), updateCapsule);
-router.delete('/:id', validateParams({ id: 'string' }), deleteCapsule);
-router.post('/:id/unlock', validateParams({ id: 'string' }), validateBody(solveRiddleSchema), unlockCapsule);
-router.post('/:id/attempt', validateParams({ id: 'string' }), attemptRiddle);
-router.post('/:id/reactions', validateParams({ id: 'string' }), addReaction);
-router.post('/:id/comments', validateParams({ id: 'string' }), validateBody(addCommentSchema), addComment);
+router.post('/:id/unlock', validateObjectId('id'), validateBody(solveRiddleSchema), unlockCapsule);
+router.post('/:id/attempt', validateObjectId('id'), validateBody(solveRiddleSchema), attemptRiddle);
+router.post('/:id/reactions', validateObjectId('id'), addReaction);
+router.post('/:id/comments', validateObjectId('id'), validateBody(addCommentSchema), addComment);
+router.get('/:id', validateObjectId('id'), getCapsule);
+router.put('/:id', validateObjectId('id'), validateBody(updateCapsuleSchema), updateCapsule);
+router.delete('/:id', validateObjectId('id'), deleteCapsule);
 
 export default router;

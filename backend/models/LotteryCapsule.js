@@ -69,9 +69,9 @@ lotteryCapsuleSchema.statics.createLotteryCapsule = async function(userId, type 
     content = "A special memory capsule just for you!";
   }
 
-  // Set unlock date to 2-5 days from now
+  // Set unlock date to 1-3 days from now (reduced for better user experience)
   const unlockDate = new Date();
-  const randomDays = Math.floor(Math.random() * 4) + 2; // 2-5 days
+  const randomDays = Math.floor(Math.random() * 3) + 1; // 1-3 days
   unlockDate.setDate(unlockDate.getDate() + randomDays);
 
   return this.create({

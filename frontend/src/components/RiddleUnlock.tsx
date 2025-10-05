@@ -19,6 +19,8 @@ const RiddleUnlock = ({ capsuleId, riddleQuestion, onSuccess, onClose }: RiddleU
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockoutMessage, setLockoutMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,12 +46,24 @@ const RiddleUnlock = ({ capsuleId, riddleQuestion, onSuccess, onClose }: RiddleU
         onSuccess(response.data.capsule);
       } else {
         setAttempts(prev => prev + 1);
-        toast({
-          title: "❌ Incorrect Answer",
-          description: response.message || "That's not the right answer. Try again!",
-          variant: "destructive"
-        });
-        setAnswer('');
+        
+        // Check if capsule is locked
+        if (response.locked) {
+          setIsLocked(true);
+          setLockoutMessage(response.message);
+          toast({
+            title: "🔒 Capsule Locked",
+            description: response.message,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "❌ Incorrect Answer",
+            description: response.message || "That's not the right answer. Try again!",
+            variant: "destructive"
+          });
+          setAnswer('');
+        }
       }
     } catch (error) {
       toast({
@@ -78,48 +92,66 @@ const RiddleUnlock = ({ capsuleId, riddleQuestion, onSuccess, onClose }: RiddleU
               <p className="text-white/90">{riddleQuestion}</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="answer" className="text-white">
-                  Your Answer
-                </Label>
-                <Input
-                  id="answer"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Enter your answer here..."
-                  className="glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400"
-                  disabled={loading}
-                />
-              </div>
-
-              {attempts > 0 && (
-                <div className="flex items-center gap-2 text-sm text-yellow-400">
-                  <XCircle className="w-4 h-4" />
-                  <span>Attempts: {attempts}</span>
+            {isLocked ? (
+              <div className="text-center space-y-4">
+                <div className="p-4 bg-red-500/20 rounded-lg border border-red-500/30">
+                  <div className="flex items-center justify-center mb-2">
+                    <XCircle className="w-8 h-8 text-red-400" />
+                  </div>
+                  <p className="text-red-400 font-medium mb-2">Capsule Locked</p>
+                  <p className="text-red-300 text-sm">{lockoutMessage}</p>
                 </div>
-              )}
-
-              <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  disabled={loading || !answer.trim()}
-                  className="flex-1 btn-glow"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Checking...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Submit Answer
-                    </>
-                  )}
-                </Button>
                 <Button
                   type="button"
+                  onClick={onClose}
+                  className="w-full btn-glass"
+                >
+                  Close
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="answer" className="text-white">
+                    Your Answer
+                  </Label>
+                  <Input
+                    id="answer"
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder="Enter your answer here..."
+                    className="glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400"
+                    disabled={loading}
+                  />
+                </div>
+
+                {attempts > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-yellow-400">
+                    <XCircle className="w-4 h-4" />
+                    <span>Attempts: {attempts}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <Button
+                    type="submit"
+                    disabled={loading || !answer.trim()}
+                    className="flex-1 btn-glow"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Submit Answer
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
                   variant="outline"
                   onClick={onClose}
                   className="glass-card border-white/10"
@@ -128,6 +160,7 @@ const RiddleUnlock = ({ capsuleId, riddleQuestion, onSuccess, onClose }: RiddleU
                 </Button>
               </div>
             </form>
+            )}
           </div>
         </CardContent>
       </Card>
