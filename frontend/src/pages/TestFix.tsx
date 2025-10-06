@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import StarField from '@/components/StarField';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
-const SimpleTest = () => {
+const TestFix = () => {
   const testMemories = [
     {
       id: '1',
@@ -32,8 +32,8 @@ const SimpleTest = () => {
   return (
     <div style={{ width: '100vw', height: '100vh', background: 'black' }}>
       <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 10, color: 'white' }}>
-        <h1>Simple Star Test</h1>
-        <p>Click on the star to test</p>
+        <h1>Three.js Fix Test</h1>
+        <p>If you see this without errors, the fix worked!</p>
       </div>
       
       <ErrorBoundary>
@@ -56,4 +56,4 @@ const SimpleTest = () => {
   );
 };
 
-export default SimpleTest;
+export default TestFix;

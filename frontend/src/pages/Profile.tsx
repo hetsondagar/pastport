@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import Navigation from '@/components/Navigation';
 import { 
   User, 
   Mail, 
@@ -25,7 +26,9 @@ import {
   EyeOff,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 
 const Profile = () => {
@@ -241,48 +244,73 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Your Profile</h1>
-          <p className="text-blue-200">Manage your account settings and preferences</p>
-        </div>
+    <div className="min-h-screen">
+      <Navigation />
+      
+      <div className="pt-24 pb-12">
+        <div className="container mx-auto px-4">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+              <Button
+                variant="ghost"
+                onClick={() => window.history.back()}
+                className="btn-glass hover:bg-white/10"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = '/dashboard'}
+                className="btn-glass hover:bg-white/10"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </div>
+            <h1 className="text-4xl app-name-bold text-gradient mb-4">
+              Your Profile
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Manage your account settings and preferences
+            </p>
+          </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-muted/20 border border-white/10 mb-6">
-            <TabsTrigger 
-              value="profile" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-200"
-            >
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger 
-              value="preferences"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-200"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Preferences
-            </TabsTrigger>
-            <TabsTrigger 
-              value="security"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-200"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Security
-            </TabsTrigger>
-          </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 glass-card border-white/10 mb-6">
+              <TabsTrigger 
+                value="profile" 
+                className="data-[state=active]:bg-primary/20 data-[state=active]:text-white transition-all duration-200"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preferences"
+                className="data-[state=active]:bg-primary/20 data-[state=active]:text-white transition-all duration-200"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Preferences
+              </TabsTrigger>
+              <TabsTrigger 
+                value="security"
+                className="data-[state=active]:bg-primary/20 data-[state=active]:text-white transition-all duration-200"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Security
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <User className="w-5 h-5" />
-                  Profile Information
-                </CardTitle>
-              </CardHeader>
+            {/* Profile Tab */}
+            <TabsContent value="profile" className="space-y-6">
+              <Card className="glass-card-enhanced border-white/10 bg-background/90 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <User className="w-5 h-5" />
+                    Profile Information
+                  </CardTitle>
+                </CardHeader>
               <CardContent>
                 <form onSubmit={handleProfileUpdate} className="space-y-6">
                   {/* Avatar Section */}
@@ -298,7 +326,7 @@ const Profile = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="glass-card border-white/10"
+                        className="btn-glass hover:bg-white/10"
                         onClick={() => {/* TODO: Implement avatar upload */}}
                       >
                         <Camera className="w-4 h-4 mr-2" />
@@ -409,7 +437,7 @@ const Profile = () => {
                           type="button"
                           variant="outline"
                           onClick={() => setIsEditing(false)}
-                          className="glass-card border-white/10"
+                          className="btn-glass hover:bg-white/10"
                         >
                           Cancel
                         </Button>
@@ -420,68 +448,68 @@ const Profile = () => {
               </CardContent>
             </Card>
 
-            {/* Stats Card */}
-            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Award className="w-5 h-5" />
-                  Your Stats
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 glass-card border-white/10 bg-background/50 rounded-lg hover:bg-background/70 transition-all duration-200">
-                    <div className="text-2xl font-bold text-blue-400">{user?.stats?.capsulesCreated || 0}</div>
-                    <div className="text-sm text-gray-300">Capsules Created</div>
-                  </div>
-                  <div className="text-center p-4 glass-card border-white/10 bg-background/50 rounded-lg hover:bg-background/70 transition-all duration-200">
-                    <div className="text-2xl font-bold text-green-400">{user?.stats?.capsulesUnlocked || 0}</div>
-                    <div className="text-sm text-gray-300">Capsules Unlocked</div>
-                  </div>
-                  <div className="text-center p-4 glass-card border-white/10 bg-background/50 rounded-lg hover:bg-background/70 transition-all duration-200">
-                    <div className="text-2xl font-bold text-purple-400">{user?.stats?.riddlesSolved || 0}</div>
-                    <div className="text-sm text-gray-300">Riddles Solved</div>
-                  </div>
-                  <div className="text-center p-4 glass-card border-white/10 bg-background/50 rounded-lg hover:bg-background/70 transition-all duration-200">
-                    <div className="text-2xl font-bold text-yellow-400">{user?.stats?.friendsCount || 0}</div>
-                    <div className="text-sm text-gray-300">Friends</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Badges Card */}
-            {user?.badges && user.badges.length > 0 && (
-              <Card className="glass-card border-white/10 bg-background/80 backdrop-blur-xl">
+              {/* Stats Card */}
+              <Card className="glass-card-enhanced border-white/10 bg-background/90 backdrop-blur-xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-white">
                     <Award className="w-5 h-5" />
-                    Your Badges
+                    Your Stats
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap gap-3">
-                    {user.badges.map((badge: any, index: number) => (
-                      <Badge key={index} variant="secondary" className="glass-card border-white/10">
-                        <span className="mr-2">{badge.icon}</span>
-                        {badge.name}
-                      </Badge>
-                    ))}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="glass-card-enhanced p-4 text-center">
+                      <div className="text-2xl font-bold text-primary">{user?.stats?.capsulesCreated || 0}</div>
+                      <div className="text-sm text-muted-foreground">Capsules Created</div>
+                    </div>
+                    <div className="glass-card-enhanced p-4 text-center">
+                      <div className="text-2xl font-bold text-accent">{user?.stats?.capsulesUnlocked || 0}</div>
+                      <div className="text-sm text-muted-foreground">Capsules Unlocked</div>
+                    </div>
+                    <div className="glass-card-enhanced p-4 text-center">
+                      <div className="text-2xl font-bold text-secondary">{user?.stats?.riddlesSolved || 0}</div>
+                      <div className="text-sm text-muted-foreground">Riddles Solved</div>
+                    </div>
+                    <div className="glass-card-enhanced p-4 text-center">
+                      <div className="text-2xl font-bold text-gradient">{user?.stats?.friendsCount || 0}</div>
+                      <div className="text-sm text-muted-foreground">Friends</div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
+
+              {/* Badges Card */}
+              {user?.badges && user.badges.length > 0 && (
+                <Card className="glass-card-enhanced border-white/10 bg-background/90 backdrop-blur-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                      <Award className="w-5 h-5" />
+                      Your Badges
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      {user.badges.map((badge: any, index: number) => (
+                        <Badge key={index} variant="secondary" className="glass-card border-white/10">
+                          <span className="mr-2">{badge.icon}</span>
+                          {badge.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
           </TabsContent>
 
-          {/* Preferences Tab */}
-          <TabsContent value="preferences" className="space-y-6">
-            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Settings className="w-5 h-5" />
-                  Preferences
-                </CardTitle>
-              </CardHeader>
+            {/* Preferences Tab */}
+            <TabsContent value="preferences" className="space-y-6">
+              <Card className="glass-card-enhanced border-white/10 bg-background/90 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Settings className="w-5 h-5" />
+                    Preferences
+                  </CardTitle>
+                </CardHeader>
               <CardContent className="space-y-6">
                 {/* Theme Settings */}
                 <div className="space-y-4">
@@ -619,15 +647,15 @@ const Profile = () => {
             </Card>
           </TabsContent>
 
-          {/* Security Tab */}
-          <TabsContent value="security" className="space-y-6">
-            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Shield className="w-5 h-5" />
-                  Security Settings
-                </CardTitle>
-              </CardHeader>
+            {/* Security Tab */}
+            <TabsContent value="security" className="space-y-6">
+              <Card className="glass-card-enhanced border-white/10 bg-background/90 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Shield className="w-5 h-5" />
+                    Security Settings
+                  </CardTitle>
+                </CardHeader>
               <CardContent>
                 <form onSubmit={handlePasswordChange} className="space-y-6">
                   <div className="space-y-2">
@@ -756,14 +784,14 @@ const Profile = () => {
               </CardContent>
             </Card>
 
-            {/* Account Info */}
-            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <User className="w-5 h-5" />
-                  Account Information
-                </CardTitle>
-              </CardHeader>
+              {/* Account Info */}
+              <Card className="glass-card-enhanced border-white/10 bg-background/90 backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <User className="w-5 h-5" />
+                    Account Information
+                  </CardTitle>
+                </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-muted-foreground" />
@@ -784,7 +812,8 @@ const Profile = () => {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

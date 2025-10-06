@@ -40,10 +40,19 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (_) {
+        data = null;
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Request failed');
+        const message = (data && (data.message || data.error || data.errors)) ? JSON.stringify(data) : 'Request failed';
+        const err = new Error(message);
+        err.status = response.status;
+        err.data = data;
+        throw err;
       }
 
       return data;

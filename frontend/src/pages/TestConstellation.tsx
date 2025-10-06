@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars, Environment } from '@react-three/drei';
+import { Suspense } from 'react';
 import StarField from '@/components/StarField';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
 
@@ -75,27 +77,31 @@ const TestConstellation = () => {
 
       {/* 3D Canvas */}
       <div className="fixed inset-0">
-        <Canvas
-          camera={{ position: [0, 0, 10], fov: 75 }}
-          style={{ background: 'transparent' }}
-        >
-          <Environment preset="night" />
-          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-          
-          <StarField
-            memories={memories}
-            onMemoryClick={handleMemoryClick}
-            onCameraFocus={handleCameraFocus}
-          />
-          
-          <OrbitControls
-            enablePan={true}
-            enableZoom={true}
-            enableRotate={true}
-            minDistance={5}
-            maxDistance={50}
-          />
-        </Canvas>
+        <ErrorBoundary>
+          <Canvas
+            camera={{ position: [0, 0, 10], fov: 75 }}
+            style={{ background: 'transparent' }}
+          >
+            <Suspense fallback={null}>
+              <Environment preset="night" />
+              <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+              
+              <StarField
+                memories={memories}
+                onMemoryClick={handleMemoryClick}
+                onCameraFocus={handleCameraFocus}
+              />
+            </Suspense>
+            
+            <OrbitControls
+              enablePan={true}
+              enableZoom={true}
+              enableRotate={true}
+              minDistance={5}
+              maxDistance={50}
+            />
+          </Canvas>
+        </ErrorBoundary>
       </div>
 
       {/* Instructions */}

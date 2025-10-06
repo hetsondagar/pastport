@@ -5,16 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthProvider } from "./contexts/AuthContext";
+import GlobalBackground from "./components/GlobalBackground";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import CreateCapsule from "./pages/CreateCapsule";
 import Profile from "./pages/Profile";
 import DailyJournal from "./pages/DailyJournal";
 import MemoryConstellationPage from "./pages/MemoryConstellationPage";
-import TestConstellation from "./pages/TestConstellation";
-import MinimalTest from "./pages/MinimalTest";
-import ConstellationTest from "./pages/ConstellationTest";
-import SimpleTest from "./pages/SimpleTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,10 +41,7 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/journal" element={<PageTransition><DailyJournal /></PageTransition>} />
         <Route path="/memories/constellation" element={<PageTransition><MemoryConstellationPage /></PageTransition>} />
-        <Route path="/test-constellation" element={<PageTransition><TestConstellation /></PageTransition>} />
-        <Route path="/minimal-test" element={<PageTransition><MinimalTest /></PageTransition>} />
-        <Route path="/constellation-test" element={<PageTransition><ConstellationTest /></PageTransition>} />
-        <Route path="/simple-test" element={<PageTransition><SimpleTest /></PageTransition>} />
+        {/* constellation-test (temporary) removed */}
         <Route path="/create" element={<PageTransition><CreateCapsule /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
@@ -57,14 +51,17 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <div className="min-h-screen bg-nebula bg-stars animate-gradient-shift animate-nebula-float animate-star-twinkle">
+  <div className="min-h-screen bg-nebula bg-stars animate-gradient-shift animate-nebula-float animate-star-twinkle relative">
+    <GlobalBackground />
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <AppRoutes />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <AppRoutes />
+            </div>
           </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>

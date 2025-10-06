@@ -13,6 +13,9 @@ import apiClient from '@/lib/api';
 import Navigation from '@/components/Navigation';
 import StarField from '@/components/StarField';
 import MemoryModal from '@/components/MemoryModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import ThreeJSLoading from '@/components/ThreeJSLoading';
+import WebGLContextManager from '@/components/WebGLContextManager';
 import { Search, Filter, Home, Sparkles } from 'lucide-react';
 
 interface Memory {
@@ -30,7 +33,7 @@ interface Memory {
 }
 
 const MemoryConstellationPage = () => {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const { toast } = useToast();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [filteredMemories, setFilteredMemories] = useState<Memory[]>([]);
@@ -39,9 +42,12 @@ const MemoryConstellationPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [cameraPosition, setCameraPosition] = useState([0, 0, 10]);
+  const [cameraPosition, setCameraPosition] = useState([0, 0, 15]);
   const [isCameraAnimating, setIsCameraAnimating] = useState(false);
   const cameraRef = useRef<any>(null);
+  const [showDemo, setShowDemo] = useState(false);
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1); // 1-12
 
   const categories = ['All', 'Travel', 'Learning', 'Growth', 'Fun'];
   const categoryColors = {
@@ -53,40 +59,84 @@ const MemoryConstellationPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadMemories();
+      loadMonthEntries();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, year, month]);
 
   useEffect(() => {
     filterMemories();
   }, [memories, searchTerm, selectedCategory]);
 
-  const loadMemories = async () => {
+  const loadMonthEntries = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getMemories();
-      if (response.success) {
-        setMemories(response.data);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to load memories",
-          variant: "destructive"
+      const userId = (user && (user.id || user._id)) as string | undefined;
+      if (!userId) {
+        setMemories([]);
+        return;
+      }
+      const response = await apiClient.getMonthEntries(userId, year, month);
+      // Accept multiple shapes: {success,data:{entries:[]}}, {entries:[]}, or []
+      const entries: any[] = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.entries)
+          ? response.entries
+          : Array.isArray(response?.data)
+            ? response.data
+            : Array.isArray(response?.data?.entries)
+              ? response.data.entries
+              : [];
+      if (entries.length > 0) {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const radius = 6;
+        const mapped = entries.map((e: any, index: number) => {
+          const dateStr = e.date || e.createdAt || new Date(year, month - 1, index + 1).toISOString();
+          const day = new Date(dateStr).getDate();
+          const angle = (day / daysInMonth) * Math.PI * 2;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          const importance = Math.min(10, Math.max(3, (e.moodScore ?? (e.content?.length || 100) % 10)));
+          const mood = (e.mood || '').toLowerCase();
+          const category: 'Travel' | 'Learning' | 'Growth' | 'Fun' =
+            mood.includes('travel') ? 'Travel' :
+            mood.includes('learn') ? 'Learning' :
+            mood.includes('fun') || mood.includes('happy') ? 'Fun' : 'Growth';
+          return {
+            id: e.id || e._id || `${year}-${month}-${day}`,
+            title: e.title || `Entry ${day}`,
+            content: e.content || '',
+            category,
+            importance,
+            date: dateStr,
+            relatedIds: [],
+            position: { x, y, z: 0 },
+            tags: e.tags || [],
+            media: [],
+          } as Memory;
         });
+        setMemories(mapped);
+      } else {
+        setMemories([]);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load memories",
-        variant: "destructive"
-      });
+      console.error('Error loading month entries:', error);
+      setMemories([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filterMemories = () => {
-    let filtered = memories;
+    let source = memories;
+    if (showDemo && memories.length === 0) {
+      source = [
+        { id: 'demo-1', title: 'Demo 1', content: '', category: 'Travel', importance: 7, date: new Date().toISOString(), relatedIds: [], position: { x: 0, y: 0, z: 0 }, tags: [], media: [] },
+        { id: 'demo-2', title: 'Demo 2', content: '', category: 'Learning', importance: 5, date: new Date().toISOString(), relatedIds: [], position: { x: 3, y: 0, z: 0 }, tags: [], media: [] },
+        { id: 'demo-3', title: 'Demo 3', content: '', category: 'Growth', importance: 8, date: new Date().toISOString(), relatedIds: [], position: { x: 0, y: 3, z: 0 }, tags: [], media: [] },
+      ];
+    }
+
+    let filtered = source;
 
     // Filter by category
     if (selectedCategory !== 'All') {
@@ -124,11 +174,11 @@ const MemoryConstellationPage = () => {
     // Animate camera to focus position
     if (cameraRef.current) {
       gsap.to(cameraRef.current.position, {
-        duration: 2,
+        duration: 1.2,
         x: position[0],
         y: position[1],
         z: position[2],
-        ease: "power2.inOut",
+        ease: "power3.out",
         onComplete: () => {
           setIsCameraAnimating(false);
         }
@@ -136,11 +186,11 @@ const MemoryConstellationPage = () => {
       
       // Animate camera look at the memory
       gsap.to(cameraRef.current.rotation, {
-        duration: 2,
+        duration: 1.2,
         x: 0,
         y: 0,
         z: 0,
-        ease: "power2.inOut"
+        ease: "power3.out"
       });
     }
   };
@@ -149,16 +199,16 @@ const MemoryConstellationPage = () => {
     if (isCameraAnimating) return;
     
     setIsCameraAnimating(true);
-    const defaultPosition: [number, number, number] = [0, 0, 10];
+    const defaultPosition: [number, number, number] = [0, 0, 12];
     setCameraPosition(defaultPosition);
     
     if (cameraRef.current) {
       gsap.to(cameraRef.current.position, {
-        duration: 2,
+        duration: 1.2,
         x: defaultPosition[0],
         y: defaultPosition[1],
         z: defaultPosition[2],
-        ease: "power2.inOut",
+        ease: "power3.out",
         onComplete: () => {
           setIsCameraAnimating(false);
         }
@@ -244,7 +294,29 @@ const MemoryConstellationPage = () => {
                 ))}
               </div>
 
-              {/* Camera Controls */}
+              {/* Month / Year */}
+              <div className="flex gap-2">
+                <select
+                  value={month}
+                  onChange={(e) => setMonth(Number(e.target.value))}
+                  className="glass-card border-white/10 rounded-md bg-background/50 px-2 py-2"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
+                  ))}
+                </select>
+                <select
+                  value={year}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                  className="glass-card border-white/10 rounded-md bg-background/50 px-2 py-2"
+                >
+                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+
+            {/* Camera Controls */}
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -255,6 +327,13 @@ const MemoryConstellationPage = () => {
                   <Sparkles className="w-4 h-4 mr-2" />
                   Reset View
                 </Button>
+              <Button
+                variant="outline"
+                onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
+                className="glass-card border-white/10 hover:bg-white/10"
+              >
+                Clear Filters
+              </Button>
                 <Button
                   variant="outline"
                   onClick={() => window.location.href = '/dashboard'}
@@ -263,6 +342,15 @@ const MemoryConstellationPage = () => {
                   <Home className="w-4 h-4 mr-2" />
                   Dashboard
                 </Button>
+              {memories.length === 0 && (
+                <Button
+                  variant={showDemo ? 'default' : 'outline'}
+                  onClick={() => setShowDemo((v) => !v)}
+                  className="glass-card border-white/10 hover:bg-white/10"
+                >
+                  {showDemo ? 'Hide Demo Stars' : 'Show Demo Stars'}
+                </Button>
+              )}
               </div>
             </div>
           </motion.div>
@@ -271,27 +359,36 @@ const MemoryConstellationPage = () => {
 
       {/* 3D Canvas */}
       <div className="fixed inset-0 top-20">
-        <Canvas
-          camera={{ position: cameraPosition, fov: 75 }}
-          style={{ background: 'transparent' }}
-        >
-          <PerspectiveCamera
-            ref={cameraRef}
-            position={cameraPosition}
-            fov={75}
-            makeDefault
-          />
-          <Suspense fallback={null}>
-            {/* Environment */}
-            <Environment preset="night" />
-            <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-            
-            {/* Memory Constellation */}
-            <StarField
-              memories={filteredMemories}
-              onMemoryClick={handleMemoryClick}
-              onCameraFocus={handleCameraFocus}
+        <ErrorBoundary>
+          <Canvas
+            camera={{ position: cameraPosition, fov: 75 }}
+            style={{ background: 'transparent' }}
+          >
+            <PerspectiveCamera
+              ref={cameraRef}
+              position={cameraPosition}
+              fov={75}
+              makeDefault
             />
+            <WebGLContextManager />
+            <Suspense fallback={<ThreeJSLoading />}>
+              {/* Super strong lighting */}
+              <ambientLight intensity={1.0} />
+              <pointLight position={[10, 10, 10]} intensity={3} />
+              <pointLight position={[-10, -10, -10]} intensity={2} />
+              <pointLight position={[0, 10, 0]} intensity={2} />
+              
+              {/* Environment */}
+              <Environment preset="night" />
+              <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+              
+              {/* Memory Constellation */}
+              <StarField
+                memories={filteredMemories}
+                onMemoryClick={handleMemoryClick}
+                onCameraFocus={handleCameraFocus}
+              />
+            </Suspense>
             
             {/* Controls */}
             <OrbitControls
@@ -301,9 +398,26 @@ const MemoryConstellationPage = () => {
               minDistance={5}
               maxDistance={50}
             />
-          </Suspense>
-        </Canvas>
+          </Canvas>
+        </ErrorBoundary>
       </div>
+
+      {/* Empty state overlay */}
+      {filteredMemories.length === 0 && !loading && (
+        <div className="fixed inset-0 top-20 flex items-center justify-center pointer-events-none">
+          <div className="pointer-events-auto glass-card-enhanced border-white/10 p-4 rounded-lg text-center">
+            <h3 className="text-white font-semibold mb-1">No memories to display</h3>
+            <p className="text-sm text-muted-foreground mb-3">Add a memory or adjust filters to see stars.</p>
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" className="glass-card border-white/10" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}>Clear Filters</Button>
+              <Button className="btn-glow" onClick={() => window.location.href = '/create'}>Create Memory</Button>
+              {memories.length === 0 && (
+                <Button variant="outline" className="glass-card border-white/10" onClick={() => setShowDemo(true)}>Show Demo Stars</Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Overlay */}
       <div className="fixed bottom-4 left-4 z-10">
@@ -342,7 +456,7 @@ const MemoryConstellationPage = () => {
         <MemoryModal
           memory={selectedMemory}
           onClose={handleCloseModal}
-          onUpdate={loadMemories}
+          onUpdate={loadMonthEntries}
         />
       )}
     </div>

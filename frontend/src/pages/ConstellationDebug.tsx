@@ -1,47 +1,49 @@
 import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Stars, Environment } from '@react-three/drei';
 import { Suspense } from 'react';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import Navigation from '@/components/Navigation';
 import StarField from '@/components/StarField';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import ThreeJSLoading from '@/components/ThreeJSLoading';
+import WebGLContextManager from '@/components/WebGLContextManager';
+import Navigation from '@/components/Navigation';
 
-const ConstellationTest = () => {
+const ConstellationDebug = () => {
   const [memories] = useState([
     {
-      id: 'test-1',
-      title: 'Test Memory 1',
-      content: 'This is a test memory',
+      id: '1',
+      title: 'Debug Memory 1',
+      content: 'This is a debug memory',
       category: 'Travel' as const,
       importance: 8,
       date: new Date().toISOString(),
       relatedIds: [],
       position: { x: 0, y: 0, z: 0 },
-      tags: ['test'],
+      tags: [],
       media: []
     },
     {
-      id: 'test-2',
-      title: 'Test Memory 2',
-      content: 'Another test memory',
+      id: '2',
+      title: 'Debug Memory 2',
+      content: 'This is another debug memory',
       category: 'Learning' as const,
       importance: 6,
       date: new Date().toISOString(),
       relatedIds: [],
       position: { x: 3, y: 0, z: 0 },
-      tags: ['test'],
+      tags: [],
       media: []
     },
     {
-      id: 'test-3',
-      title: 'Test Memory 3',
-      content: 'Third test memory',
+      id: '3',
+      title: 'Debug Memory 3',
+      content: 'This is a third debug memory',
       category: 'Growth' as const,
       importance: 9,
       date: new Date().toISOString(),
       relatedIds: [],
       position: { x: 0, y: 3, z: 0 },
-      tags: ['test'],
+      tags: [],
       media: []
     }
   ]);
@@ -63,20 +65,23 @@ const ConstellationTest = () => {
         <div className="container mx-auto px-4">
           <div className="mb-8">
             <h1 className="text-4xl app-name-bold text-gradient mb-4">
-              Constellation Test
+              Constellation Debug
             </h1>
             <p className="text-muted-foreground text-lg">
-              Testing constellation with guaranteed test data
+              Testing constellation page functionality
             </p>
           </div>
 
-          <div className="h-96 border-2 border-white/20 rounded-lg overflow-hidden bg-black">
+          <div className="h-96 border border-white/10 rounded-lg overflow-hidden">
             <ErrorBoundary>
-              <Canvas camera={{ position: [0, 0, 10], fov: 75 }}>
-                <Suspense fallback={null}>
-                  <ambientLight intensity={0.5} />
+              <Canvas camera={{ position: [0, 0, 15], fov: 75 }}>
+                <WebGLContextManager />
+                <Suspense fallback={<ThreeJSLoading />}>
+                  <ambientLight intensity={0.3} />
                   <pointLight position={[10, 10, 10]} intensity={1} />
                   <pointLight position={[-10, -10, -10]} intensity={0.5} />
+                  <Environment preset="night" />
+                  <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
                   
                   <StarField
                     memories={memories}
@@ -91,12 +96,9 @@ const ConstellationTest = () => {
           </div>
 
           <div className="mt-4 p-4 glass-card-enhanced">
-            <h3 className="text-white font-bold mb-2">Test Results:</h3>
+            <h3 className="text-white font-bold mb-2">Debug Info:</h3>
             <p className="text-sm text-muted-foreground">
-              You should see 3 colored spheres above. If you can see them, the StarField component is working!
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Memories: {memories.length} | Categories: {memories.map(m => m.category).join(', ')}
+              If you can see a star field above without errors, the constellation page is working!
             </p>
           </div>
         </div>
@@ -105,4 +107,4 @@ const ConstellationTest = () => {
   );
 };
 
-export default ConstellationTest;
+export default ConstellationDebug;

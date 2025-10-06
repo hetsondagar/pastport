@@ -30,7 +30,11 @@ const CreateCapsule = () => {
     riddleQuestion: '',
     riddleAnswer: '',
     isShared: false,
-    tags: [] as string[]
+    tags: [] as string[],
+    // Optional toggle UI for riddle (legacy): if true, treat as lockType 'riddle'
+    hasRiddle: false,
+    // Optional alias used by the legacy riddle block
+    riddle: ''
   });
   const [loading, setLoading] = useState(false);
   const [createMode, setCreateMode] = useState<'capsule' | 'journal'>('capsule');
@@ -57,10 +61,23 @@ const CreateCapsule = () => {
       return;
     }
 
-    if (formData.lockType === 'riddle' && (!formData.riddleQuestion || !formData.riddleAnswer)) {
+    const effectiveLockType = formData.hasRiddle ? 'riddle' : formData.lockType;
+    const effectiveRiddleQuestion = formData.riddleQuestion || formData.riddle;
+    if (effectiveLockType === 'riddle' && (!effectiveRiddleQuestion || !formData.riddleAnswer)) {
       toast({
         title: "Incomplete Riddle",
         description: "Please provide both riddle question and answer.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Normalize unlock date to ISO string (start of selected day)
+    const unlockISO = new Date(formData.unlockDate).toISOString();
+    if (isNaN(new Date(unlockISO).getTime())) {
+      toast({
+        title: "Invalid date",
+        description: "Please choose a valid unlock date.",
         variant: "destructive"
       });
       return;
@@ -73,9 +90,9 @@ const CreateCapsule = () => {
         message: formData.message,
         emoji: formData.emoji,
         mood: formData.mood,
-        unlockDate: formData.unlockDate,
-        lockType: formData.lockType,
-        riddleQuestion: formData.riddleQuestion,
+        unlockDate: unlockISO,
+        lockType: effectiveLockType,
+        riddleQuestion: effectiveRiddleQuestion,
         riddleAnswer: formData.riddleAnswer,
         tags: formData.tags,
         category: 'personal',
