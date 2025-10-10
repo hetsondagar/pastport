@@ -1,46 +1,344 @@
 import { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text, Html } from '@react-three/drei';
+import { Text, Html, Billboard, Sparkles, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 
-interface Memory {
+interface JournalEntry {
   id: string;
   title: string;
   content: string;
-  category: 'Travel' | 'Learning' | 'Growth' | 'Fun';
-  importance: number;
+  mood: string;
   date: string;
-  relatedIds: string[];
   position: { x: number; y: number; z: number };
-  tags: string[];
-  media: string[];
+  dayOfMonth: number;
+  isCapsule: boolean;
 }
 
 interface StarFieldProps {
-  memories: Memory[];
-  onMemoryClick: (memory: Memory) => void;
+  entries: JournalEntry[];
+  onEntryClick: (entry: JournalEntry) => void;
   onCameraFocus: (position: [number, number, number]) => void;
 }
 
-const StarField = ({ memories, onMemoryClick, onCameraFocus }: StarFieldProps) => {
+// Separate Star component to properly use hooks
+interface StarProps {
+  entry: JournalEntry;
+  isHovered: boolean;
+  onEntryClick: (entry: JournalEntry) => void;
+  onCameraFocus: (position: [number, number, number]) => void;
+  onHoverChange: (id: string | null) => void;
+  getMoodColor: (mood: string) => string;
+}
+
+const Star = ({ entry, isHovered, onEntryClick, onCameraFocus, onHoverChange, getMoodColor }: StarProps) => {
+  const starRef = useRef<THREE.Group>(null);
+  
+  const getMoodEmoji = (mood: string) => {
+    const moodEmojis: { [key: string]: string } = {
+      happy: '🌞',
+      sad: '😢',
+      excited: '🎉',
+      angry: '😡',
+      calm: '🌙',
+      anxious: '😰',
+      grateful: '🙏',
+      neutral: '😐'
+    };
+    return moodEmojis[mood] || '😐';
+  };
+  
+  // Individual star pulsing animation with rotation
+  useFrame((state) => {
+    if (starRef.current) {
+      const pulse = 1 + Math.sin(state.clock.elapsedTime * 2 + entry.dayOfMonth) * 0.15;
+      const rotation = state.clock.elapsedTime * 0.5 + entry.dayOfMonth;
+      starRef.current.scale.setScalar(pulse);
+      starRef.current.rotation.y = rotation;
+      starRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3 + entry.dayOfMonth) * 0.1;
+    }
+  });
+
+  const baseSize = Math.max(0.5, 0.6 + ((entry?.dayOfMonth || 1) % 7) * 0.08);
+  const size = isHovered ? baseSize * 1.8 : baseSize;
+  const colorHex = getMoodColor(entry?.mood || 'neutral');
+  const color = new THREE.Color(colorHex);
+  const emissiveColor = color.clone();
+
+  return (
+    <group ref={starRef} position={[entry.position.x, entry.position.y, entry.position.z]}>
+      {/* Sparkle particles around star */}
+      <Sparkles
+        count={isHovered ? 30 : 15}
+        scale={size * 6}
+        size={isHovered ? 3 : 1.5}
+        speed={0.3}
+        color={colorHex}
+        opacity={isHovered ? 0.9 : 0.6}
+      />
+
+      {/* Beautiful mood-colored glow rings */}
+      <mesh>
+        <ringGeometry args={[size * 2.0, size * 2.8, 64]} />
+        <meshBasicMaterial
+          color={colorHex}
+          transparent
+          opacity={isHovered ? 0.8 : 0.5}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      <mesh>
+        <ringGeometry args={[size * 3.2, size * 4.5, 64]} />
+        <meshBasicMaterial
+          color={colorHex}
+          transparent
+          opacity={isHovered ? 0.5 : 0.3}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      <mesh>
+        <ringGeometry args={[size * 5.0, size * 6.5, 48]} />
+        <meshBasicMaterial
+          color={colorHex}
+          transparent
+          opacity={isHovered ? 0.3 : 0.15}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Main star core with mood-based color */}
+      <mesh
+        onClick={() => {
+          onEntryClick(entry);
+          onCameraFocus([entry.position.x, entry.position.y, entry.position.z + 5]);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHoverChange(entry.id);
+          if (document?.body) document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          onHoverChange(null);
+          if (document?.body) document.body.style.cursor = 'auto';
+        }}
+        scale={isHovered ? 1.3 : 1}
+      >
+        <icosahedronGeometry args={[size, 3]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={emissiveColor}
+          emissiveIntensity={isHovered ? 2.0 : 1.2}
+          roughness={0.1}
+          metalness={0.5}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Bright white hot inner core */}
+      <mesh>
+        <sphereGeometry args={[size * 0.4, 32, 32]} />
+        <meshBasicMaterial
+          color={0xffffff}
+          transparent={false}
+          toneMapped={false}
+        />
+      </mesh>
+      
+      {/* Colored glow layer */}
+      <mesh>
+        <sphereGeometry args={[size * 1.2, 32, 32]} />
+        <meshBasicMaterial
+          color={colorHex}
+          transparent
+          opacity={isHovered ? 0.9 : 0.7}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Mood-colored corona effect */}
+      <mesh>
+        <sphereGeometry args={[size * 4.0, 32, 32]} />
+        <meshBasicMaterial
+          color={colorHex}
+          transparent
+          opacity={isHovered ? 0.4 : 0.25}
+          blending={THREE.AdditiveBlending}
+          side={THREE.BackSide}
+        />
+      </mesh>
+
+      {/* Mood-colored energy field with glow */}
+      <mesh>
+        <sphereGeometry args={[size * 6.5, 32, 32]} />
+        <meshBasicMaterial
+          color={colorHex}
+          transparent
+          opacity={isHovered ? 0.25 : 0.12}
+          blending={THREE.AdditiveBlending}
+          side={THREE.BackSide}
+        />
+      </mesh>
+      
+      {/* Outer atmospheric glow */}
+      <mesh>
+        <sphereGeometry args={[size * 9, 24, 24]} />
+        <meshBasicMaterial
+          color={colorHex}
+          transparent
+          opacity={isHovered ? 0.12 : 0.06}
+          blending={THREE.AdditiveBlending}
+          side={THREE.BackSide}
+        />
+      </mesh>
+
+      {/* Mood-colored point lights for realistic glow */}
+      <pointLight 
+        position={[0, 0, 0]} 
+        intensity={isHovered ? 4.0 : 2.5} 
+        distance={15} 
+        color={colorHex}
+        decay={1.5}
+      />
+      
+      <pointLight 
+        position={[size * 0.5, size * 0.5, size * 0.5]} 
+        intensity={isHovered ? 2.5 : 1.5} 
+        distance={10} 
+        color={colorHex}
+        decay={1.8}
+      />
+      
+      <pointLight 
+        position={[-size * 0.3, size * 0.4, -size * 0.2]} 
+        intensity={isHovered ? 2.0 : 1.0} 
+        distance={8} 
+        color={colorHex}
+        decay={2.0}
+      />
+
+      <Billboard>
+        <Text
+          position={[0, size * 1.8 + 0.5, 0]}
+          fontSize={Math.max(0.3, size * 0.6)}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.04}
+          outlineColor="#000000"
+          outlineOpacity={0.8}
+          fontWeight="bold"
+        >
+          {entry.title}
+        </Text>
+      </Billboard>
+
+      {isHovered && (
+        <Html center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+          <div className="px-4 py-2 rounded-lg text-sm text-white bg-black/80 backdrop-blur-sm border border-white/20 shadow-xl">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
+              <div>
+                <div className="font-semibold capitalize">{entry.mood}</div>
+                <div className="text-xs text-gray-400">
+                  Day {entry.dayOfMonth} • {new Date(entry.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+};
+
+const StarField = ({ entries, onEntryClick, onCameraFocus }: StarFieldProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  // Simple category colors
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Travel': return '#3B82F6';
-      case 'Learning': return '#10B981';
-      case 'Growth': return '#F59E0B';
-      case 'Fun': return '#8B5CF6';
-      default: return '#6B7280';
+  // Mood color mapping
+  const getMoodColor = (mood: string): string => {
+    const moodColors: { [key: string]: string } = {
+      happy: '#10B981',
+      sad: '#3B82F6',
+      excited: '#F59E0B',
+      calm: '#8B5CF6',
+      anxious: '#EF4444',
+      grateful: '#F97316',
+      neutral: '#6B7280'
+    };
+    return moodColors[mood] || '#6B7280';
+  };
+
+  // Realistic planet colors and materials
+  const getPlanetData = (mood: string) => {
+    switch (mood) {
+      case 'happy': 
+        return {
+          color: '#4A90E2', // Earth blue
+          emissive: '#2E5B8A',
+          roughness: 0.8,
+          metalness: 0.1,
+          name: 'Earth-like'
+        };
+      case 'sad': 
+        return {
+          color: '#8B4513', // Mars red-brown
+          emissive: '#5D2E0A',
+          roughness: 0.9,
+          metalness: 0.05,
+          name: 'Mars-like'
+        };
+      case 'excited': 
+        return {
+          color: '#FF6B35', // Venus orange
+          emissive: '#CC4A1A',
+          roughness: 0.7,
+          metalness: 0.2,
+          name: 'Venus-like'
+        };
+      case 'calm': 
+        return {
+          color: '#E6E6FA', // Neptune blue
+          emissive: '#B0B0D6',
+          roughness: 0.6,
+          metalness: 0.3,
+          name: 'Neptune-like'
+        };
+      case 'anxious': 
+        return {
+          color: '#FF4500', // Jupiter orange
+          emissive: '#CC3600',
+          roughness: 0.5,
+          metalness: 0.4,
+          name: 'Jupiter-like'
+        };
+      case 'grateful': 
+        return {
+          color: '#FFD700', // Saturn gold
+          emissive: '#CCAA00',
+          roughness: 0.4,
+          metalness: 0.6,
+          name: 'Saturn-like'
+        };
+      default: 
+        return {
+          color: '#C0C0C0', // Mercury silver
+          emissive: '#999999',
+          roughness: 0.3,
+          metalness: 0.8,
+          name: 'Mercury-like'
+        };
     }
   };
 
-  // Memoize geometry and materials to avoid recreation
-  const sphereGeometry = useMemo(() => new THREE.SphereGeometry(0.5, 32, 32), []);
-  
-  // Simple rotation animation
+  // Removed constellation lines - showing only individual stars
+
+  // Enhanced animation with pulsing stars
   useFrame((state) => {
     if (groupRef.current) {
       groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.1) * 0.1;
@@ -49,63 +347,34 @@ const StarField = ({ memories, onMemoryClick, onCameraFocus }: StarFieldProps) =
 
   return (
     <group ref={groupRef}>
-      {memories.map((memory) => {
-        const baseSize = Math.max(0.25, memory.importance * 0.12);
-        const isHovered = hoveredId === memory.id;
-        const size = isHovered ? baseSize * 1.35 : baseSize;
-        const color = getCategoryColor(memory.category);
+      {/* Ambient particles in deep space */}
+      <Sparkles
+        count={100}
+        scale={80}
+        size={0.3}
+        speed={0.05}
+        color={0xffffff}
+        opacity={0.3}
+      />
 
-        return (
-          <group key={memory.id} position={[memory.position.x, memory.position.y, memory.position.z]}>
-            <mesh
-              onClick={() => {
-                onMemoryClick(memory);
-                onCameraFocus([memory.position.x, memory.position.y, memory.position.z + 5]);
-              }}
-              onPointerOver={(e) => {
-                e.stopPropagation();
-                setHoveredId(memory.id);
-                (e?.eventObject as any)?.parent?.parent?.parent;
-                if (document?.body) document.body.style.cursor = 'pointer';
-              }}
-              onPointerOut={(e) => {
-                e.stopPropagation();
-                setHoveredId((current) => (current === memory.id ? null : current));
-                if (document?.body) document.body.style.cursor = 'auto';
-              }}
-              scale={isHovered ? 1.1 : 1}
-            >
-              <sphereGeometry args={[size, 16, 16]} />
-              <meshStandardMaterial
-                color={color}
-                emissive={color}
-                emissiveIntensity={isHovered ? 0.8 : 0.35}
-                transparent={false}
-                roughness={0.3}
-                metalness={0.05}
-              />
-            </mesh>
-
-            <Text
-              position={[0, size + 0.5, 0]}
-              fontSize={0.32}
-              color="white"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {memory.title}
-            </Text>
-
-            {isHovered && (
-              <Html center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-                <div className="px-2 py-1 rounded-md text-xs text-white bg-black/60 border border-white/10">
-                  {memory.category} • {new Date(memory.date).toLocaleDateString()}
-                </div>
-              </Html>
-            )}
-          </group>
-        );
-      })}
+      {/* Individual Stars - Each Journal Entry */}
+      {entries.map((entry) => (
+        <Star
+          key={entry.id}
+          entry={entry}
+          isHovered={hoveredId === entry.id}
+          onEntryClick={onEntryClick}
+          onCameraFocus={onCameraFocus}
+          onHoverChange={(id) => {
+            if (id) {
+              setHoveredId(id);
+            } else {
+              setHoveredId((current) => (current === entry.id ? null : current));
+            }
+          }}
+          getMoodColor={getMoodColor}
+        />
+      ))}
     </group>
   );
 };

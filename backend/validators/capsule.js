@@ -167,9 +167,9 @@ export const solveRiddleSchema = Joi.object({
     .trim()
     .min(1)
     .max(100)
-    .required()
+    .optional()
+    .allow(null, '')
     .messages({
-      'string.empty': 'Answer is required',
       'string.min': 'Answer must be at least 1 character',
       'string.max': 'Answer cannot exceed 100 characters'
     })

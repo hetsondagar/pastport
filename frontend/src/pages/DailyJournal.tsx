@@ -9,6 +9,7 @@ import Navigation from '@/components/Navigation';
 import MonthlyCardView from '@/components/MonthlyCardView';
 import JournalEntryModal from '@/components/JournalEntryModal';
 import AnimatedCounter from '@/components/AnimatedCounter';
+import PageTitle from '@/components/ui/PageTitle';
 
 interface JournalEntry {
   _id: string;
@@ -71,17 +72,11 @@ const DailyJournal = () => {
       <div className="pt-24 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <h1 className="text-4xl app-name-bold text-gradient mb-4">
-              Daily Journal
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Track your daily thoughts and create time capsules
-            </p>
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+            <PageTitle
+              title="Daily Journal"
+              subtitle="Track your daily thoughts and create time capsules"
+            />
           </motion.div>
 
           {/* Stats Cards */}

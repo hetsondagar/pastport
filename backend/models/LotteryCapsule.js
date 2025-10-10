@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getCurrentIST, canUnlockInIST } from '../utils/timezone.js';
 
 const lotteryCapsuleSchema = new mongoose.Schema({
   userId: {
@@ -86,23 +87,22 @@ lotteryCapsuleSchema.statics.createLotteryCapsule = async function(userId, type 
 lotteryCapsuleSchema.statics.getActiveLotteryCapsule = async function(userId) {
   return this.findOne({
     userId,
-    isUnlocked: false,
-    unlockDate: { $gt: new Date() }
+    isUnlocked: false
   }).sort({ createdAt: -1 });
 };
 
-// Method to unlock lottery capsule
+// Method to unlock lottery capsule (using IST)
 lotteryCapsuleSchema.methods.unlock = async function() {
   if (this.isUnlocked) {
     throw new Error('Capsule already unlocked');
   }
   
-  if (new Date() < this.unlockDate) {
-    throw new Error('Capsule not ready to unlock yet');
+  if (!canUnlockInIST(this.unlockDate)) {
+    throw new Error('Capsule not ready to unlock yet (IST)');
   }
 
   this.isUnlocked = true;
-  this.unlockedAt = new Date();
+  this.unlockedAt = getCurrentIST();
   return this.save();
 };
 

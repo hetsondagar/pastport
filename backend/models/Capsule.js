@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getCurrentIST, canUnlockInIST } from '../utils/timezone.js';
 
 const capsuleSchema = new mongoose.Schema({
   title: {
@@ -364,17 +365,18 @@ capsuleSchema.methods.checkRiddleAnswer = function(answer, userId) {
   }
 };
 
-// Unlock capsule
+// Unlock capsule (using IST timezone)
 capsuleSchema.methods.unlock = function(userId) {
   if (this.isUnlocked) {
     return { success: false, message: 'Capsule is already unlocked' };
   }
   
-  const now = new Date();
-  if (now < this.unlockDate) {
-    return { success: false, message: 'Capsule is not ready to be unlocked yet' };
+  // Check unlock time in IST
+  if (!canUnlockInIST(this.unlockDate)) {
+    return { success: false, message: 'Capsule is not ready to be unlocked yet (IST)' };
   }
   
+  const now = getCurrentIST();
   this.isUnlocked = true;
   this.unlockedAt = now;
   this.unlockedBy = userId;

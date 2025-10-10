@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getCurrentIST, canUnlockInIST } from '../utils/timezone.js';
 
 const journalEntrySchema = new mongoose.Schema({
   userId: {
@@ -79,25 +80,25 @@ journalEntrySchema.virtual('formattedDate').get(function() {
   return this.date.toISOString().split('T')[0];
 });
 
-// Method to check if entry can be unlocked
+// Method to check if entry can be unlocked (using IST)
 journalEntrySchema.methods.canUnlock = function() {
   if (!this.isCapsule || this.isUnlocked) return false;
   
   if (this.lockType === 'time') {
-    return new Date() >= this.unlockDate;
+    return canUnlockInIST(this.unlockDate);
   }
   
   return true; // For riddle type, can be unlocked anytime if answer is correct
 };
 
-// Method to unlock entry
+// Method to unlock entry (using IST)
 journalEntrySchema.methods.unlock = async function() {
   if (!this.canUnlock()) {
-    throw new Error('Entry cannot be unlocked yet');
+    throw new Error('Entry cannot be unlocked yet (IST)');
   }
   
   this.isUnlocked = true;
-  this.unlockedAt = new Date();
+  this.unlockedAt = getCurrentIST();
   return this.save();
 };
 

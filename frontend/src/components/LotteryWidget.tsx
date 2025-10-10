@@ -167,20 +167,20 @@ const LotteryWidget = () => {
               <p className="text-sm text-gray-300">Weekly surprise!</p>
             </div>
           </div>
-          <Badge className={`${getTypeColor(lotteryCapsule.type)} text-white`}>
-            <span className="mr-1">{getTypeIcon(lotteryCapsule.type)}</span>
-            {lotteryCapsule.type}
+          <Badge className={`${getTypeColor(lotteryCapsule?.type || 'quote')} text-white`}>
+            <span className="mr-1">{getTypeIcon(lotteryCapsule?.type || 'quote')}</span>
+            {lotteryCapsule?.type || 'quote'}
           </Badge>
         </div>
 
-        {lotteryCapsule.isUnlocked ? (
+        {lotteryCapsule?.isUnlocked ? (
           <div className="space-y-3">
             <div className="p-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg border border-green-500/30">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-green-400" />
                 <span className="text-green-400 font-medium">Unlocked!</span>
               </div>
-              <p className="text-white text-sm">{lotteryCapsule.content}</p>
+              <p className="text-white text-sm">{lotteryCapsule?.content}</p>
             </div>
             <Button 
               onClick={loadLotteryCapsule}

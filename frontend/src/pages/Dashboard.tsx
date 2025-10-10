@@ -9,10 +9,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
 import CapsuleCard from '@/components/CapsuleCard';
+import CapsuleModal from '@/components/CapsuleModal';
 import Navigation from '@/components/Navigation';
 import StreakWidget from '@/components/StreakWidget';
 import LotteryWidget from '@/components/LotteryWidget';
 import AnimatedCounter from '@/components/AnimatedCounter';
+import PageTitle from '@/components/ui/PageTitle';
 
 const Dashboard = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -35,6 +37,8 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<'all' | 'locked' | 'unlocked'>('all');
+  const [selectedCapsule, setSelectedCapsule] = useState<any>(null);
+  const [showCapsuleModal, setShowCapsuleModal] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -78,8 +82,9 @@ const Dashboard = () => {
   };
 
   const handleCapsuleUnlock = () => {
-    // Refresh capsules after unlock
+    // Refresh capsules after unlock (no page reload)
     loadCapsules();
+    loadStats(); // Also refresh stats
   };
 
   const loadStats = async () => {
@@ -104,9 +109,22 @@ const Dashboard = () => {
     }
   };
 
-  const handleCapsuleClick = (id: string) => {
-    // TODO: Navigate to capsule detail view
-    console.log('Opening capsule:', id);
+  const handleCapsuleClick = async (id: string) => {
+    try {
+      // Fetch the full capsule data
+      const response = await apiClient.getCapsule(id);
+      if (response.success) {
+        setSelectedCapsule(response.data);
+        setShowCapsuleModal(true);
+      }
+    } catch (error) {
+      console.error('Failed to load capsule:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load capsule details.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Filter capsules locally for better UX
@@ -133,14 +151,10 @@ const Dashboard = () => {
       <div className="pt-24 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl app-name-bold text-gradient mb-4">
-              Your Time Capsules
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Manage your memories and discover what awaits you in the future
-            </p>
-          </div>
+          <PageTitle
+            title="Your Time Capsules"
+            subtitle="Manage your memories and discover what awaits you in the future"
+          />
 
           {/* Stats Cards */}
           <div className="grid md:grid-cols-4 gap-4 mb-8">
@@ -338,6 +352,17 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Capsule Modal */}
+      <CapsuleModal
+        capsule={selectedCapsule}
+        isOpen={showCapsuleModal}
+        onClose={() => {
+          setShowCapsuleModal(false);
+          setSelectedCapsule(null);
+          loadCapsules(); // Refresh capsules after viewing
+        }}
+      />
     </div>
   );
 };

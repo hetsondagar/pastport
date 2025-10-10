@@ -85,19 +85,24 @@ const CreateCapsule = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.createCapsule({
+      const payload: any = {
         title: formData.title,
         message: formData.message,
         emoji: formData.emoji,
         mood: formData.mood,
         unlockDate: unlockISO,
         lockType: effectiveLockType,
-        riddleQuestion: effectiveRiddleQuestion,
-        riddleAnswer: formData.riddleAnswer,
         tags: formData.tags,
         category: 'personal',
         isPublic: formData.isShared
-      });
+      };
+
+      if (effectiveLockType === 'riddle') {
+        payload.riddleQuestion = effectiveRiddleQuestion;
+        payload.riddleAnswer = formData.riddleAnswer;
+      }
+
+      const response = await apiClient.createCapsule(payload);
 
       if (response.success) {
         toast({

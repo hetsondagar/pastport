@@ -146,7 +146,7 @@ class ApiClient {
     
     // Add text fields
     Object.entries(capsuleData).forEach(([key, value]) => {
-      if (key !== 'media' && value !== undefined && value !== null) {
+      if (key !== 'media' && value !== undefined && value !== null && value !== '') {
         if (Array.isArray(value)) {
           formData.append(key, JSON.stringify(value));
         } else {

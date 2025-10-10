@@ -4,9 +4,7 @@ import { OrbitControls, Stars, Environment, PerspectiveCamera } from '@react-thr
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+// Removed Badge and Card imports after UI simplification
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
@@ -16,153 +14,208 @@ import MemoryModal from '@/components/MemoryModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ThreeJSLoading from '@/components/ThreeJSLoading';
 import WebGLContextManager from '@/components/WebGLContextManager';
-import { Search, Filter, Home, Sparkles } from 'lucide-react';
+import { Home, Sparkles, Calendar, BookOpen } from 'lucide-react';
+import PageTitle from '@/components/ui/PageTitle';
 
-interface Memory {
+interface JournalEntry {
   id: string;
   title: string;
   content: string;
-  category: 'Travel' | 'Learning' | 'Growth' | 'Fun';
-  importance: number;
+  mood: string;
   date: string;
-  relatedIds: string[];
   position: { x: number; y: number; z: number };
-  tags: string[];
-  media: string[];
-  relatedMemories?: Memory[];
+  dayOfMonth: number;
+  isCapsule: boolean;
 }
 
 const MemoryConstellationPage = () => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const { toast } = useToast();
-  const [memories, setMemories] = useState<Memory[]>([]);
-  const [filteredMemories, setFilteredMemories] = useState<Memory[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [cameraPosition, setCameraPosition] = useState([0, 0, 15]);
+  const [cameraPosition, setCameraPosition] = useState([0, 0, 35]);
   const [isCameraAnimating, setIsCameraAnimating] = useState(false);
   const cameraRef = useRef<any>(null);
   const [showDemo, setShowDemo] = useState(false);
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth() + 1); // 1-12
+  // Always use current month - constellation resets each month
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1; // 1-12
 
-  const categories = ['All', 'Travel', 'Learning', 'Growth', 'Fun'];
-  const categoryColors = {
-    Travel: 'bg-blue-500',
-    Learning: 'bg-green-500',
-    Growth: 'bg-yellow-500',
-    Fun: 'bg-purple-500'
+  const moodColors = {
+    happy: '#10B981',
+    sad: '#3B82F6', 
+    excited: '#F59E0B',
+    calm: '#8B5CF6',
+    anxious: '#EF4444',
+    grateful: '#F97316',
+    neutral: '#6B7280'
   };
 
   useEffect(() => {
     if (isAuthenticated) {
       loadMonthEntries();
     }
-  }, [isAuthenticated, year, month]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    filterMemories();
-  }, [memories, searchTerm, selectedCategory]);
+    filterEntries();
+  }, [journalEntries, showDemo]);
 
   const loadMonthEntries = async () => {
     try {
       setLoading(true);
       const userId = (user && (user.id || user._id)) as string | undefined;
       if (!userId) {
-        setMemories([]);
+        setJournalEntries([]);
         return;
       }
       const response = await apiClient.getMonthEntries(userId, year, month);
-      // Accept multiple shapes: {success,data:{entries:[]}}, {entries:[]}, or []
-      const entries: any[] = Array.isArray(response)
-        ? response
-        : Array.isArray(response?.entries)
-          ? response.entries
-          : Array.isArray(response?.data)
-            ? response.data
-            : Array.isArray(response?.data?.entries)
-              ? response.data.entries
-              : [];
+      
+      console.log('Raw API response:', response);
+      
+      // Handle different response formats
+      let entriesData: any;
+      
+      // Check if response has success and data structure
+      if (response?.success && response?.data) {
+        entriesData = response.data.entries;
+      } else if (response?.data) {
+        entriesData = response.data;
+      } else if (response?.entries) {
+        entriesData = response.entries;
+      } else {
+        entriesData = response;
+      }
+      
+      // Convert entries map/object to array if needed
+      let entries: any[] = [];
+      
+      if (Array.isArray(entriesData)) {
+        // Already an array
+        entries = entriesData;
+      } else if (typeof entriesData === 'object' && entriesData !== null) {
+        // It's an object/map, convert to array
+        entries = Object.values(entriesData);
+      }
+      
+      console.log('Processed entries:', entries);
+      
       if (entries.length > 0) {
         const daysInMonth = new Date(year, month, 0).getDate();
-        const radius = 6;
         const mapped = entries.map((e: any, index: number) => {
           const dateStr = e.date || e.createdAt || new Date(year, month - 1, index + 1).toISOString();
           const day = new Date(dateStr).getDate();
-          const angle = (day / daysInMonth) * Math.PI * 2;
-          const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius;
-          const importance = Math.min(10, Math.max(3, (e.moodScore ?? (e.content?.length || 100) % 10)));
-          const mood = (e.mood || '').toLowerCase();
-          const category: 'Travel' | 'Learning' | 'Growth' | 'Fun' =
-            mood.includes('travel') ? 'Travel' :
-            mood.includes('learn') ? 'Learning' :
-            mood.includes('fun') || mood.includes('happy') ? 'Fun' : 'Growth';
+          
+          // Create scattered constellation pattern with better spread
+          const seed = day * 7 + month * 13; // Deterministic but varied
+          const random = (seed: number) => {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+          };
+          
+          // Create widespread, galaxy-like distribution
+          const angle = (day / 31) * Math.PI * 2; // Circular distribution
+          const radius = 15 + random(seed) * 10; // Variable radius 15-25 units
+          
+          // Spiral pattern with variation
+          const spiralFactor = day / 5;
+          const clusterX = Math.cos(angle + spiralFactor) * radius;
+          const clusterY = Math.sin(angle + spiralFactor) * radius;
+          const clusterZ = Math.sin(day * 0.5) * 8 - 4; // More depth variation
+          
+          // Add organic scatter for natural look
+          const scatterX = (random(seed) - 0.5) * 8;
+          const scatterY = (random(seed + 1) - 0.5) * 8;
+          const scatterZ = (random(seed + 2) - 0.5) * 6;
+          
+          const x = clusterX + scatterX;
+          const y = clusterY + scatterY;
+          const z = clusterZ + scatterZ;
+          
           return {
-            id: e.id || e._id || `${year}-${month}-${day}`,
-            title: e.title || `Entry ${day}`,
+            id: e._id || e.id || `${year}-${month}-${day}`,
+            title: e.title || `Day ${day}`,
             content: e.content || '',
-            category,
-            importance,
+            mood: e.mood || 'neutral',
             date: dateStr,
-            relatedIds: [],
-            position: { x, y, z: 0 },
-            tags: e.tags || [],
-            media: [],
-          } as Memory;
+            position: { x, y, z },
+            dayOfMonth: day,
+            isCapsule: e.isCapsule || false
+          } as JournalEntry;
         });
-        setMemories(mapped);
+        setJournalEntries(mapped);
       } else {
-        setMemories([]);
+        setJournalEntries([]);
       }
     } catch (error) {
       console.error('Error loading month entries:', error);
-      setMemories([]);
+      setJournalEntries([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filterMemories = () => {
-    let source = memories;
-    if (showDemo && memories.length === 0) {
-      source = [
-        { id: 'demo-1', title: 'Demo 1', content: '', category: 'Travel', importance: 7, date: new Date().toISOString(), relatedIds: [], position: { x: 0, y: 0, z: 0 }, tags: [], media: [] },
-        { id: 'demo-2', title: 'Demo 2', content: '', category: 'Learning', importance: 5, date: new Date().toISOString(), relatedIds: [], position: { x: 3, y: 0, z: 0 }, tags: [], media: [] },
-        { id: 'demo-3', title: 'Demo 3', content: '', category: 'Growth', importance: 8, date: new Date().toISOString(), relatedIds: [], position: { x: 0, y: 3, z: 0 }, tags: [], media: [] },
-      ];
+  const filterEntries = () => {
+    let source = journalEntries;
+    if (showDemo && journalEntries.length === 0) {
+      // Create demo constellation for current month
+      const daysInMonth = new Date(year, month, 0).getDate();
+      source = Array.from({ length: Math.min(15, daysInMonth) }, (_, i) => {
+        const day = i + 1;
+        
+        // Use same scattered positioning as real entries
+        const seed = day * 7 + month * 13;
+        const random = (seed: number) => {
+          const x = Math.sin(seed) * 10000;
+          return x - Math.floor(x);
+        };
+        
+        // Create widespread, galaxy-like distribution
+        const angle = (day / 31) * Math.PI * 2; // Circular distribution
+        const radius = 15 + random(seed) * 10; // Variable radius 15-25 units
+        
+        // Spiral pattern with variation
+        const spiralFactor = day / 5;
+        const clusterX = Math.cos(angle + spiralFactor) * radius;
+        const clusterY = Math.sin(angle + spiralFactor) * radius;
+        const clusterZ = Math.sin(day * 0.5) * 8 - 4; // More depth variation
+        
+        // Add organic scatter for natural look
+        const scatterX = (random(seed) - 0.5) * 8;
+        const scatterY = (random(seed + 1) - 0.5) * 8;
+        const scatterZ = (random(seed + 2) - 0.5) * 6;
+        
+        const x = clusterX + scatterX;
+        const y = clusterY + scatterY;
+        const z = clusterZ + scatterZ;
+        
+        return {
+          id: `demo-${day}`,
+          title: `Day ${day}`,
+          content: `Demo entry for day ${day}`,
+          mood: ['happy', 'calm', 'excited', 'grateful'][day % 4],
+          date: new Date(year, month - 1, day).toISOString(),
+          position: { x, y, z },
+          dayOfMonth: day,
+          isCapsule: day % 3 === 0
+        };
+      });
     }
-
-    let filtered = source;
-
-    // Filter by category
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(memory => memory.category === selectedCategory);
-    }
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(memory =>
-        memory.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        memory.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        memory.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    setFilteredMemories(filtered);
+    setFilteredEntries(source);
   };
 
-  const handleMemoryClick = (memory: Memory) => {
-    setSelectedMemory(memory);
+  const handleEntryClick = (entry: JournalEntry) => {
+    setSelectedEntry(entry);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedMemory(null);
+    setSelectedEntry(null);
   };
 
   const handleCameraFocus = (position: [number, number, number]) => {
@@ -199,7 +252,7 @@ const MemoryConstellationPage = () => {
     if (isCameraAnimating) return;
     
     setIsCameraAnimating(true);
-    const defaultPosition: [number, number, number] = [0, 0, 12];
+    const defaultPosition: [number, number, number] = [0, 0, 35];
     setCameraPosition(defaultPosition);
     
     if (cameraRef.current) {
@@ -214,6 +267,12 @@ const MemoryConstellationPage = () => {
         }
       });
     }
+  };
+
+  const getMonthName = (monthNum: number) => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[monthNum - 1];
   };
 
   if (authLoading || loading) {
@@ -251,73 +310,30 @@ const MemoryConstellationPage = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between"
+            className="flex flex-col gap-4 items-start"
           >
             {/* Title */}
             <div className="flex items-center gap-3">
               <Sparkles className="w-8 h-8 text-primary" />
+              <PageTitle 
+                title="Memory Constellation" 
+                subtitle="This month's memories shine as stars - they reset each new month" 
+              />
+            </div>
+
+            {/* Current Month Display Only */}
+            <div className="flex items-center gap-2 glass-card-enhanced p-3 rounded-lg">
+              <Calendar className="w-5 h-5 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold text-white">Memory Constellation</h1>
-                <p className="text-muted-foreground">Explore your memories as stars in space</p>
+                <span className="text-white font-semibold text-lg">
+                  {getMonthName(month)} {year}
+                </span>
+                <p className="text-xs text-gray-400">Current month's memories</p>
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search memories..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400"
-                />
-              </div>
-
-              {/* Category Filter */}
-              <div className="flex gap-2">
-                {categories.map((category) => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className={`${
-                      selectedCategory === category
-                        ? 'bg-primary text-primary-foreground'
-                        : 'glass-card border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Month / Year */}
-              <div className="flex gap-2">
-                <select
-                  value={month}
-                  onChange={(e) => setMonth(Number(e.target.value))}
-                  className="glass-card border-white/10 rounded-md bg-background/50 px-2 py-2"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
-                  ))}
-                </select>
-                <select
-                  value={year}
-                  onChange={(e) => setYear(Number(e.target.value))}
-                  className="glass-card border-white/10 rounded-md bg-background/50 px-2 py-2"
-                >
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-
-            {/* Camera Controls */}
-              <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   onClick={resetCamera}
@@ -329,29 +345,21 @@ const MemoryConstellationPage = () => {
                 </Button>
               <Button
                 variant="outline"
-                onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
-                className="glass-card border-white/10 hover:bg-white/10"
-              >
-                Clear Filters
-              </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => window.location.href = '/dashboard'}
+                onClick={() => window.location.href = '/dashboard'}
                   className="glass-card border-white/10 hover:bg-white/10"
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Dashboard
                 </Button>
-              {memories.length === 0 && (
+              {journalEntries.length === 0 && (
                 <Button
                   variant={showDemo ? 'default' : 'outline'}
                   onClick={() => setShowDemo((v) => !v)}
                   className="glass-card border-white/10 hover:bg-white/10"
                 >
-                  {showDemo ? 'Hide Demo Stars' : 'Show Demo Stars'}
+                  {showDemo ? 'Hide Demo Constellation' : 'Show Demo Constellation'}
                 </Button>
               )}
-              </div>
             </div>
           </motion.div>
         </div>
@@ -362,7 +370,8 @@ const MemoryConstellationPage = () => {
         <ErrorBoundary>
           <Canvas
             camera={{ position: cameraPosition, fov: 75 }}
-            style={{ background: 'transparent' }}
+            style={{ background: '#000000' }}
+            gl={{ alpha: false, antialias: true }}
           >
             <PerspectiveCamera
               ref={cameraRef}
@@ -372,20 +381,19 @@ const MemoryConstellationPage = () => {
             />
             <WebGLContextManager />
             <Suspense fallback={<ThreeJSLoading />}>
-              {/* Super strong lighting */}
-              <ambientLight intensity={1.0} />
-              <pointLight position={[10, 10, 10]} intensity={3} />
-              <pointLight position={[-10, -10, -10]} intensity={2} />
-              <pointLight position={[0, 10, 0]} intensity={2} />
+              {/* Subtle ambient lighting for deep space */}
+              <ambientLight intensity={0.2} />
+              <pointLight position={[20, 20, 20]} intensity={0.5} color="#ffffff" />
+              <pointLight position={[-20, -20, -20]} intensity={0.3} color="#ffffff" />
               
-              {/* Environment */}
+              {/* Deep space environment */}
               <Environment preset="night" />
-              <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+              <Stars radius={150} depth={80} count={8000} factor={5} saturation={0} fade speed={0.5} />
               
-              {/* Memory Constellation */}
+              {/* Journal Constellation */}
               <StarField
-                memories={filteredMemories}
-                onMemoryClick={handleMemoryClick}
+                entries={filteredEntries}
+                onEntryClick={handleEntryClick}
                 onCameraFocus={handleCameraFocus}
               />
             </Suspense>
@@ -395,66 +403,46 @@ const MemoryConstellationPage = () => {
               enablePan={true}
               enableZoom={true}
               enableRotate={true}
-              minDistance={5}
-              maxDistance={50}
+              minDistance={10}
+              maxDistance={80}
             />
           </Canvas>
         </ErrorBoundary>
       </div>
 
       {/* Empty state overlay */}
-      {filteredMemories.length === 0 && !loading && (
+      {filteredEntries.length === 0 && !loading && (
         <div className="fixed inset-0 top-20 flex items-center justify-center pointer-events-none">
-          <div className="pointer-events-auto glass-card-enhanced border-white/10 p-4 rounded-lg text-center">
-            <h3 className="text-white font-semibold mb-1">No memories to display</h3>
-            <p className="text-sm text-muted-foreground mb-3">Add a memory or adjust filters to see stars.</p>
-            <div className="flex gap-2 justify-center">
-              <Button variant="outline" className="glass-card border-white/10" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}>Clear Filters</Button>
-              <Button className="btn-glow" onClick={() => window.location.href = '/create'}>Create Memory</Button>
-              {memories.length === 0 && (
-                <Button variant="outline" className="glass-card border-white/10" onClick={() => setShowDemo(true)}>Show Demo Stars</Button>
+          <div className="pointer-events-auto glass-card-enhanced border-white/10 p-6 rounded-lg text-center max-w-md">
+            <Sparkles className="w-16 h-16 text-primary mx-auto mb-4 opacity-50" />
+            <h3 className="text-white font-semibold text-xl mb-2">No Stars Yet for {getMonthName(month)} {year}</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Each day you write a journal entry becomes a star in your constellation. 
+              <br />
+              <strong className="text-white">Start journaling to light up the sky!</strong>
+            </p>
+            <div className="flex flex-col gap-2 justify-center">
+              <Button className="btn-glow" onClick={() => window.location.href = '/journal'}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                Go to Journal
+              </Button>
+              {journalEntries.length === 0 && (
+                <Button variant="outline" className="glass-card border-white/10" onClick={() => setShowDemo(true)}>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Show Demo Constellation
+                </Button>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Stats Overlay */}
-      <div className="fixed bottom-4 left-4 z-10">
-        <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{memories.length}</div>
-                <div className="text-xs text-muted-foreground">Total Memories</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-accent">{filteredMemories.length}</div>
-                <div className="text-xs text-muted-foreground">Visible</div>
-              </div>
-              <div className="flex gap-1">
-                {categories.slice(1).map((category) => {
-                  const count = memories.filter(m => m.category === category).length;
-                  return (
-                    <Badge
-                      key={category}
-                      variant="outline"
-                      className={`${categoryColors[category as keyof typeof categoryColors]} text-white border-0`}
-                    >
-                      {count}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Stats Overlay removed for a cleaner constellation view */}
 
-      {/* Memory Modal */}
-      {showModal && selectedMemory && (
+      {/* Entry Modal */}
+      {showModal && selectedEntry && (
         <MemoryModal
-          memory={selectedMemory}
+          memory={selectedEntry}
           onClose={handleCloseModal}
           onUpdate={loadMonthEntries}
         />

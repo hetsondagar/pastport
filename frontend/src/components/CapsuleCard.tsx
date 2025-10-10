@@ -61,7 +61,7 @@ const CapsuleCard = ({
     if (lockType === 'riddle' && riddleQuestion) {
       setShowRiddleUnlock(true);
     } else {
-      // Unlock the capsule
+      // Unlock the time-based capsule
       try {
         setUnlocking(true);
         const response = await apiClient.unlockCapsule(id);
@@ -69,14 +69,19 @@ const CapsuleCard = ({
         if (response.success) {
           toast({
             title: "🎉 Capsule Unlocked!",
-            description: "Your time capsule has been unlocked successfully!",
+            description: "Your time capsule has been unlocked! Opening now...",
           });
-          // Call the onUnlock callback to refresh the capsule data
+          
+          // Open the capsule immediately by triggering the onClick
+          setTimeout(() => {
+            if (onClick) {
+              onClick();
+            }
+          }, 500); // Small delay to show the toast first
+          
+          // Also call onUnlock to refresh data
           if (onUnlock) {
             onUnlock();
-          } else {
-            // Fallback to page reload
-            window.location.reload();
           }
         } else {
           toast({
@@ -99,12 +104,17 @@ const CapsuleCard = ({
 
   const handleRiddleSuccess = (capsuleData: any) => {
     setShowRiddleUnlock(false);
+    
+    // Open the capsule immediately after successful riddle unlock
+    setTimeout(() => {
+      if (onClick) {
+        onClick();
+      }
+    }, 500);
+    
     // Call the onUnlock callback to refresh the capsule data
     if (onUnlock) {
       onUnlock();
-    } else {
-      // Fallback to page reload
-      window.location.reload();
     }
   };
   const now = new Date();

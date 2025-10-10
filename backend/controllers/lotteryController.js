@@ -1,6 +1,7 @@
 import LotteryCapsule from '../models/LotteryCapsule.js';
 import User from '../models/User.js';
 import { getRandomQuote } from '../utils/quotes.js';
+import { getCurrentIST, getTimeUntilUnlockIST } from '../utils/timezone.js';
 
 // @desc    Get active lottery capsule for user
 // @route   GET /api/lottery
@@ -40,8 +41,8 @@ export const getLotteryCapsule = async (req, res, next) => {
         content: lotteryCapsule.isUnlocked ? lotteryCapsule.content : null,
         unlockDate: lotteryCapsule.unlockDate,
         isUnlocked: lotteryCapsule.isUnlocked,
-        type: lotteryCapsule.type,
-        timeUntilUnlock: lotteryCapsule.unlockDate - new Date()
+        type: lotteryCapsule.type || 'quote',
+        timeUntilUnlock: getTimeUntilUnlockIST(lotteryCapsule.unlockDate)
       }
     });
   } catch (error) {
