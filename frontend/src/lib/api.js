@@ -41,6 +41,11 @@ class ApiClient {
       headers: this.getHeaders(options.includeAuth !== false),
       ...options,
     };
+    
+    // Debug logging in development
+    if (import.meta.env.DEV) {
+      console.log('API Request:', { url, endpoint, baseURL: this.baseURL });
+    }
 
     try {
       const response = await fetch(url, config);

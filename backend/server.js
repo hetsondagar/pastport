@@ -47,7 +47,7 @@ app.use(helmet({
 }));
 
 // CORS configuration with support for multiple allowed origins
-const defaultOrigins = 'http://localhost:5173,http://localhost:8080,https://pastportnostalgia-reimagined.vercel.app';
+const defaultOrigins = 'http://localhost:5173,http://localhost:8080,https://pastportnostalgia-reimagined.vercel.app,https://pastport-nostalgiareimagined.vercel.app';
 const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || defaultOrigins)
   .split(',')
   .map((o) => o.trim())
