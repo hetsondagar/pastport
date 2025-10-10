@@ -1,14 +1,32 @@
 // API client for PastPort backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD 
-    ? 'https://pastport-3xaq.onrender.com/api' 
-    : 'http://localhost:5000/api'
-  );
+const getBaseURL = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  const prodUrl = 'https://pastport-3xaq.onrender.com';
+  const devUrl = 'http://localhost:5000';
+  
+  // Use environment variable if set
+  if (envUrl) {
+    // Ensure it ends with /api
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
+  }
+  
+  // Use production or development URL
+  return import.meta.env.PROD ? `${prodUrl}/api` : `${devUrl}/api`;
+};
+
+const API_BASE_URL = getBaseURL();
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
     this.token = localStorage.getItem('token');
+    
+    // Debug logging
+    console.log('API Client initialized with baseURL:', this.baseURL);
+    console.log('Environment:', {
+      PROD: import.meta.env.PROD,
+      VITE_API_URL: import.meta.env.VITE_API_URL
+    });
   }
 
   // Set authentication token
