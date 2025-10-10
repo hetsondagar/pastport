@@ -217,10 +217,11 @@ const Profile = () => {
 
     setIsSaving(true);
     try {
-      const result = await changePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
-      });
+    const result = await changePassword({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+      confirmNewPassword: passwordData.confirmPassword
+    });
       
       if (result.success) {
         toast({
