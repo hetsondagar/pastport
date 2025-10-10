@@ -1,7 +1,7 @@
 // API client for PastPort backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.PROD 
-    ? 'https://pastport-backend.onrender.com/api' 
+    ? 'https://pastport-3xaq.onrender.com/api' 
     : 'http://localhost:5000/api'
   );
 

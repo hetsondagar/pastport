@@ -47,7 +47,8 @@ app.use(helmet({
 }));
 
 // CORS configuration with support for multiple allowed origins
-const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'http://localhost:5173,http://localhost:8080')
+const defaultOrigins = 'http://localhost:5173,http://localhost:8080,https://pastportnostalgia-reimagined.vercel.app';
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || defaultOrigins)
   .split(',')
   .map((o) => o.trim())
   .filter(Boolean);
@@ -70,10 +71,15 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Also allow common local patterns
+    // Also allow common local patterns and Vercel domains
     try {
       const url = new URL(origin);
       if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        return callback(null, true);
+      }
+      
+      // Allow Vercel domains
+      if (url.hostname.endsWith('.vercel.app') || url.hostname.endsWith('.vercel.dev')) {
         return callback(null, true);
       }
     } catch (_) {}
