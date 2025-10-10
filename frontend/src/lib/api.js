@@ -383,6 +383,47 @@ class ApiClient {
   async getMemoriesByCategory(category) {
     return this.request(`/memories/category/${category}`, 'GET');
   }
+
+  // Media endpoints
+  async uploadMedia(formData) {
+    const url = `${this.baseURL}/media/upload`;
+    const config = {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        // Don't set Content-Type - let browser set it with boundary for FormData
+      },
+      body: formData
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Upload failed');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Media upload failed:', error);
+      throw error;
+    }
+  }
+
+  async getEntryMedia(entryType, entryId) {
+    return this.request(`/media/${entryType}/${entryId}`);
+  }
+
+  async deleteMedia(mediaId) {
+    return this.request(`/media/${mediaId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getUserMedia(userId) {
+    return this.request(`/media/user/${userId}`);
+  }
 }
 
 // Create and export a singleton instance

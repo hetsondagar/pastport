@@ -101,7 +101,7 @@ const AuthForm = () => {
     if (!loginData.email || !loginData.password) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields.",
+        description: "Please enter both email and password to login.",
         variant: "destructive"
       });
       return;
@@ -111,12 +111,23 @@ const AuthForm = () => {
     if (result.success) {
       toast({
         title: "Welcome back! 🎉",
-        description: "You've successfully logged in.",
+        description: "You've successfully logged in to PastPort.",
       });
     } else {
+      // Provide user-friendly error messages
+      let errorMessage = result.message || "Please check your credentials.";
+      
+      if (errorMessage.toLowerCase().includes('invalid credentials')) {
+        errorMessage = "The email or password you entered is incorrect. Please try again.";
+      } else if (errorMessage.toLowerCase().includes('deactivated')) {
+        errorMessage = "Your account has been deactivated. Please contact support.";
+      } else if (errorMessage.toLowerCase().includes('network')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
-        title: "Login Failed",
-        description: result.message || "Please check your credentials.",
+        title: "Unable to Login",
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -127,9 +138,28 @@ const AuthForm = () => {
     clearError();
 
     if (!isFormValid()) {
+      // Provide specific error based on validation
+      let errorDesc = "Please complete all fields correctly.";
+      
+      if (!registerData.name) {
+        errorDesc = "Please enter your full name.";
+      } else if (!registerData.email) {
+        errorDesc = "Please enter your email address.";
+      } else if (validationErrors.email) {
+        errorDesc = "Please enter a valid email address.";
+      } else if (!registerData.password) {
+        errorDesc = "Please create a password.";
+      } else if (validationErrors.password) {
+        errorDesc = "Password must be at least 6 characters long.";
+      } else if (!registerData.confirmPassword) {
+        errorDesc = "Please confirm your password.";
+      } else if (validationErrors.confirmPassword) {
+        errorDesc = "Passwords don't match. Please check and try again.";
+      }
+      
       toast({
-        title: "Please fix the errors",
-        description: "Complete all fields correctly to continue.",
+        title: "Unable to Register",
+        description: errorDesc,
         variant: "destructive"
       });
       return;
@@ -145,12 +175,25 @@ const AuthForm = () => {
     if (result.success) {
       toast({
         title: "Welcome to PastPort! 🌟",
-        description: "Your account has been created successfully.",
+        description: "Your account has been created successfully. Start creating your first time capsule!",
       });
     } else {
+      // Provide user-friendly error messages
+      let errorMessage = result.message || "Please try again.";
+      
+      if (errorMessage.toLowerCase().includes('already exists')) {
+        errorMessage = "An account with this email already exists. Please login or use a different email.";
+      } else if (errorMessage.toLowerCase().includes('invalid email')) {
+        errorMessage = "Please enter a valid email address.";
+      } else if (errorMessage.toLowerCase().includes('password')) {
+        errorMessage = "Password must be at least 6 characters long.";
+      } else if (errorMessage.toLowerCase().includes('network')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
         title: "Registration Failed",
-        description: result.message || "Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -162,16 +205,17 @@ const AuthForm = () => {
         <CardHeader className="text-center">
           <div className="mb-4">
             <img 
-              src="/logo.png" 
+              src="/logo_main.png" 
               alt="PastPort Logo" 
-              className="w-12 h-12 mx-auto mb-2"
+              className="w-12 h-12 mx-auto mb-2 object-contain"
+              style={{ background: 'transparent' }}
             />
           </div>
           <CardTitle className="text-2xl app-name-bold text-gradient">
             Welcome to PastPort
           </CardTitle>
           <p className="text-muted-foreground">
-            Store your memories, unlock your future
+            <span className="text-gradient tagline">nostalgia, reimagined</span>
           </p>
         </CardHeader>
         <CardContent>

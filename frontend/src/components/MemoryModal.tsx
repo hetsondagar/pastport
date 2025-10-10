@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
 import { X, Calendar, Tag, Star, Edit, Trash2, Save, XCircle } from 'lucide-react';
+import MediaDisplay from '@/components/MediaDisplay';
 
 interface Memory {
   id: string;
@@ -241,6 +242,14 @@ const MemoryModal = ({ memory, onClose, onUpdate }: MemoryModalProps) => {
                 </div>
               ) : (
                 <p className="text-white/90 leading-relaxed">{memory.content}</p>
+              )}
+
+              {/* Media Attachments */}
+              {!isEditing && memory.media && memory.media.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-3">Attachments</h3>
+                  <MediaDisplay media={memory.media} layout="grid" showCaptions={true} />
+                </div>
               )}
 
               {/* Metadata */}

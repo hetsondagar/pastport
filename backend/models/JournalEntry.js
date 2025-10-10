@@ -56,6 +56,36 @@ const journalEntrySchema = new mongoose.Schema({
     trim: true,
     maxlength: 30
   }],
+  media: [{
+    url: {
+      type: String,
+      required: true
+    },
+    publicId: {
+      type: String,
+      required: true
+    },
+    type: {
+      type: String,
+      enum: ['image', 'video', 'audio'],
+      required: true
+    },
+    format: String,
+    resourceType: String,
+    width: Number,
+    height: Number,
+    size: Number,
+    duration: Number,
+    caption: {
+      type: String,
+      maxlength: 500,
+      default: ''
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   isPublic: {
     type: Boolean,
     default: false

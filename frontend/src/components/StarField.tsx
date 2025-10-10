@@ -112,7 +112,9 @@ const Star = ({ entry, isHovered, onEntryClick, onCameraFocus, onHoverChange, ge
 
       {/* Main star core with mood-based color */}
       <mesh
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('Star mesh clicked:', entry.title);
           onEntryClick(entry);
           onCameraFocus([entry.position.x, entry.position.y, entry.position.z + 5]);
         }}

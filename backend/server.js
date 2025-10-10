@@ -31,6 +31,7 @@ import notificationRoutes from './routes/notifications.js';
 import lotteryRoutes from './routes/lottery.js';
 import journalRoutes from './routes/journal.js';
 import memoryRoutes from './routes/memories.js';
+import mediaRoutes from './routes/media.js';
 
 // Load environment variables
 dotenv.config();
@@ -148,6 +149,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/lottery', lotteryRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/memories', memoryRoutes);
+app.use('/api/media', mediaRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

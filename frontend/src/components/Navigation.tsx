@@ -16,34 +16,58 @@ const Navigation = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/logo.png" 
-              alt="PastPort Logo" 
-              className="w-8 h-8 animate-pulse-glow"
-            />
-            <span className="text-2xl app-name-bold text-gradient">PastPort</span>
+            <div 
+              className="w-10 h-10 animate-pulse-glow overflow-hidden"
+              style={{ 
+                background: 'transparent',
+                backgroundColor: 'transparent',
+                borderRadius: '50%',
+                clipPath: 'circle(50%)'
+              }}
+            >
+              <img 
+                src="/logo_main.png" 
+                alt="PastPort Logo" 
+                className="w-full h-full object-contain"
+                style={{ 
+                  background: 'transparent',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  boxShadow: 'none'
+                }}
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xl app-name-bold text-gradient">PastPort</span>
+              <span className="text-xs tagline text-gradient -mt-1">nostalgia, reimagined</span>
+            </div>
           </Link>
 
           {/* Desktop Menu */}
-          {isAuthenticated && (
-            <div className="hidden md:flex items-center space-x-6">
-              <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
-                Dashboard
-              </Link>
-              <Link to="/journal" className="text-foreground hover:text-primary transition-colors">
-                Daily Journal
-              </Link>
-              <Link to="/memories/constellation" className="text-foreground hover:text-primary transition-colors">
-                Constellation
-              </Link>
-              <Link to="/create" className="text-foreground hover:text-primary transition-colors">
-                Create
-              </Link>
-              <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
-                Profile
-              </Link>
-            </div>
-          )}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors">
+              How It Works
+            </Link>
+            {isAuthenticated && (
+              <>
+                <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
+                  Dashboard
+                </Link>
+                <Link to="/journal" className="text-foreground hover:text-primary transition-colors">
+                  Daily Journal
+                </Link>
+                <Link to="/memories/constellation" className="text-foreground hover:text-primary transition-colors">
+                  Constellation
+                </Link>
+                <Link to="/create" className="text-foreground hover:text-primary transition-colors">
+                  Create
+                </Link>
+                <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
+                  Profile
+                </Link>
+              </>
+            )}
+          </div>
 
           {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center space-x-4">
@@ -120,6 +144,9 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pt-4 border-t border-white/10">
             <div className="flex flex-col space-y-4">
+              <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors">
+                How It Works
+              </Link>
               {isAuthenticated ? (
                 <>
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">

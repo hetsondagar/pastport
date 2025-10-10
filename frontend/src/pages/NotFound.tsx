@@ -16,9 +16,10 @@ const NotFound = () => {
         {/* Logo */}
         <div className="mb-8">
           <img 
-            src="/logo.png" 
+            src="/logo_main.png" 
             alt="PastPort Logo" 
-            className="w-16 h-16 mx-auto mb-4"
+            className="w-16 h-16 mx-auto mb-4 object-contain"
+            style={{ background: 'transparent' }}
           />
           <h1 className="text-6xl app-name-bold text-gradient mb-4">404</h1>
         </div>

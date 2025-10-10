@@ -102,56 +102,62 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      setLoading(true);
       setError(null);
       
+      console.log('Updating profile with:', profileData);
       const response = await apiClient.updateProfile(profileData);
+      console.log('Profile update response:', response);
       
       if (response.success) {
-        updateUser(response.data.user);
+        // Update user state with new data
+        setUser(response.data.user);
         return { success: true, data: response.data };
       } else {
         setError(response.message || 'Profile update failed');
         return { success: false, message: response.message };
       }
     } catch (error) {
+      console.error('Profile update error:', error);
       const errorMessage = error.message || 'Profile update failed';
       setError(errorMessage);
       return { success: false, message: errorMessage };
-    } finally {
-      setLoading(false);
     }
   };
 
   const updatePreferences = async (preferences) => {
     try {
-      setLoading(true);
       setError(null);
       
+      console.log('Updating preferences with:', preferences);
       const response = await apiClient.updatePreferences(preferences);
+      console.log('Preferences update response:', response);
       
       if (response.success) {
-        updateUser({ preferences: response.data.preferences });
+        // Update user with new preferences
+        setUser(prevUser => ({
+          ...prevUser,
+          preferences: response.data.preferences
+        }));
         return { success: true, data: response.data };
       } else {
         setError(response.message || 'Preferences update failed');
         return { success: false, message: response.message };
       }
     } catch (error) {
+      console.error('Preferences update error:', error);
       const errorMessage = error.message || 'Preferences update failed';
       setError(errorMessage);
       return { success: false, message: errorMessage };
-    } finally {
-      setLoading(false);
     }
   };
 
   const changePassword = async (passwordData) => {
     try {
-      setLoading(true);
       setError(null);
       
+      console.log('Changing password...');
       const response = await apiClient.changePassword(passwordData);
+      console.log('Password change response:', response);
       
       if (response.success) {
         return { success: true, data: response.data };
@@ -160,11 +166,10 @@ export const AuthProvider = ({ children }) => {
         return { success: false, message: response.message };
       }
     } catch (error) {
+      console.error('Password change error:', error);
       const errorMessage = error.message || 'Password change failed';
       setError(errorMessage);
       return { success: false, message: errorMessage };
-    } finally {
-      setLoading(false);
     }
   };
 

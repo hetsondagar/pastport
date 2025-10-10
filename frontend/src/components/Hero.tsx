@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Clock, Users } from 'lucide-react';
+import { ArrowRight, Sparkles, Clock, Lock } from 'lucide-react';
 import heroCapsule from '@/assets/hero-capsule.jpg';
 
 const Hero = () => {
@@ -11,9 +11,9 @@ const Hero = () => {
         <img
           src={heroCapsule}
           alt="Futuristic time capsule"
-          className="w-full h-full object-cover opacity-20"
+          className="w-full h-full object-cover opacity-15"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/80 to-background/90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/50 via-background/30 to-background/50" />
       </div>
 
       {/* Floating Particles */}
@@ -24,13 +24,14 @@ const Hero = () => {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center max-w-4xl mx-auto">
-          {/* App Title Image */}
+        <div className="text-center max-w-4xl mx-auto glass-card p-8 md:p-12 border border-white/10 bg-background/20 backdrop-blur-sm">
+          {/* App Logo */}
           <div className="mb-8">
             <img 
-              src="/title.png" 
+              src="/logo_main.png" 
               alt="PastPort - Digital Time Capsules" 
-              className="h-16 md:h-20 mx-auto"
+              className="h-16 md:h-20 mx-auto object-contain"
+              style={{ background: 'transparent' }}
             />
           </div>
 
@@ -44,10 +45,15 @@ const Hero = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Create digital time capsules with your most precious moments. 
-            Set unlock dates, add riddles, and rediscover your past when the time is right.
-          </p>
+          <div className="mb-8">
+            <p className="text-2xl md:text-3xl tagline text-gradient animate-gradient mb-2">
+              nostalgia, reimagined
+            </p>
+            <p className="text-base md:text-lg text-muted-foreground/80 max-w-2xl mx-auto">
+              Create digital time capsules with your most precious moments. 
+              Set unlock dates, add riddles, and rediscover your past when the time is right.
+            </p>
+          </div>
 
           {/* Feature Highlights */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
@@ -66,10 +72,10 @@ const Hero = () => {
               </p>
             </div>
             <div className="glass-card p-6 glow-hover">
-              <Users className="w-8 h-8 text-secondary mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold mb-2">Shareable</h3>
+              <Lock className="w-8 h-8 text-secondary mb-4 mx-auto" />
+              <h3 className="text-lg font-semibold mb-2">Secure</h3>
               <p className="text-muted-foreground text-sm">
-                Create shared capsules with friends
+                Your memories are private and encrypted
               </p>
             </div>
           </div>
@@ -82,9 +88,11 @@ const Hero = () => {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Button size="lg" variant="ghost" className="btn-glass text-lg px-8 py-4">
-              Watch Demo
-            </Button>
+            <Link to="/how-it-works">
+              <Button size="lg" variant="ghost" className="btn-glass text-lg px-8 py-4">
+                How It Works
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}

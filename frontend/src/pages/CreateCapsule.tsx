@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, Upload, Users, Puzzle, Sparkles, ArrowLeft, Loader2, BookOpen, Clock } from 'lucide-react';
+import { Calendar, Upload, Puzzle, Sparkles, ArrowLeft, Loader2, BookOpen, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
 import Navigation from '@/components/Navigation';
 import MoodPicker from '@/components/MoodPicker';
 import LockTypeSelector from '@/components/LockTypeSelector';
+import MediaUploader from '@/components/MediaUploader';
 
 const CreateCapsule = () => {
   const navigate = useNavigate();
@@ -29,7 +30,6 @@ const CreateCapsule = () => {
     lockType: 'time',
     riddleQuestion: '',
     riddleAnswer: '',
-    isShared: false,
     tags: [] as string[],
     // Optional toggle UI for riddle (legacy): if true, treat as lockType 'riddle'
     hasRiddle: false,
@@ -38,6 +38,8 @@ const CreateCapsule = () => {
   });
   const [loading, setLoading] = useState(false);
   const [createMode, setCreateMode] = useState<'capsule' | 'journal'>('capsule');
+  const [createdCapsuleId, setCreatedCapsuleId] = useState<string | null>(null);
+  const [uploadedMedia, setUploadedMedia] = useState<any[]>([]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -94,7 +96,7 @@ const CreateCapsule = () => {
         lockType: effectiveLockType,
         tags: formData.tags,
         category: 'personal',
-        isPublic: formData.isShared
+        isPublic: false
       };
 
       if (effectiveLockType === 'riddle') {
@@ -105,9 +107,14 @@ const CreateCapsule = () => {
       const response = await apiClient.createCapsule(payload);
 
       if (response.success) {
+        const capsuleId = response.data._id || response.data.id;
+        setCreatedCapsuleId(capsuleId);
+        
         toast({
           title: "Capsule Created! ✨",
-          description: "Your time capsule has been safely stored and will unlock on the specified date.",
+          description: uploadedMedia.length > 0 
+            ? "Capsule created with media attachments!"
+            : "Your time capsule has been safely stored and will unlock on the specified date.",
         });
 
         // Navigate back to dashboard
@@ -278,6 +285,24 @@ const CreateCapsule = () => {
               </CardContent>
             </Card>
 
+            {/* Media Attachments */}
+            <Card className="glass-card border-white/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Media Attachments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MediaUploader
+                  entryId={createdCapsuleId || undefined}
+                  entryType="capsule"
+                  onMediaUploaded={(media) => setUploadedMedia(prev => [...prev, media])}
+                  maxFiles={5}
+                />
+              </CardContent>
+            </Card>
+
             {/* Advanced Options */}
             <Card className="glass-card border-white/10">
               <CardHeader>
@@ -327,24 +352,6 @@ const CreateCapsule = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Shared Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Users className="w-5 h-5 text-secondary" />
-                    <div>
-                      <Label htmlFor="isShared">Share with Friends</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Allow friends to view this capsule
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="isShared"
-                    checked={formData.isShared}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isShared: checked }))}
-                  />
-                </div>
               </CardContent>
             </Card>
 

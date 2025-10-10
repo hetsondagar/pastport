@@ -12,6 +12,7 @@ import CreateCapsule from "./pages/CreateCapsule";
 import Profile from "./pages/Profile";
 import DailyJournal from "./pages/DailyJournal";
 import MemoryConstellationPage from "./pages/MemoryConstellationPage";
+import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const AppRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+        <Route path="/how-it-works" element={<PageTransition><HowItWorks /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/journal" element={<PageTransition><DailyJournal /></PageTransition>} />
         <Route path="/memories/constellation" element={<PageTransition><MemoryConstellationPage /></PageTransition>} />

@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
 import Navigation from '@/components/Navigation';
 import StarField from '@/components/StarField';
-import MemoryModal from '@/components/MemoryModal';
+import JournalEntryModal from '@/components/JournalEntryModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ThreeJSLoading from '@/components/ThreeJSLoading';
 import WebGLContextManager from '@/components/WebGLContextManager';
@@ -209,6 +209,7 @@ const MemoryConstellationPage = () => {
   };
 
   const handleEntryClick = (entry: JournalEntry) => {
+    console.log('Star clicked:', entry);
     setSelectedEntry(entry);
     setShowModal(true);
   };
@@ -301,11 +302,11 @@ const MemoryConstellationPage = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen select-none">
       <Navigation />
       
       {/* Header */}
-      <div className="fixed top-20 left-4 right-4 z-10">
+      <div className="fixed top-20 left-4 right-4 z-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -366,11 +367,18 @@ const MemoryConstellationPage = () => {
       </div>
 
       {/* 3D Canvas */}
-      <div className="fixed inset-0 top-20">
+      <div className="fixed inset-0 top-20 z-0 select-none">
         <ErrorBoundary>
           <Canvas
             camera={{ position: cameraPosition, fov: 75 }}
-            style={{ background: '#000000' }}
+            style={{ 
+              background: '#000000',
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0
+            }}
             gl={{ alpha: false, antialias: true }}
           >
             <PerspectiveCamera
@@ -398,13 +406,22 @@ const MemoryConstellationPage = () => {
               />
             </Suspense>
             
-            {/* Controls */}
+            {/* Enhanced Controls - Better zoom behavior */}
             <OrbitControls
               enablePan={true}
               enableZoom={true}
               enableRotate={true}
-              minDistance={10}
-              maxDistance={80}
+              minDistance={5}
+              maxDistance={120}
+              zoomSpeed={0.8}
+              panSpeed={0.8}
+              rotateSpeed={0.5}
+              dampingFactor={0.05}
+              enableDamping={true}
+              touches={{
+                ONE: 1, // 1 finger = rotate
+                TWO: 2  // 2 fingers = zoom/pan
+              }}
             />
           </Canvas>
         </ErrorBoundary>
@@ -412,7 +429,7 @@ const MemoryConstellationPage = () => {
 
       {/* Empty state overlay */}
       {filteredEntries.length === 0 && !loading && (
-        <div className="fixed inset-0 top-20 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 top-20 flex items-center justify-center pointer-events-none z-10">
           <div className="pointer-events-auto glass-card-enhanced border-white/10 p-6 rounded-lg text-center max-w-md">
             <Sparkles className="w-16 h-16 text-primary mx-auto mb-4 opacity-50" />
             <h3 className="text-white font-semibold text-xl mb-2">No Stars Yet for {getMonthName(month)} {year}</h3>
@@ -441,11 +458,18 @@ const MemoryConstellationPage = () => {
 
       {/* Entry Modal */}
       {showModal && selectedEntry && (
-        <MemoryModal
-          memory={selectedEntry}
+        <JournalEntryModal
+          entry={selectedEntry}
           onClose={handleCloseModal}
           onUpdate={loadMonthEntries}
         />
+      )}
+      
+      {/* Debug info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 left-4 z-50 text-xs bg-black/50 text-white p-2 rounded">
+          Modal: {showModal ? 'SHOWING' : 'HIDDEN'} | Entry: {selectedEntry?.title || 'None'}
+        </div>
       )}
     </div>
   );

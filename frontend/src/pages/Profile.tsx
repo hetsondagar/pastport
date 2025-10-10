@@ -14,14 +14,9 @@ import {
   Mail, 
   Calendar, 
   Award, 
-  Settings, 
-  Camera, 
   Save, 
   Loader2,
-  Edit3,
   Shield,
-  Bell,
-  Palette,
   Eye,
   EyeOff,
   CheckCircle,
@@ -32,7 +27,7 @@ import {
 } from 'lucide-react';
 
 const Profile = () => {
-  const { user, updateProfile, updatePreferences, changePassword } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const { toast } = useToast();
   
   // Profile data
@@ -40,20 +35,6 @@ const Profile = () => {
     name: '',
     bio: '',
     avatar: ''
-  });
-
-  // Preferences data
-  const [preferences, setPreferences] = useState({
-    theme: 'auto',
-    notifications: {
-      email: true,
-      push: true,
-      unlockReminders: true
-    },
-    privacy: {
-      profileVisibility: 'friends',
-      showBadges: true
-    }
   });
 
   // Password change data
@@ -70,8 +51,7 @@ const Profile = () => {
     confirm: false
   });
   const [activeTab, setActiveTab] = useState('profile');
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState({
     name: '',
     bio: '',
@@ -87,11 +67,6 @@ const Profile = () => {
         name: user.name || '',
         bio: user.bio || '',
         avatar: user.avatar || ''
-      });
-      setPreferences(user.preferences || {
-        theme: 'auto',
-        notifications: { email: true, push: true, unlockReminders: true },
-        privacy: { profileVisibility: 'friends', showBadges: true }
       });
     }
   }, [user]);
@@ -125,82 +100,122 @@ const Profile = () => {
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validationErrors.name || validationErrors.bio) {
+    // Provide specific validation errors
+    if (validationErrors.name) {
       toast({
-        title: "Please fix the errors",
-        description: "Complete all fields correctly to continue.",
+        title: "Invalid Name",
+        description: "Your name must be at least 2 characters long.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (validationErrors.bio) {
+      toast({
+        title: "Bio Too Long",
+        description: "Your bio cannot exceed 500 characters. Please shorten it.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!profileData.name) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your name to continue.",
         variant: "destructive"
       });
       return;
     }
 
-    setIsLoading(true);
+    setIsSaving(true);
     try {
       const result = await updateProfile(profileData);
       if (result.success) {
         toast({
-          title: "Profile Updated! ✨",
-          description: "Your profile has been updated successfully.",
+          title: "Profile Updated Successfully! ✨",
+          description: "Your profile information has been saved.",
         });
-        setIsEditing(false);
       } else {
+        // Provide user-friendly error messages
+        let errorMessage = result.message || "Please try again.";
+        
+        if (errorMessage.toLowerCase().includes('network')) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else if (errorMessage.toLowerCase().includes('unauthorized')) {
+          errorMessage = "Your session has expired. Please login again.";
+        } else if (errorMessage.toLowerCase().includes('validation')) {
+          errorMessage = "Please check your information and try again.";
+        }
+        
         toast({
-          title: "Update Failed",
-          description: result.message || "Please try again.",
+          title: "Unable to Update Profile",
+          description: errorMessage,
           variant: "destructive"
         });
       }
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({
-        title: "Update Failed",
-        description: "An error occurred while updating your profile.",
+        title: "Profile Update Failed",
+        description: "An unexpected error occurred. Please try again or contact support if the problem persists.",
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePreferencesUpdate = async () => {
-    setIsLoading(true);
-    try {
-      const result = await updatePreferences(preferences);
-      if (result.success) {
-        toast({
-          title: "Preferences Updated! 🎨",
-          description: "Your preferences have been saved.",
-        });
-      } else {
-        toast({
-          title: "Update Failed",
-          description: result.message || "Please try again.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Update Failed",
-        description: "An error occurred while updating your preferences.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validationErrors.newPassword || validationErrors.confirmPassword) {
+    // Provide specific validation errors
+    if (!passwordData.currentPassword) {
       toast({
-        title: "Please fix the errors",
-        description: "Complete all fields correctly to continue.",
+        title: "Current Password Required",
+        description: "Please enter your current password to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!passwordData.newPassword) {
+      toast({
+        title: "New Password Required",
+        description: "Please enter a new password.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (validationErrors.newPassword) {
+      toast({
+        title: "Invalid New Password",
+        description: "Your new password must be at least 6 characters long.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!passwordData.confirmPassword) {
+      toast({
+        title: "Confirm Password Required",
+        description: "Please confirm your new password.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (validationErrors.confirmPassword) {
+      toast({
+        title: "Passwords Don't Match",
+        description: "The new password and confirmation password don't match. Please check and try again.",
         variant: "destructive"
       });
       return;
     }
 
-    setIsLoading(true);
+    setIsSaving(true);
     try {
       const result = await changePassword({
         currentPassword: passwordData.currentPassword,
@@ -209,25 +224,39 @@ const Profile = () => {
       
       if (result.success) {
         toast({
-          title: "Password Changed! 🔒",
-          description: "Your password has been updated successfully.",
+          title: "Password Changed Successfully! 🔒",
+          description: "Your password has been updated. Please use your new password for future logins.",
         });
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
+        // Provide user-friendly error messages
+        let errorMessage = result.message || "Please check your current password.";
+        
+        if (errorMessage.toLowerCase().includes('incorrect') || errorMessage.toLowerCase().includes('invalid')) {
+          errorMessage = "Your current password is incorrect. Please try again.";
+        } else if (errorMessage.toLowerCase().includes('same')) {
+          errorMessage = "Your new password cannot be the same as your current password.";
+        } else if (errorMessage.toLowerCase().includes('weak')) {
+          errorMessage = "Please choose a stronger password with at least 6 characters.";
+        } else if (errorMessage.toLowerCase().includes('network')) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        }
+        
         toast({
-          title: "Password Change Failed",
-          description: result.message || "Please check your current password.",
+          title: "Unable to Change Password",
+          description: errorMessage,
           variant: "destructive"
         });
       }
     } catch (error) {
+      console.error('Password change error:', error);
       toast({
         title: "Password Change Failed",
-        description: "An error occurred while changing your password.",
+        description: "An unexpected error occurred. Please try again or contact support if the problem persists.",
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -278,20 +307,13 @@ const Profile = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 glass-card border-white/10 mb-6">
+            <TabsList className="grid w-full grid-cols-2 glass-card border-white/10 mb-6">
               <TabsTrigger 
                 value="profile" 
                 className="data-[state=active]:bg-primary/20 data-[state=active]:text-white transition-all duration-200"
               >
                 <User className="w-4 h-4 mr-2" />
                 Profile
-              </TabsTrigger>
-              <TabsTrigger 
-                value="preferences"
-                className="data-[state=active]:bg-primary/20 data-[state=active]:text-white transition-all duration-200"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Preferences
               </TabsTrigger>
               <TabsTrigger 
                 value="security"
@@ -322,18 +344,9 @@ const Profile = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="btn-glass hover:bg-white/10"
-                        onClick={() => {/* TODO: Implement avatar upload */}}
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Change Avatar
-                      </Button>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        JPG, PNG or GIF. Max size 2MB.
+                      <h3 className="text-xl font-semibold text-white">{profileData.name || 'User'}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {user?.email}
                       </p>
                     </div>
                   </div>
@@ -353,7 +366,6 @@ const Profile = () => {
                               ? 'border-green-500/50 focus:border-green-500' 
                               : 'focus:border-blue-500'
                         }`}
-                        disabled={!isEditing}
                       />
                       {profileData.name && (
                         <div className="absolute right-3 top-3">
@@ -387,7 +399,6 @@ const Profile = () => {
                             : 'focus:border-blue-500'
                         }`}
                         placeholder="Tell us about yourself..."
-                        disabled={!isEditing}
                       />
                     </div>
                     <div className="flex justify-between items-center">
@@ -405,44 +416,23 @@ const Profile = () => {
 
                   {/* Action Buttons */}
                   <div className="flex gap-3">
-                    {!isEditing ? (
-                      <Button
-                        type="button"
-                        onClick={() => setIsEditing(true)}
-                        className="btn-glow"
-                      >
-                        <Edit3 className="w-4 h-4 mr-2" />
-                        Edit Profile
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="btn-glow transition-all duration-200"
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="w-4 h-4 mr-2" />
-                              Save Changes
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setIsEditing(false)}
-                          className="btn-glass hover:bg-white/10"
-                        >
-                          Cancel
-                        </Button>
-                      </>
-                    )}
+                    <Button
+                      type="submit"
+                      disabled={isSaving}
+                      className="btn-glow transition-all duration-200"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Profile
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </form>
               </CardContent>
@@ -499,152 +489,6 @@ const Profile = () => {
                   </CardContent>
                 </Card>
               )}
-          </TabsContent>
-
-            {/* Preferences Tab */}
-            <TabsContent value="preferences" className="space-y-6">
-              <Card className="glass-card-enhanced border-white/10 bg-background/90 backdrop-blur-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
-                    <Settings className="w-5 h-5" />
-                    Preferences
-                  </CardTitle>
-                </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Theme Settings */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Palette className="w-5 h-5" />
-                    Appearance
-                  </h3>
-                  <div className="space-y-2">
-                    <Label>Theme</Label>
-                    <select
-                      value={preferences.theme}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, theme: e.target.value }))}
-                      className="w-full px-3 py-2 glass-card border-white/10 rounded-md bg-background/50"
-                    >
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                      <option value="auto">Auto</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Notification Settings */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Bell className="w-5 h-5" />
-                    Notifications
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Email Notifications</Label>
-                        <p className="text-sm text-muted-foreground">Receive updates via email</p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={preferences.notifications.email}
-                        onChange={(e) => setPreferences(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, email: e.target.checked }
-                        }))}
-                        className="w-4 h-4"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Push Notifications</Label>
-                        <p className="text-sm text-muted-foreground">Receive browser notifications</p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={preferences.notifications.push}
-                        onChange={(e) => setPreferences(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, push: e.target.checked }
-                        }))}
-                        className="w-4 h-4"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Unlock Reminders</Label>
-                        <p className="text-sm text-muted-foreground">Get reminded when capsules unlock</p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={preferences.notifications.unlockReminders}
-                        onChange={(e) => setPreferences(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, unlockReminders: e.target.checked }
-                        }))}
-                        className="w-4 h-4"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Privacy Settings */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Eye className="w-5 h-5" />
-                    Privacy
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label>Profile Visibility</Label>
-                      <select
-                        value={preferences.privacy.profileVisibility}
-                        onChange={(e) => setPreferences(prev => ({
-                          ...prev,
-                          privacy: { ...prev.privacy, profileVisibility: e.target.value }
-                        }))}
-                        className="w-full px-3 py-2 glass-card border-white/10 rounded-md bg-background/50"
-                      >
-                        <option value="public">Public</option>
-                        <option value="friends">Friends Only</option>
-                        <option value="private">Private</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Show Badges</Label>
-                        <p className="text-sm text-muted-foreground">Display your badges on your profile</p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={preferences.privacy.showBadges}
-                        onChange={(e) => setPreferences(prev => ({
-                          ...prev,
-                          privacy: { ...prev.privacy, showBadges: e.target.checked }
-                        }))}
-                        className="w-4 h-4"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handlePreferencesUpdate}
-                  disabled={isLoading}
-                  className="btn-glow"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Preferences
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
           </TabsContent>
 
             {/* Security Tab */}
@@ -765,10 +609,10 @@ const Profile = () => {
 
                   <Button
                     type="submit"
-                    disabled={isLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || Object.values(validationErrors).some(error => error !== '')}
+                    disabled={isSaving || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || Object.values(validationErrors).some(error => error !== '')}
                     className="btn-glow"
                   >
-                    {isLoading ? (
+                    {isSaving ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Changing Password...

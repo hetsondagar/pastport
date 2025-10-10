@@ -1,8 +1,9 @@
-import { X, Calendar, Lock, Unlock, Share2, Heart, MessageCircle } from 'lucide-react';
+import { X, Calendar, Lock, Unlock, Heart, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
+import MediaDisplay from '@/components/MediaDisplay';
 
 interface CapsuleModalProps {
   capsule: any;
@@ -102,9 +103,17 @@ const CapsuleModal = ({ capsule, isOpen, onClose }: CapsuleModalProps) => {
                         </p>
                       </div>
 
+                      {/* Media Attachments */}
+                      {capsule.media && capsule.media.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-semibold text-white mb-3">Media Attachments</h3>
+                          <MediaDisplay media={capsule.media} layout="grid" showCaptions={true} />
+                        </div>
+                      )}
+
                       {/* Unlock Info */}
                       {capsule.unlockedAt && (
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <div className="flex items-center gap-2 text-sm text-gray-400 mt-4">
                           <Unlock className="w-4 h-4" />
                           <span>Unlocked on {formatDate(capsule.unlockedAt)}</span>
                         </div>
@@ -150,14 +159,8 @@ const CapsuleModal = ({ capsule, isOpen, onClose }: CapsuleModalProps) => {
                   )}
 
                   {/* Social Info */}
-                  {capsule.isUnlocked && (
+                  {capsule.isUnlocked && (capsule.reactions?.length > 0 || capsule.comments?.length > 0) && (
                     <div className="flex items-center gap-4 text-sm text-gray-400 pt-4 border-t border-white/10">
-                      {capsule.sharedWith && capsule.sharedWith.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Share2 className="w-4 h-4" />
-                          <span>{capsule.sharedWith.length} shared</span>
-                        </div>
-                      )}
                       {capsule.reactions && capsule.reactions.length > 0 && (
                         <div className="flex items-center gap-1">
                           <Heart className="w-4 h-4" />

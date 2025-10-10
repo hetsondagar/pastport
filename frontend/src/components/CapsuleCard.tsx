@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Lock, Unlock, Users, Puzzle } from 'lucide-react';
+import { Clock, Lock, Unlock, Puzzle, Image, Video, Music } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import RiddleUnlock from './RiddleUnlock';
@@ -16,12 +16,12 @@ interface CapsuleCardProps {
   isLocked: boolean;
   lockType?: string;
   riddleQuestion?: string;
-  isShared: boolean;
   preview?: string;
   onClick: () => void;
   failedAttempts?: number;
   lockoutUntil?: Date;
   onUnlock?: () => void;
+  media?: any[];
 }
 
 const CapsuleCard = ({
@@ -33,12 +33,12 @@ const CapsuleCard = ({
   isLocked,
   lockType,
   riddleQuestion,
-  isShared,
   preview,
   onClick,
   failedAttempts = 0,
   lockoutUntil,
-  onUnlock
+  onUnlock,
+  media = []
 }: CapsuleCardProps) => {
   const [showRiddleUnlock, setShowRiddleUnlock] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
@@ -185,12 +185,6 @@ const CapsuleCard = ({
               Riddle
             </Badge>
           )}
-          {isShared && (
-            <Badge variant="secondary" className="bg-secondary/20 text-secondary">
-              <Users className="w-3 h-3 mr-1" />
-              Shared
-            </Badge>
-          )}
         </div>
       </div>
 
@@ -199,6 +193,36 @@ const CapsuleCard = ({
         <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
           {preview}
         </p>
+      )}
+
+      {/* Media Thumbnails */}
+      {media && media.length > 0 && (
+        <div className="mb-4">
+          <div className="flex gap-2 flex-wrap">
+            {media.slice(0, 3).map((item, index) => (
+              <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden bg-black/20">
+                {item.type === 'image' && (
+                  <img src={item.url} alt="" className="w-full h-full object-cover" />
+                )}
+                {item.type === 'video' && (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+                    <Video className="w-6 h-6 text-blue-400" />
+                  </div>
+                )}
+                {item.type === 'audio' && (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-pink-500/20">
+                    <Music className="w-6 h-6 text-purple-400" />
+                  </div>
+                )}
+              </div>
+            ))}
+            {media.length > 3 && (
+              <div className="w-16 h-16 rounded-lg bg-black/20 flex items-center justify-center text-xs text-gray-400">
+                +{media.length - 3}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {isLocked && (

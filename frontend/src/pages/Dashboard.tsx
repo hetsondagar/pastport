@@ -325,12 +325,12 @@ const Dashboard = () => {
                 isLocked={!capsule.isUnlocked}
                 lockType={capsule.lockType}
                 riddleQuestion={capsule.riddleQuestion}
-                isShared={capsule.sharedWith && capsule.sharedWith.length > 0}
                 preview={capsule.isUnlocked ? capsule.message : 'This capsule is locked until the unlock date...'}
                 onClick={() => handleCapsuleClick(capsule._id)}
                 failedAttempts={capsule.failedAttempts}
                 lockoutUntil={capsule.lockoutUntil ? new Date(capsule.lockoutUntil) : undefined}
                 onUnlock={handleCapsuleUnlock}
+                media={capsule.media}
               />
             ))}
           </div>

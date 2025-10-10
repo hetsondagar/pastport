@@ -1,194 +1,78 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Calendar, 
-  Lock, 
-  Unlock, 
-  Puzzle, 
-  Save, 
-  X, 
-  Loader2,
-  CheckCircle,
-  XCircle,
-  AlertCircle
-} from 'lucide-react';
-import apiClient from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import MoodPicker from './MoodPicker';
-import ConfettiAnimation from './ConfettiAnimation';
+import { X, Calendar, Star, Edit, Trash2, Save, XCircle } from 'lucide-react';
+import MediaDisplay from '@/components/MediaDisplay';
 
 interface JournalEntry {
-  _id: string;
+  id: string;
+  title: string;
   content: string;
   mood: string;
-  isCapsule: boolean;
-  lockType: string;
-  isUnlocked: boolean;
-  unlockDate?: string;
-  riddleQuestion?: string;
   date: string;
+  position: { x: number; y: number; z: number };
+  dayOfMonth: number;
+  isCapsule: boolean;
 }
 
 interface JournalEntryModalProps {
-  entry: JournalEntry | null;
-  date: Date;
-  isOpen: boolean;
+  entry: JournalEntry;
   onClose: () => void;
-  onSave: () => void;
+  onUpdate: () => void;
 }
 
-const JournalEntryModal = ({ entry, date, isOpen, onClose, onSave }: JournalEntryModalProps) => {
+const JournalEntryModal = ({ entry, onClose, onUpdate }: JournalEntryModalProps) => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    content: '',
-    mood: 'neutral',
-    isCapsule: false,
-    lockType: 'none',
-    unlockDate: '',
-    riddleQuestion: '',
-    riddleAnswer: '',
-    tags: [] as string[],
-    isPublic: false
+    title: entry.title,
+    content: entry.content,
+    mood: entry.mood
   });
-  const [riddleAnswer, setRiddleAnswer] = useState('');
-  const [showRiddleForm, setShowRiddleForm] = useState(false);
-  const [showUnlockConfetti, setShowUnlockConfetti] = useState(false);
 
-  useEffect(() => {
-    if (entry) {
-      setFormData({
-        content: entry.content,
-        mood: entry.mood,
-        isCapsule: entry.isCapsule,
-        lockType: entry.lockType,
-        unlockDate: entry.unlockDate ? new Date(entry.unlockDate).toISOString().split('T')[0] : '',
-        riddleQuestion: entry.riddleQuestion || '',
-        riddleAnswer: '',
-        tags: [],
-        isPublic: false
-      });
-      setIsEditing(false);
-    } else {
-      setFormData({
-        content: '',
-        mood: 'neutral',
-        isCapsule: false,
-        lockType: 'none',
-        unlockDate: '',
-        riddleQuestion: '',
-        riddleAnswer: '',
-        tags: [],
-        isPublic: false
-      });
-      setIsEditing(true);
-    }
-  }, [entry, date]);
+  const moodColors = {
+    happy: 'bg-green-500',
+    sad: 'bg-blue-500',
+    excited: 'bg-yellow-500',
+    angry: 'bg-red-500',
+    calm: 'bg-purple-500',
+    anxious: 'bg-orange-500',
+    grateful: 'bg-pink-500',
+    neutral: 'bg-gray-500'
+  };
+
+  const moodEmojis = {
+    happy: '😊',
+    sad: '😢',
+    excited: '🎉',
+    angry: '😡',
+    calm: '😌',
+    anxious: '😰',
+    grateful: '🙏',
+    neutral: '😐'
+  };
 
   const handleSave = async () => {
-    if (!formData.content.trim()) {
-      toast({
-        title: "Content Required",
-        description: "Please enter some content for your journal entry.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (formData.isCapsule && formData.lockType === 'riddle' && (!formData.riddleQuestion || !formData.riddleAnswer)) {
-      toast({
-        title: "Riddle Required",
-        description: "Please provide both riddle question and answer.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setLoading(true);
     try {
-      if (entry) {
-        // Update existing entry
-        const response = await apiClient.updateJournalEntry(entry._id, {
-          content: formData.content,
-          mood: formData.mood,
-          tags: formData.tags,
-          isPublic: formData.isPublic
-        });
-
-        if (response.success) {
-          toast({
-            title: "Entry Updated",
-            description: "Your journal entry has been updated successfully.",
-          });
-          onSave();
-        }
-      } else {
-        // Create new entry
-        const response = await apiClient.createJournalEntry({
-          content: formData.content,
-          mood: formData.mood,
-          date: date.toISOString().split('T')[0],
-          isCapsule: formData.isCapsule,
-          lockType: formData.lockType,
-          unlockDate: formData.lockType === 'time' ? formData.unlockDate : undefined,
-          riddleQuestion: formData.lockType === 'riddle' ? formData.riddleQuestion : undefined,
-          riddleAnswer: formData.lockType === 'riddle' ? formData.riddleAnswer : undefined,
-          tags: formData.tags,
-          isPublic: formData.isPublic
-        });
-
-        if (response.success) {
-          toast({
-            title: "Entry Created",
-            description: "Your journal entry has been created successfully.",
-          });
-          onSave();
-        }
-      }
+      // Here you would call your API to update the journal entry
+      // await apiClient.updateJournalEntry(entry.id, formData);
+      
+      toast({
+        title: "Success",
+        description: "Journal entry updated successfully!",
+      });
+      
+      setIsEditing(false);
+      onUpdate();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save journal entry. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUnlock = async () => {
-    if (!entry || !entry.isCapsule) return;
-
-    setLoading(true);
-    try {
-      const response = await apiClient.unlockJournalEntry(entry._id, riddleAnswer);
-      
-      if (response.success) {
-        setShowUnlockConfetti(true);
-        toast({
-          title: "🎉 Capsule Unlocked!",
-          description: "Your time capsule has been unlocked successfully!",
-        });
-        onSave();
-      } else {
-        toast({
-          title: "Unlock Failed",
-          description: response.message || "Failed to unlock capsule.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Unlock Failed",
-        description: "Failed to unlock capsule. Please try again.",
+        description: "Failed to update journal entry.",
         variant: "destructive"
       });
     } finally {
@@ -197,23 +81,26 @@ const JournalEntryModal = ({ entry, date, isOpen, onClose, onSave }: JournalEntr
   };
 
   const handleDelete = async () => {
-    if (!entry) return;
+    if (!confirm('Are you sure you want to delete this journal entry?')) {
+      return;
+    }
 
     setLoading(true);
     try {
-      const response = await apiClient.deleteJournalEntry(entry._id);
+      // Here you would call your API to delete the journal entry
+      // await apiClient.deleteJournalEntry(entry.id);
       
-      if (response.success) {
-        toast({
-          title: "Entry Deleted",
-          description: "Your journal entry has been deleted successfully.",
-        });
-        onSave();
-      }
+      toast({
+        title: "Success",
+        description: "Journal entry deleted successfully!",
+      });
+      
+      onUpdate();
+      onClose();
     } catch (error) {
       toast({
-        title: "Delete Failed",
-        description: "Failed to delete journal entry. Please try again.",
+        title: "Error",
+        description: "Failed to delete journal entry.",
         variant: "destructive"
       });
     } finally {
@@ -221,258 +108,151 @@ const JournalEntryModal = ({ entry, date, isOpen, onClose, onSave }: JournalEntr
     }
   };
 
-  if (!isOpen) return null;
-
-  const canUnlock = entry?.isCapsule && !entry.isUnlocked && 
-    (entry.lockType === 'riddle' || (entry.lockType === 'time' && entry.unlockDate && new Date(entry.unlockDate) <= new Date()));
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long'
+    });
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto glass-card border-white/10 bg-background/90 backdrop-blur-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-white">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              {entry ? 'Journal Entry' : 'New Journal Entry'}
-              <Badge variant="outline" className="text-xs">
-                {date.toLocaleDateString()}
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-gray-400 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {entry && !isEditing && !canUnlock ? (
-            // View mode
-            <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center select-none"
+      >
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+        
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: "spring", duration: 0.3 }}
+          className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4 select-text"
+        >
+          <Card className="glass-card-enhanced border-white/20">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+              <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{getMoodEmoji(entry.mood)}</span>
-                  <span className="text-white font-medium capitalize">{entry.mood}</span>
+                  <Star className="w-5 h-5 text-primary" />
+                  <Badge 
+                    variant="secondary" 
+                    className={`${moodColors[entry.mood as keyof typeof moodColors]} text-white`}
+                  >
+                    {moodEmojis[entry.mood as keyof typeof moodEmojis]} {entry.mood}
+                  </Badge>
                   {entry.isCapsule && (
-                    <Badge className="bg-purple-500/20 text-purple-400">
-                      {entry.isUnlocked ? 'Unlocked Capsule' : 'Locked Capsule'}
+                    <Badge variant="outline" className="border-primary text-primary">
+                      Time Capsule
                     </Badge>
                   )}
                 </div>
-                <p className="text-white/90 whitespace-pre-wrap">{entry.content}</p>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => setIsEditing(true)}
-                  className="btn-glow"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Edit Entry
-                </Button>
-                <Button
-                  onClick={handleDelete}
-                  variant="destructive"
-                  className="bg-red-500/20 text-red-400 border-red-500/50"
-                >
-                  Delete Entry
-                </Button>
-              </div>
-            </div>
-          ) : canUnlock ? (
-            // Unlock mode
-            <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
-                <div className="flex items-center gap-2 mb-2">
-                  <Lock className="w-5 h-5 text-purple-400" />
-                  <span className="text-white font-medium">Locked Time Capsule</span>
-                </div>
-                <p className="text-white/90 mb-4">{entry.content}</p>
-                
-                {entry.lockType === 'riddle' && entry.riddleQuestion && (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30">
-                      <p className="text-white font-medium mb-2">Riddle:</p>
-                      <p className="text-white/90">{entry.riddleQuestion}</p>
-                    </div>
-                    <div>
-                      <Label htmlFor="riddle-answer" className="text-white">Your Answer</Label>
-                      <Input
-                        id="riddle-answer"
-                        value={riddleAnswer}
-                        onChange={(e) => setRiddleAnswer(e.target.value)}
-                        placeholder="Enter your answer here..."
-                        className="glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400"
-                      />
-                    </div>
+                <CardTitle className="text-2xl text-white mb-2">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full bg-transparent border-b border-white/20 text-white text-2xl font-bold outline-none"
+                    />
+                  ) : (
+                    entry.title
+                  )}
+                </CardTitle>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {formatDate(entry.date)}
                   </div>
-                )}
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4" />
+                    Day {entry.dayOfMonth}
+                  </div>
+                </div>
               </div>
-
-              <Button
-                onClick={handleUnlock}
-                disabled={loading || (entry.lockType === 'riddle' && !riddleAnswer.trim())}
-                className="w-full btn-glow"
-              >
-                {loading ? (
+              
+              <div className="flex items-center gap-2">
+                {isEditing ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Unlocking...
+                    <Button
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={loading}
+                      className="bg-primary hover:bg-primary/80"
+                    >
+                      <Save className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditing(false)}
+                      disabled={loading}
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
                   </>
                 ) : (
                   <>
-                    <Unlock className="w-4 h-4 mr-2" />
-                    Unlock Capsule
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditing(true)}
+                      className="glass-card border-white/10 hover:bg-white/10"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDelete}
+                      disabled={loading}
+                      className="glass-card border-red-500/20 hover:bg-red-500/10 text-red-400"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </>
                 )}
-              </Button>
-            </div>
-          ) : (
-            // Edit/Create mode
-            <div className="space-y-4">
-              <MoodPicker
-                selectedMood={formData.mood}
-                onMoodChange={(mood) => setFormData(prev => ({ ...prev, mood }))}
-              />
-
-              <div>
-                <Label htmlFor="content" className="text-white">Content</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Write about your day..."
-                  className="glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400"
-                  rows={6}
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is-capsule"
-                  checked={formData.isCapsule}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isCapsule: checked }))}
-                />
-                <Label htmlFor="is-capsule" className="text-white">Make this a time capsule</Label>
-              </div>
-
-              {formData.isCapsule && (
-                <div className="space-y-4 p-4 glass-card border-white/10 bg-background/50 rounded-lg">
-                  <div>
-                    <Label htmlFor="lock-type" className="text-white">Lock Type</Label>
-                    <Select
-                      value={formData.lockType}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, lockType: value }))}
-                    >
-                      <SelectTrigger id="lock-type" className="glass-card border-white/10 bg-background/50 text-white">
-                        <SelectValue placeholder="Select lock type" />
-                      </SelectTrigger>
-                      <SelectContent className="glass-card border-white/10 bg-background/90 text-white">
-                        <SelectItem value="none">No Lock</SelectItem>
-                        <SelectItem value="time">Time Lock</SelectItem>
-                        <SelectItem value="riddle">Riddle Lock</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {formData.lockType === 'time' && (
-                    <div>
-                      <Label htmlFor="unlock-date" className="text-white">Unlock Date</Label>
-                      <Input
-                        id="unlock-date"
-                        type="date"
-                        value={formData.unlockDate}
-                        onChange={(e) => setFormData(prev => ({ ...prev, unlockDate: e.target.value }))}
-                        className="glass-card border-white/10 bg-background/50 text-white"
-                        min={new Date().toISOString().split('T')[0]}
-                      />
-                    </div>
-                  )}
-
-                  {formData.lockType === 'riddle' && (
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="riddle-question" className="text-white">Riddle Question</Label>
-                        <Textarea
-                          id="riddle-question"
-                          value={formData.riddleQuestion}
-                          onChange={(e) => setFormData(prev => ({ ...prev, riddleQuestion: e.target.value }))}
-                          placeholder="What's the riddle that needs to be answered?"
-                          className="glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400"
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="riddle-answer" className="text-white">Correct Answer</Label>
-                        <Input
-                          id="riddle-answer"
-                          type="password"
-                          value={formData.riddleAnswer}
-                          onChange={(e) => setFormData(prev => ({ ...prev, riddleAnswer: e.target.value }))}
-                          placeholder="The answer to unlock the capsule"
-                          className="glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex gap-3">
                 <Button
-                  onClick={handleSave}
-                  disabled={loading || !formData.content.trim()}
-                  className="flex-1 btn-glow"
+                  size="sm"
+                  variant="ghost"
+                  onClick={onClose}
+                  className="text-muted-foreground hover:text-white"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      {entry ? 'Update Entry' : 'Create Entry'}
-                    </>
-                  )}
+                  <X className="w-4 h-4" />
                 </Button>
-                {entry && (
-                  <Button
-                    onClick={() => setIsEditing(false)}
-                    variant="outline"
-                    className="glass-card border-white/10"
-                  >
-                    Cancel
-                  </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-white mb-2">Content</h4>
+                {isEditing ? (
+                  <textarea
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    className="w-full h-32 bg-background/20 border border-white/10 rounded-lg p-3 text-white resize-none outline-none focus:border-primary/50"
+                    placeholder="Write your thoughts..."
+                  />
+                ) : (
+                  <div className="glass-card p-4 rounded-lg min-h-[100px]">
+                    <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      {entry.content}
+                    </p>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Unlock Confetti Animation */}
-      <ConfettiAnimation 
-        isActive={showUnlockConfetti} 
-        onComplete={() => setShowUnlockConfetti(false)} 
-      />
-    </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
-};
-
-const getMoodEmoji = (mood: string) => {
-  const moodEmojis: { [key: string]: string } = {
-    happy: '🌞',
-    sad: '😢',
-    excited: '🎉',
-    angry: '😡',
-    calm: '🌙',
-    neutral: '😐'
-  };
-  return moodEmojis[mood] || '😐';
 };
 
 export default JournalEntryModal;

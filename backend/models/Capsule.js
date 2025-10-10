@@ -134,11 +134,20 @@ const capsuleSchema = new mongoose.Schema({
     },
     type: {
       type: String,
-      enum: ['image', 'video', 'document'],
+      enum: ['image', 'video', 'audio'],
       required: true
     },
-    filename: String,
+    format: String,
+    resourceType: String,
+    width: Number,
+    height: Number,
     size: Number,
+    duration: Number, // For video/audio
+    caption: {
+      type: String,
+      maxlength: 500,
+      default: ''
+    },
     uploadedAt: {
       type: Date,
       default: Date.now
@@ -271,16 +280,31 @@ capsuleSchema.virtual('commentCount').get(function() {
 
 // Check if user can view capsule
 capsuleSchema.methods.canView = function(userId) {
+  const userIdStr = userId.toString();
+  const creatorIdStr = this.creator.toString();
+  
+  console.log('canView check:', {
+    userId: userIdStr,
+    creatorId: creatorIdStr,
+    isCreator: creatorIdStr === userIdStr,
+    sharedWith: this.sharedWith.map(share => ({
+      userId: share.user.toString(),
+      permission: share.permission
+    }))
+  });
+  
   // Creator can always view
-  if (this.creator.toString() === userId.toString()) {
+  if (creatorIdStr === userIdStr) {
+    console.log('User is creator - access granted');
     return true;
   }
   
   // Check if user is in sharedWith
   const sharedUser = this.sharedWith.find(share => 
-    share.user.toString() === userId.toString()
+    share.user.toString() === userIdStr
   );
   
+  console.log('Shared user found:', !!sharedUser);
   return !!sharedUser;
 };
 

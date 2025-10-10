@@ -107,6 +107,12 @@ export const getCapsules = async (req, res, next) => {
 // @access  Private
 export const getCapsule = async (req, res, next) => {
   try {
+    console.log('getCapsule request:', {
+      capsuleId: req.params.id,
+      userId: req.user?._id,
+      userEmail: req.user?.email
+    });
+
     const capsule = await Capsule.findById(req.params.id)
       .populate('creator', 'name avatar')
       .populate('sharedWith.user', 'name avatar')
@@ -122,6 +128,14 @@ export const getCapsule = async (req, res, next) => {
     }
 
     // Check if user can view this capsule
+    console.log('Capsule access check:', {
+      capsuleId: req.params.id,
+      userId: req.user._id,
+      creatorId: capsule.creator,
+      sharedWith: capsule.sharedWith,
+      canView: capsule.canView(req.user._id)
+    });
+    
     if (!capsule.canView(req.user._id)) {
       return res.status(403).json({
         success: false,
