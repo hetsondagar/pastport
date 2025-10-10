@@ -27,11 +27,14 @@ const Hero = () => {
         <div className="text-center max-w-4xl mx-auto glass-card p-8 md:p-12 border border-white/10 bg-background/20 backdrop-blur-sm">
           {/* App Logo */}
           <div className="mb-8">
-            <img 
-              src="/logo_main.png" 
-              alt="PastPort - Digital Time Capsules" 
+            <img
+              src="/logo_main.png"
+              alt="PastPort - Digital Time Capsules"
               className="h-16 md:h-20 mx-auto object-contain"
               style={{ background: 'transparent' }}
+              onError={(e) => {
+                e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik00MCAxNkM0OC44MzY2IDE2IDU2IDIzLjE2MzQgNTYgMzJDNjYgNDAuODM2NiA0OC44MzY2IDQ4IDQwIDQ4QzMxLjE2MzQgNDggMjQgNDAuODM2NiAyNCAzMkMyNCAyMy4xNjM0IDMxLjE2MzQgMTYgNDAgMTZaIiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjkiLz4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiIHgxPSIwIiB5MT0iMCIgeDI9IjgwIiB5Mj0iODAiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzY2NjdFQUIiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjOEI1Q0ZGIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==';
+              }}
             />
           </div>
 

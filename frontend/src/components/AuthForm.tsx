@@ -209,6 +209,9 @@ const AuthForm = () => {
               alt="PastPort Logo" 
               className="w-12 h-12 mx-auto mb-2 object-contain"
               style={{ background: 'transparent' }}
+              onError={(e) => {
+                e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjQiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik0yNCA5QzI5LjUyMjg0IDkgMzQgMTMuNDc3MiAzNCAxOUMyNCAyNy41MjI4IDE4LjUyMjggMzMgMjQgMzNDMTguNDc3MiAzMyAxNCAyNy41MjI4IDE0IDE5QzE0IDEzLjQ3NzIgMTguNDc3MiA5IDI0IDlaIiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjkiLz4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiIHgxPSIwIiB5MT0iMCIgeDI9IjQ4IiB5Mj0iNDgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzY2NjdFQUIiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjOEI1Q0ZGIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==';
+              }}
             />
           </div>
           <CardTitle className="text-2xl app-name-bold text-gradient">
