@@ -24,10 +24,7 @@ export const getCapsules = async (req, res, next) => {
 
     // Build query
     let query = {
-      $or: [
-        { creator: userId },
-        { 'sharedWith.user': userId }
-      ],
+      creator: userId,
       isArchived: false
     };
 
@@ -67,7 +64,6 @@ export const getCapsules = async (req, res, next) => {
 
     const capsules = await Capsule.find(query)
       .populate('creator', 'name avatar')
-      .populate('sharedWith.user', 'name avatar')
       .populate('unlockedBy', 'name avatar')
       .sort(sortOptions)
       .skip(skip)
@@ -115,7 +111,6 @@ export const getCapsule = async (req, res, next) => {
 
     const capsule = await Capsule.findById(req.params.id)
       .populate('creator', 'name avatar')
-      .populate('sharedWith.user', 'name avatar')
       .populate('unlockedBy', 'name avatar')
       .populate('reactions.user', 'name avatar')
       .populate('comments.user', 'name avatar');
@@ -132,7 +127,6 @@ export const getCapsule = async (req, res, next) => {
       capsuleId: req.params.id,
       userId: req.user._id,
       creatorId: capsule.creator,
-      sharedWith: capsule.sharedWith,
       canView: capsule.canView(req.user._id)
     });
     
@@ -176,8 +170,7 @@ export const createCapsule = async (req, res, next) => {
       riddleAnswer,
       tags = [],
       category = 'personal',
-      isPublic = false,
-      sharedWith = []
+      isPublic = false
     } = req.body;
 
     const userId = req.user._id;
@@ -202,11 +195,7 @@ export const createCapsule = async (req, res, next) => {
       unlockDate: unlockDateObj,
       tags,
       category,
-      isPublic,
-      sharedWith: sharedWith.map(userId => ({
-        user: userId,
-        permission: 'view'
-      }))
+      isPublic
     };
 
     // Add riddle if lockType is riddle
@@ -293,19 +282,6 @@ export const createCapsule = async (req, res, next) => {
       });
     }
 
-    // Create notifications for shared users
-    if (sharedWith.length > 0) {
-      for (const sharedUserId of sharedWith) {
-        await Notification.createNotification(
-          sharedUserId,
-          'capsule_shared',
-          'New Shared Capsule',
-          `${user.name} shared a capsule with you: "${title}"`,
-          { capsuleId: capsule._id, fromUser: userId }
-        );
-      }
-    }
-
     res.status(201).json({
       success: true,
       message: 'Capsule created successfully',
@@ -352,8 +328,7 @@ export const updateCapsule = async (req, res, next) => {
       emoji,
       tags,
       category,
-      isPublic,
-      sharedWith
+      isPublic
     } = req.body;
 
     // Update fields
@@ -363,12 +338,6 @@ export const updateCapsule = async (req, res, next) => {
     if (tags) capsule.tags = tags;
     if (category) capsule.category = category;
     if (isPublic !== undefined) capsule.isPublic = isPublic;
-    if (sharedWith) {
-      capsule.sharedWith = sharedWith.map(userId => ({
-        user: userId,
-        permission: 'view'
-      }));
-    }
 
     await capsule.save();
 
@@ -639,10 +608,7 @@ export const getCapsuleStats = async (req, res, next) => {
     const stats = await Capsule.aggregate([
       {
         $match: {
-          $or: [
-            { creator: userId },
-            { 'sharedWith.user': userId }
-          ],
+          creator: userId,
           isArchived: false
         }
       },
@@ -656,9 +622,6 @@ export const getCapsuleStats = async (req, res, next) => {
           unlockedCapsules: {
             $sum: { $cond: [{ $eq: ['$isUnlocked', true] }, 1, 0] }
           },
-          sharedCapsules: {
-            $sum: { $cond: [{ $gt: [{ $size: '$sharedWith' }, 0] }, 1, 0] }
-          },
           riddleCapsules: {
             $sum: { $cond: [{ $eq: ['$hasRiddle', true] }, 1, 0] }
           }
@@ -670,7 +633,6 @@ export const getCapsuleStats = async (req, res, next) => {
       totalCapsules: 0,
       lockedCapsules: 0,
       unlockedCapsules: 0,
-      sharedCapsules: 0,
       riddleCapsules: 0
     };
 

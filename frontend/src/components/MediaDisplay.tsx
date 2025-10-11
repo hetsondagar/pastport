@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MediaItem {
+  _id?: string;
   url: string;
   type: 'image' | 'video' | 'audio';
   caption?: string;
@@ -20,9 +21,11 @@ interface MediaDisplayProps {
   media: MediaItem[];
   layout?: 'grid' | 'carousel';
   showCaptions?: boolean;
+  onDelete?: (mediaId: string) => void;
+  showDelete?: boolean;
 }
 
-const MediaDisplay = ({ media, layout = 'grid', showCaptions = true }: MediaDisplayProps) => {
+const MediaDisplay = ({ media, layout = 'grid', showCaptions = true, onDelete, showDelete = false }: MediaDisplayProps) => {
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -133,6 +136,18 @@ const MediaDisplay = ({ media, layout = 'grid', showCaptions = true }: MediaDisp
                       <span className="capitalize">{item.type}</span>
                     </Badge>
                   </div>
+
+                  {/* Delete Button */}
+                  {showDelete && onDelete && item._id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(item._id!)}
+                      className="absolute top-2 right-2 bg-red-500/70 hover:bg-red-500 text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
 
                 {/* Caption */}

@@ -33,25 +33,6 @@ const userSchema = new mongoose.Schema({
     maxlength: [500, 'Bio cannot be more than 500 characters'],
     default: ''
   },
-  friends: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  friendRequests: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'accepted', 'declined'],
-      default: 'pending'
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
   badges: [{
     name: {
       type: String,
@@ -71,7 +52,7 @@ const userSchema = new mongoose.Schema({
     },
     category: {
       type: String,
-      enum: ['creation', 'social', 'challenge', 'milestone'],
+      enum: ['creation', 'challenge', 'milestone'],
       required: true
     }
   }],
@@ -98,8 +79,8 @@ const userSchema = new mongoose.Schema({
     privacy: {
       profileVisibility: {
         type: String,
-        enum: ['public', 'friends', 'private'],
-        default: 'friends'
+        enum: ['public', 'private'],
+        default: 'private'
       },
       showBadges: {
         type: Boolean,
@@ -117,10 +98,6 @@ const userSchema = new mongoose.Schema({
       default: 0
     },
     riddlesSolved: {
-      type: Number,
-      default: 0
-    },
-    friendsCount: {
       type: Number,
       default: 0
     },
@@ -195,14 +172,6 @@ userSchema.pre('save', async function(next) {
 userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
-// Update friends count when friends array changes
-userSchema.pre('save', function(next) {
-  if (this.isModified('friends')) {
-    this.stats.friendsCount = this.friends.length;
-  }
-  next();
-});
 
 // Add badge to user
 userSchema.methods.addBadge = function(badgeData) {

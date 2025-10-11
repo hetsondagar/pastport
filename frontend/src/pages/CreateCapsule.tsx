@@ -6,8 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Calendar, Upload, Puzzle, Sparkles, ArrowLeft, Loader2, BookOpen, Clock } from 'lucide-react';
+import { Calendar, Upload, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api';
@@ -30,11 +29,7 @@ const CreateCapsule = () => {
     lockType: 'time',
     riddleQuestion: '',
     riddleAnswer: '',
-    tags: [] as string[],
-    // Optional toggle UI for riddle (legacy): if true, treat as lockType 'riddle'
-    hasRiddle: false,
-    // Optional alias used by the legacy riddle block
-    riddle: ''
+    tags: [] as string[]
   });
   const [loading, setLoading] = useState(false);
   const [createMode, setCreateMode] = useState<'capsule' | 'journal'>('capsule');
@@ -63,9 +58,7 @@ const CreateCapsule = () => {
       return;
     }
 
-    const effectiveLockType = formData.hasRiddle ? 'riddle' : formData.lockType;
-    const effectiveRiddleQuestion = formData.riddleQuestion || formData.riddle;
-    if (effectiveLockType === 'riddle' && (!effectiveRiddleQuestion || !formData.riddleAnswer)) {
+    if (formData.lockType === 'riddle' && (!formData.riddleQuestion || !formData.riddleAnswer)) {
       toast({
         title: "Incomplete Riddle",
         description: "Please provide both riddle question and answer.",
@@ -93,14 +86,14 @@ const CreateCapsule = () => {
         emoji: formData.emoji,
         mood: formData.mood,
         unlockDate: unlockISO,
-        lockType: effectiveLockType,
+        lockType: formData.lockType,
         tags: formData.tags,
         category: 'personal',
         isPublic: false
       };
 
-      if (effectiveLockType === 'riddle') {
-        payload.riddleQuestion = effectiveRiddleQuestion;
+      if (formData.lockType === 'riddle') {
+        payload.riddleQuestion = formData.riddleQuestion;
         payload.riddleAnswer = formData.riddleAnswer;
       }
 
@@ -300,58 +293,6 @@ const CreateCapsule = () => {
                   onMediaUploaded={(media) => setUploadedMedia(prev => [...prev, media])}
                   maxFiles={5}
                 />
-              </CardContent>
-            </Card>
-
-            {/* Advanced Options */}
-            <Card className="glass-card border-white/10">
-              <CardHeader>
-                <CardTitle>Advanced Options</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Riddle Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Puzzle className="w-5 h-5 text-accent" />
-                    <div>
-                      <Label htmlFor="hasRiddle">Add Riddle Challenge</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Require solving a riddle to unlock
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="hasRiddle"
-                    checked={formData.hasRiddle}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasRiddle: checked }))}
-                  />
-                </div>
-
-                {/* Riddle Fields */}
-                {formData.hasRiddle && (
-                  <div className="space-y-4 pl-8 border-l-2 border-accent/20">
-                    <div>
-                      <Label htmlFor="riddle">Riddle Question</Label>
-                      <Input
-                        id="riddle"
-                        value={formData.riddle}
-                        onChange={(e) => setFormData(prev => ({ ...prev, riddle: e.target.value }))}
-                        placeholder="What riddle must be solved to unlock?"
-                        className="glass-card border-white/10 mt-2"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="riddleAnswer">Answer</Label>
-                      <Input
-                        id="riddleAnswer"
-                        value={formData.riddleAnswer}
-                        onChange={(e) => setFormData(prev => ({ ...prev, riddleAnswer: e.target.value }))}
-                        placeholder="What's the answer?"
-                        className="glass-card border-white/10 mt-2"
-                      />
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
 

@@ -50,21 +50,6 @@ const capsuleSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  sharedWith: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    permission: {
-      type: String,
-      enum: ['view', 'edit', 'admin'],
-      default: 'view'
-    },
-    addedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
   unlockDate: {
     type: Date,
     required: [true, 'Please add an unlock date'],
@@ -160,7 +145,7 @@ const capsuleSchema = new mongoose.Schema({
   }],
   category: {
     type: String,
-    enum: ['personal', 'friends', 'family', 'school', 'travel', 'goals', 'memories', 'other'],
+    enum: ['personal', 'school', 'travel', 'goals', 'memories', 'other'],
     default: 'personal'
   },
   isPublic: {
@@ -283,45 +268,19 @@ capsuleSchema.methods.canView = function(userId) {
   const userIdStr = userId.toString();
   const creatorIdStr = this.creator.toString();
   
-  console.log('canView check:', {
-    userId: userIdStr,
-    creatorId: creatorIdStr,
-    isCreator: creatorIdStr === userIdStr,
-    sharedWith: this.sharedWith.map(share => ({
-      userId: share.user.toString(),
-      permission: share.permission
-    }))
-  });
-  
   // Creator can always view
   if (creatorIdStr === userIdStr) {
-    console.log('User is creator - access granted');
     return true;
   }
   
-  // Check if user is in sharedWith
-  const sharedUser = this.sharedWith.find(share => 
-    share.user.toString() === userIdStr
-  );
-  
-  console.log('Shared user found:', !!sharedUser);
-  return !!sharedUser;
+  // Public capsules can be viewed by anyone
+  return this.isPublic;
 };
 
 // Check if user can edit capsule
 capsuleSchema.methods.canEdit = function(userId) {
-  // Creator can always edit
-  if (this.creator.toString() === userId.toString()) {
-    return true;
-  }
-  
-  // Check if user has edit permission
-  const sharedUser = this.sharedWith.find(share => 
-    share.user.toString() === userId.toString() && 
-    ['edit', 'admin'].includes(share.permission)
-  );
-  
-  return !!sharedUser;
+  // Only creator can edit
+  return this.creator.toString() === userId.toString();
 };
 
 // Add view to capsule

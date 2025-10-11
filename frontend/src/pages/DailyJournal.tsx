@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import Navigation from '@/components/Navigation';
 import MonthlyCardView from '@/components/MonthlyCardView';
-import JournalEntryModal from '@/components/JournalEntryModal';
+import CreateEditJournalModal from '@/components/CreateEditJournalModal';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import PageTitle from '@/components/ui/PageTitle';
 
@@ -27,6 +27,7 @@ const DailyJournal = () => {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEntryClick = (entry: JournalEntry | null, date: Date) => {
     setSelectedEntry(entry);
@@ -42,7 +43,8 @@ const DailyJournal = () => {
   const handleSave = () => {
     setIsModalOpen(false);
     setSelectedEntry(null);
-    // The MonthlyCardView will automatically refresh
+    // Force MonthlyCardView to refresh by updating a key
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleNewEntry = () => {
@@ -132,13 +134,13 @@ const DailyJournal = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <MonthlyCardView onEntryClick={handleEntryClick} />
+                <MonthlyCardView key={refreshKey} onEntryClick={handleEntryClick} />
               </CardContent>
             </Card>
           </motion.div>
 
           {/* Journal Entry Modal */}
-          <JournalEntryModal
+          <CreateEditJournalModal
             entry={selectedEntry}
             date={selectedDate}
             isOpen={isModalOpen}

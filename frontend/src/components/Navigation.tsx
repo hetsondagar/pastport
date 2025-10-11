@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { Clock, User, Settings, LogOut, Menu, X, Bell, BookOpen } from 'lucide-react';
+import NotificationDropdown from '@/components/NotificationDropdown';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -77,9 +78,7 @@ const Navigation = () => {
             {isAuthenticated ? (
               <>
                 {/* Notifications */}
-                <Button variant="ghost" size="icon" className="btn-glass">
-                  <Bell className="w-4 h-4" />
-                </Button>
+                <NotificationDropdown />
                 
                 {/* User Menu */}
                 <DropdownMenu>

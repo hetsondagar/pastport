@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { generateToken } from '../utils/generateToken.js';
+import { sendEmail, emailTemplates } from '../utils/emailService.js';
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -43,6 +44,16 @@ export const register = async (req, res, next) => {
 
     // Save refresh token
     await user.addRefreshToken(refreshToken);
+
+    // Send welcome email
+    try {
+      const template = emailTemplates.welcome(user.name);
+      await sendEmail(user.email, template.subject, template.html, template.text);
+      console.log(`Welcome email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail registration if email fails
+    }
 
     res.status(201).json({
       success: true,
@@ -141,9 +152,7 @@ export const login = async (req, res, next) => {
 // @access  Private
 export const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate('friends', 'name avatar')
-      .populate('friendRequests.user', 'name avatar');
+    const user = await User.findById(req.user._id);
 
     res.json({
       success: true,

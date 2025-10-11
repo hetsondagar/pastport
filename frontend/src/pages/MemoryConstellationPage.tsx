@@ -40,7 +40,6 @@ const MemoryConstellationPage = () => {
   const [isCameraAnimating, setIsCameraAnimating] = useState(false);
   const cameraRef = useRef<any>(null);
   const [showDemo, setShowDemo] = useState(false);
-  const [autoRotate, setAutoRotate] = useState(false);
   // Always use current month - constellation resets each month
   const currentDate = new Date();
   const year = currentDate.getFullYear();
@@ -345,14 +344,6 @@ const MemoryConstellationPage = () => {
                   <Sparkles className="w-4 h-4 mr-2" />
                   Reset View
                 </Button>
-                <Button
-                  variant={autoRotate ? 'default' : 'outline'}
-                  onClick={() => setAutoRotate((v) => !v)}
-                  className="glass-card border-white/10 hover:bg-white/10"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {autoRotate ? 'Stop Rotation' : 'Auto Rotate'}
-                </Button>
               <Button
                 variant="outline"
                 onClick={() => window.location.href = '/dashboard'}
@@ -415,31 +406,21 @@ const MemoryConstellationPage = () => {
               />
             </Suspense>
             
-            {/* Ultra-Smooth Controls - Effortless navigation */}
+            {/* Responsive Controls - Previous working version */}
             <OrbitControls
               enablePan={true}
               enableZoom={true}
               enableRotate={true}
               minDistance={5}
               maxDistance={120}
-              zoomSpeed={0.6}
-              panSpeed={0.6}
-              rotateSpeed={0.4}
-              dampingFactor={0.03}
+              zoomSpeed={0.8}
+              panSpeed={0.8}
+              rotateSpeed={0.5}
+              dampingFactor={0.05}
               enableDamping={true}
-              autoRotate={autoRotate}
-              autoRotateSpeed={0.5}
-              minPolarAngle={0}
-              maxPolarAngle={Math.PI}
-              screenSpacePanning={true}
-              mouseButtons={{
-                LEFT: 2,   // Rotate
-                MIDDLE: 1, // Pan
-                RIGHT: 0   // Nothing
-              }}
               touches={{
-                ONE: 2,    // 1 finger = rotate (smooth)
-                TWO: 0     // 2 fingers = zoom/pan
+                ONE: 1, // 1 finger = rotate
+                TWO: 2  // 2 fingers = zoom/pan
               }}
             />
           </Canvas>

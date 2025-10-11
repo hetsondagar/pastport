@@ -462,8 +462,8 @@ const Profile = () => {
                       <div className="text-sm text-muted-foreground">Riddles Solved</div>
                     </div>
                     <div className="glass-card-enhanced p-4 text-center">
-                      <div className="text-2xl font-bold text-gradient">{user?.stats?.friendsCount || 0}</div>
-                      <div className="text-sm text-muted-foreground">Friends</div>
+                      <div className="text-2xl font-bold text-gradient">{user?.stats?.lotteryCapsulesUnlocked || 0}</div>
+                      <div className="text-sm text-muted-foreground">Lottery Capsules</div>
                     </div>
                   </div>
                 </CardContent>

@@ -10,9 +10,6 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     enum: [
       'capsule_unlocked',
-      'capsule_shared',
-      'friend_request',
-      'friend_accepted',
       'riddle_solved',
       'badge_earned',
       'unlock_reminder',

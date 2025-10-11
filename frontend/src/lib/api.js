@@ -459,6 +459,29 @@ class ApiClient {
   async getUserMedia(userId) {
     return this.request(`/media/user/${userId}`);
   }
+
+  // Notification endpoints
+  async getNotifications(page = 1, limit = 20, unreadOnly = false) {
+    return this.request(`/notifications?page=${page}&limit=${limit}&unreadOnly=${unreadOnly}`);
+  }
+
+  async markNotificationAsRead(notificationId) {
+    return this.request(`/notifications/${notificationId}/read`, {
+      method: 'PUT',
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request('/notifications/read-all', {
+      method: 'PUT',
+    });
+  }
+
+  async deleteNotification(notificationId) {
+    return this.request(`/notifications/${notificationId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // Create and export a singleton instance

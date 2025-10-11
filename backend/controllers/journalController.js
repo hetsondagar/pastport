@@ -9,17 +9,12 @@ export const getMonthEntries = async (req, res, next) => {
     const { userId, year, month } = req.params;
     const currentUserId = req.user._id;
 
-    // Check if user is requesting their own entries or is a friend
+    // Check if user is requesting their own entries
     if (userId !== currentUserId.toString()) {
-      const user = await User.findById(currentUserId);
-      const isFriend = user.friends.some(friend => friend.toString() === userId);
-      
-      if (!isFriend) {
-        return res.status(403).json({
-          success: false,
-          message: 'You can only view your own journal entries or friends\' entries'
-        });
-      }
+      return res.status(403).json({
+        success: false,
+        message: 'You can only view your own journal entries'
+      });
     }
 
     const entries = await JournalEntry.getMonthEntries(userId, parseInt(year), parseInt(month));
