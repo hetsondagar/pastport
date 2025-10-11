@@ -424,6 +424,16 @@ Email service is ready to send messages
 2. Check 2FA is enabled
 3. Set `EMAIL_ENABLED=true`
 4. Check Render logs for email errors
+5. **Note**: Email errors won't block server startup
+6. Server will start with message: "⚠️ Email service error (non-critical)"
+
+### Issue: Rate Limit ValidationError
+**Error**: `The 'X-Forwarded-For' header is set but Express 'trust proxy' setting is false`
+
+**Solution**:
+- ✅ Already fixed in code with `app.set('trust proxy', 1)`
+- No action needed
+- Render proxy is now trusted
 
 ### Issue: CORS Errors
 **Solution**:

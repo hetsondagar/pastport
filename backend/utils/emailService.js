@@ -14,22 +14,30 @@ if (isEmailEnabled) {
   transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: Number(process.env.EMAIL_PORT) || 587,
-    secure: false,
+    secure: false, // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    tls: {
+      rejectUnauthorized: false // Allow self-signed certificates
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000
   });
 
-  transporter.verify((error) => {
-    if (error) {
-      console.log('Email service error:', error);
-    } else {
-      console.log('Email service is ready to send messages');
-    }
+  // Verify connection asynchronously (non-blocking)
+  transporter.verify()
+    .then(() => {
+      console.log('✅ Email service is ready to send messages');
+    })
+    .catch((error) => {
+      console.log('⚠️ Email service error (non-critical):', error.message);
+      console.log('Email notifications will be disabled. Check EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS');
   });
 } else {
-  console.log('Email service disabled (set EMAIL_ENABLED=true and provide EMAIL_HOST/PORT/USER/PASS to enable).');
+  console.log('📧 Email service disabled (set EMAIL_ENABLED=true and provide EMAIL_HOST/PORT/USER/PASS to enable).');
 }
 
 // Send email function
