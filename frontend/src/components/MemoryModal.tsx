@@ -36,13 +36,18 @@ const MemoryModal = ({ memory, onClose, onUpdate }: MemoryModalProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: memory.title,
-    content: memory.content,
-    category: memory.category,
-    importance: memory.importance,
-    tags: memory.tags.join(', '),
+    title: memory?.title || '',
+    content: memory?.content || '',
+    category: memory?.category || 'Fun',
+    importance: memory?.importance || 5,
+    tags: memory?.tags?.join(', ') || '',
     isPublic: false
   });
+  
+  // Early return if memory is null or undefined (after all hooks)
+  if (!memory) {
+    return null;
+  }
 
   const categoryColors = {
     Travel: 'bg-blue-500',

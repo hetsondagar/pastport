@@ -29,10 +29,15 @@ const JournalEntryModal = ({ entry, onClose, onUpdate }: JournalEntryModalProps)
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: entry.title,
-    content: entry.content,
-    mood: entry.mood
+    title: entry?.title || '',
+    content: entry?.content || '',
+    mood: entry?.mood || 'neutral'
   });
+  
+  // Early return if entry is null or undefined (after all hooks)
+  if (!entry) {
+    return null;
+  }
 
   const moodColors = {
     happy: 'bg-green-500',

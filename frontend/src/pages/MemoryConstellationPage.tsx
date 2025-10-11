@@ -40,6 +40,7 @@ const MemoryConstellationPage = () => {
   const [isCameraAnimating, setIsCameraAnimating] = useState(false);
   const cameraRef = useRef<any>(null);
   const [showDemo, setShowDemo] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(false);
   // Always use current month - constellation resets each month
   const currentDate = new Date();
   const year = currentDate.getFullYear();
@@ -225,26 +226,26 @@ const MemoryConstellationPage = () => {
     setIsCameraAnimating(true);
     setCameraPosition(position);
     
-    // Animate camera to focus position
+    // Ultra-smooth camera animation with elastic easing
     if (cameraRef.current) {
       gsap.to(cameraRef.current.position, {
-        duration: 1.2,
+        duration: 2.0,
         x: position[0],
         y: position[1],
         z: position[2],
-        ease: "power3.out",
+        ease: "power2.inOut",
         onComplete: () => {
           setIsCameraAnimating(false);
         }
       });
       
-      // Animate camera look at the memory
+      // Smooth rotation animation
       gsap.to(cameraRef.current.rotation, {
-        duration: 1.2,
+        duration: 2.0,
         x: 0,
         y: 0,
         z: 0,
-        ease: "power3.out"
+        ease: "power2.inOut"
       });
     }
   };
@@ -258,11 +259,11 @@ const MemoryConstellationPage = () => {
     
     if (cameraRef.current) {
       gsap.to(cameraRef.current.position, {
-        duration: 1.2,
+        duration: 2.0,
         x: defaultPosition[0],
         y: defaultPosition[1],
         z: defaultPosition[2],
-        ease: "power3.out",
+        ease: "power2.inOut",
         onComplete: () => {
           setIsCameraAnimating(false);
         }
@@ -344,6 +345,14 @@ const MemoryConstellationPage = () => {
                   <Sparkles className="w-4 h-4 mr-2" />
                   Reset View
                 </Button>
+                <Button
+                  variant={autoRotate ? 'default' : 'outline'}
+                  onClick={() => setAutoRotate((v) => !v)}
+                  className="glass-card border-white/10 hover:bg-white/10"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {autoRotate ? 'Stop Rotation' : 'Auto Rotate'}
+                </Button>
               <Button
                 variant="outline"
                 onClick={() => window.location.href = '/dashboard'}
@@ -406,21 +415,31 @@ const MemoryConstellationPage = () => {
               />
             </Suspense>
             
-            {/* Enhanced Controls - Better zoom behavior */}
+            {/* Ultra-Smooth Controls - Effortless navigation */}
             <OrbitControls
               enablePan={true}
               enableZoom={true}
               enableRotate={true}
               minDistance={5}
               maxDistance={120}
-              zoomSpeed={0.8}
-              panSpeed={0.8}
-              rotateSpeed={0.5}
-              dampingFactor={0.05}
+              zoomSpeed={0.6}
+              panSpeed={0.6}
+              rotateSpeed={0.4}
+              dampingFactor={0.03}
               enableDamping={true}
+              autoRotate={autoRotate}
+              autoRotateSpeed={0.5}
+              minPolarAngle={0}
+              maxPolarAngle={Math.PI}
+              screenSpacePanning={true}
+              mouseButtons={{
+                LEFT: 2,   // Rotate
+                MIDDLE: 1, // Pan
+                RIGHT: 0   // Nothing
+              }}
               touches={{
-                ONE: 1, // 1 finger = rotate
-                TWO: 2  // 2 fingers = zoom/pan
+                ONE: 2,    // 1 finger = rotate (smooth)
+                TWO: 0     // 2 fingers = zoom/pan
               }}
             />
           </Canvas>

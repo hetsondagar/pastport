@@ -185,19 +185,53 @@ const HowItWorks = () => {
             </motion.div>
 
             {/* Memory Constellation */}
-            <motion.div variants={itemVariants} className="glass-card p-8 glow-hover">
-              <Star className="w-12 h-12 text-secondary mb-4" />
-              <h3 className="text-2xl font-semibold mb-3">Memory Constellation</h3>
-              <p className="text-muted-foreground mb-4">
-                Visualize your memories as a beautiful 3D constellation of stars. Each star represents a memory - the more special it is, the brighter it shines!
-              </p>
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Interactive 3D visualization</span>
-              </div>
-              <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Rate and organize your memories</span>
+            <motion.div variants={itemVariants} className="glass-card p-8 glow-hover md:col-span-2">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <Star className="w-12 h-12 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-semibold mb-3">Memory Constellation 🌌</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Visualize your journal entries as a stunning 3D constellation of stars! Each star represents a day's entry, 
+                    with colors reflecting your mood and brightness showing its importance. Float through space and explore your memories 
+                    in a whole new way.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-3 mb-4">
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Ultra-smooth controls</strong> - Effortless navigation with buttery-smooth camera</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Mood-based colors</strong> - Each star glows with your emotion's color</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Interactive 3D space</strong> - Click stars to read your entries</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Galaxy layout</strong> - Beautiful spiral distribution pattern</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Auto-rotate mode</strong> - Sit back and watch your memories orbit</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Monthly reset</strong> - Fresh constellation each month</span>
+                    </div>
+                  </div>
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      💡 <strong>Pro Tip:</strong> Use drag to rotate, scroll to zoom, and right-click to pan. 
+                      Each mood has its own color: Happy (Green), Sad (Blue), Excited (Orange), Calm (Purple), 
+                      Anxious (Red), Grateful (Deep Orange), Neutral (Gray). The constellation resets monthly, 
+                      so each month is a new sky full of memories!
+                    </p>
+                  </div>
+                </div>
               </div>
             </motion.div>
 
@@ -249,6 +283,235 @@ const HowItWorks = () => {
               <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2">
                 <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                 <span>Email and in-app notifications</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        </section>
+
+        {/* Constellation Deep Dive */}
+        <section className="container mx-auto px-4 mb-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 glass-card px-6 py-3 rounded-full mb-6">
+              <Sparkles className="w-5 h-5 text-secondary" />
+              <span className="text-sm font-medium">Explore in 3D</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl app-name-bold mb-4">
+              Your Memories as a <span className="text-gradient">Living Constellation</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Experience your journal entries like never before - as a breathtaking 3D universe of glowing stars
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="space-y-8"
+          >
+            {/* How Constellation Works */}
+            <motion.div variants={itemVariants} className="glass-card-enhanced p-10">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Star className="w-10 h-10 text-secondary" />
+                    <h3 className="text-3xl font-semibold">How It Works</h3>
+                  </div>
+                  <p className="text-lg text-muted-foreground mb-6">
+                    Each journal entry you write becomes a glowing star in your personal galaxy. 
+                    The constellation resets every month, creating a unique sky for each month of the year.
+                  </p>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-primary font-bold">1</span>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white mb-1">Write Journal Entry</h4>
+                        <p className="text-sm text-muted-foreground">Record your day, choose your mood, and save</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-accent font-bold">2</span>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white mb-1">Star Appears</h4>
+                        <p className="text-sm text-muted-foreground">A new star materializes in your constellation with your mood's color</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-secondary font-bold">3</span>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white mb-1">Explore & Reflect</h4>
+                        <p className="text-sm text-muted-foreground">Navigate through 3D space, click stars to revisit memories</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="glass-card p-6 bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
+                  <h4 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    Mood Color System
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-2 rounded bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full" style={{background: '#10B981'}}></div>
+                        <span className="font-medium">Happy</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Vibrant Green</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full" style={{background: '#3B82F6'}}></div>
+                        <span className="font-medium">Sad</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Soft Blue</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full" style={{background: '#F59E0B'}}></div>
+                        <span className="font-medium">Excited</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Bright Orange</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full" style={{background: '#8B5CF6'}}></div>
+                        <span className="font-medium">Calm</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Peaceful Purple</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full" style={{background: '#EF4444'}}></div>
+                        <span className="font-medium">Anxious</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Alert Red</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full" style={{background: '#F97316'}}></div>
+                        <span className="font-medium">Grateful</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Warm Amber</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full" style={{background: '#6B7280'}}></div>
+                        <span className="font-medium">Neutral</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Balanced Gray</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Controls Guide */}
+            <motion.div variants={itemVariants} className="glass-card p-8">
+              <h3 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+                <Zap className="w-8 h-8 text-primary" />
+                Ultra-Smooth Navigation Controls
+              </h3>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
+                  <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl">🖱️</span>
+                  </div>
+                  <h4 className="font-semibold mb-2">Mouse Controls</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• <strong>Drag</strong> - Rotate view</li>
+                    <li>• <strong>Scroll</strong> - Zoom in/out</li>
+                    <li>• <strong>Right-click</strong> - Pan camera</li>
+                    <li>• <strong>Click star</strong> - Read entry</li>
+                  </ul>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl">📱</span>
+                  </div>
+                  <h4 className="font-semibold mb-2">Touch Controls</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• <strong>1 Finger</strong> - Smooth rotate</li>
+                    <li>• <strong>2 Fingers</strong> - Zoom & pan</li>
+                    <li>• <strong>Tap star</strong> - Open entry</li>
+                    <li>• <strong>Pinch</strong> - Zoom control</li>
+                  </ul>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20">
+                  <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl">⚡</span>
+                  </div>
+                  <h4 className="font-semibold mb-2">Smart Features</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• <strong>Auto-rotate</strong> - Cinematic view</li>
+                    <li>• <strong>Focus mode</strong> - Zoom to star</li>
+                    <li>• <strong>Reset view</strong> - Return home</li>
+                    <li>• <strong>Smooth inertia</strong> - Effortless glide</li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Technical Features */}
+            <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-6">
+              <div className="glass-card p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Eye className="w-8 h-8 text-cyan-500" />
+                  <h4 className="text-xl font-semibold">Visual Experience</h4>
+                </div>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Multi-layer glow effects</strong> - Realistic star luminescence with rings and halos</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Pulsing animations</strong> - Gentle breathing effect for living stars</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Particle systems</strong> - Sparkles and cosmic dust around each star</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Background starfield</strong> - 8,000 ambient stars for depth</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="glass-card p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="w-8 h-8 text-yellow-500" />
+                  <h4 className="text-xl font-semibold">Performance</h4>
+                </div>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>60 FPS smooth</strong> - Buttery navigation with advanced damping</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>WebGL accelerated</strong> - GPU-powered 3D rendering</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Mobile optimized</strong> - Works perfectly on phones and tablets</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Error recovery</strong> - Graceful handling of all edge cases</span>
+                  </li>
+                </ul>
               </div>
             </motion.div>
           </motion.div>

@@ -45,8 +45,12 @@ class ApiClient {
       'Content-Type': 'application/json',
     };
 
-    if (includeAuth && this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+    if (includeAuth) {
+      // Always get the latest token from localStorage
+      const currentToken = localStorage.getItem('token') || this.token;
+      if (currentToken) {
+        headers.Authorization = `Bearer ${currentToken}`;
+      }
     }
 
     return headers;
@@ -187,10 +191,12 @@ class ApiClient {
       formData.append('media', capsuleData.media);
     }
 
+    // Always get the latest token from localStorage
+    const currentToken = localStorage.getItem('token') || this.token;
     return this.request('/capsules', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.token}`,
+        Authorization: `Bearer ${currentToken}`,
         // Don't set Content-Type for FormData, let browser set it
       },
       body: formData,
@@ -414,10 +420,12 @@ class ApiClient {
   // Media endpoints
   async uploadMedia(formData) {
     const url = `${this.baseURL}/media/upload`;
+    // Always get the latest token from localStorage
+    const currentToken = localStorage.getItem('token') || this.token;
     const config = {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.token}`,
+        Authorization: `Bearer ${currentToken}`,
         // Don't set Content-Type - let browser set it with boundary for FormData
       },
       body: formData

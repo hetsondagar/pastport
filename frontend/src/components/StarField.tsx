@@ -33,6 +33,11 @@ interface StarProps {
 const Star = ({ entry, isHovered, onEntryClick, onCameraFocus, onHoverChange, getMoodColor }: StarProps) => {
   const starRef = useRef<THREE.Group>(null);
   
+  // Early return if entry is null or undefined
+  if (!entry) {
+    return null;
+  }
+  
   const getMoodEmoji = (mood: string) => {
     const moodEmojis: { [key: string]: string } = {
       happy: '🌞',
@@ -47,14 +52,20 @@ const Star = ({ entry, isHovered, onEntryClick, onCameraFocus, onHoverChange, ge
     return moodEmojis[mood] || '😐';
   };
   
-  // Individual star pulsing animation with rotation
+  // Buttery-smooth star pulsing and rotation animation
   useFrame((state) => {
     if (starRef.current) {
-      const pulse = 1 + Math.sin(state.clock.elapsedTime * 2 + entry.dayOfMonth) * 0.15;
-      const rotation = state.clock.elapsedTime * 0.5 + entry.dayOfMonth;
+      // Gentler, slower pulse for smooth breathing effect
+      const pulse = 1 + Math.sin(state.clock.elapsedTime * 1.0 + entry.dayOfMonth) * 0.08;
       starRef.current.scale.setScalar(pulse);
+      
+      // Slower, more graceful rotation
+      const rotation = state.clock.elapsedTime * 0.2 + entry.dayOfMonth;
       starRef.current.rotation.y = rotation;
-      starRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3 + entry.dayOfMonth) * 0.1;
+      
+      // Subtle wobble for organic feel
+      starRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.15 + entry.dayOfMonth) * 0.05;
+      starRef.current.rotation.z = Math.cos(state.clock.elapsedTime * 0.1 + entry.dayOfMonth) * 0.03;
     }
   });
 
@@ -241,7 +252,12 @@ const Star = ({ entry, isHovered, onEntryClick, onCameraFocus, onHoverChange, ge
 
       {isHovered && (
         <Html center distanceFactor={10} style={{ pointerEvents: 'none' }}>
-          <div className="px-4 py-2 rounded-lg text-sm text-white bg-black/80 backdrop-blur-sm border border-white/20 shadow-xl">
+          <div 
+            className="px-4 py-2 rounded-lg text-sm text-white bg-black/80 backdrop-blur-sm border border-white/20 shadow-xl transition-all duration-300 ease-out"
+            style={{
+              animation: 'fadeIn 0.3s ease-out'
+            }}
+          >
             <div className="flex items-center gap-2">
               <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
               <div>
@@ -340,10 +356,12 @@ const StarField = ({ entries, onEntryClick, onCameraFocus }: StarFieldProps) => 
 
   // Removed constellation lines - showing only individual stars
 
-  // Enhanced animation with pulsing stars
+  // Ultra-smooth constellation gentle sway
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.1) * 0.1;
+      // Gentle breathing motion for the whole constellation
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.05) * 0.03;
+      groupRef.current.rotation.x = Math.cos(state.clock.elapsedTime * 0.03) * 0.02;
     }
   });
 
@@ -360,7 +378,7 @@ const StarField = ({ entries, onEntryClick, onCameraFocus }: StarFieldProps) => 
       />
 
       {/* Individual Stars - Each Journal Entry */}
-      {entries.map((entry) => (
+      {entries.filter(entry => entry && entry.id && entry.title).map((entry) => (
         <Star
           key={entry.id}
           entry={entry}

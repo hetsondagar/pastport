@@ -47,18 +47,63 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  // Load capsules and stats
+  // Load all data in parallel for faster performance
   useEffect(() => {
     if (isAuthenticated) {
-      loadCapsules();
-      loadStats();
-      loadJournalStats();
+      loadAllData();
     }
   }, [isAuthenticated, filterStatus, searchTerm]);
 
-  const loadCapsules = async () => {
+  const loadAllData = async () => {
     try {
       setLoading(true);
+      
+      // Make all API calls in parallel for much faster loading!
+      const [capsulesResponse, statsResponse, journalResponse] = await Promise.all([
+        apiClient.getCapsules({
+          status: filterStatus,
+          search: searchTerm,
+          page: 1,
+          limit: 50
+        }).catch(err => {
+          console.error('Failed to load capsules:', err);
+          return { success: false, data: { capsules: [] } };
+        }),
+        apiClient.getCapsuleStats().catch(err => {
+          console.error('Failed to load stats:', err);
+          return { success: false, data: { stats: { totalCapsules: 0, lockedCapsules: 0, unlockedCapsules: 0, sharedCapsules: 0 } } };
+        }),
+        apiClient.getJournalStreak().catch(err => {
+          console.error('Failed to load journal stats:', err);
+          return { success: false, data: { streakCount: 0, totalEntries: 0, lastEntryDate: null } };
+        })
+      ]);
+
+      // Update all states at once
+      if (capsulesResponse.success) {
+        setCapsules(capsulesResponse.data.capsules);
+      }
+      if (statsResponse.success) {
+        setStats(statsResponse.data.stats);
+      }
+      if (journalResponse.success) {
+        setJournalStats(journalResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load some data. Please refresh the page.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Legacy functions for compatibility
+  const loadCapsules = async () => {
+    try {
       const response = await apiClient.getCapsules({
         status: filterStatus,
         search: searchTerm,
@@ -71,20 +116,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Failed to load capsules:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load capsules. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const handleCapsuleUnlock = () => {
-    // Refresh capsules after unlock (no page reload)
-    loadCapsules();
-    loadStats(); // Also refresh stats
   };
 
   const loadStats = async () => {
@@ -109,6 +141,12 @@ const Dashboard = () => {
     }
   };
 
+  const handleCapsuleUnlock = () => {
+    // Refresh capsules after unlock (no page reload)
+    loadCapsules();
+    loadStats(); // Also refresh stats
+  };
+
   const handleCapsuleClick = async (id: string) => {
     try {
       // Fetch the full capsule data
@@ -129,16 +167,43 @@ const Dashboard = () => {
 
   // Filter capsules locally for better UX
   const filteredCapsules = capsules.filter(capsule => {
+    // Ensure capsule and title exist before filtering
+    if (!capsule || !capsule.title) return false;
     const matchesSearch = capsule.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading your capsules...</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-lg text-muted-foreground">Welcome back...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show dashboard skeleton while loading data (much better UX!)
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          {/* Quick loading skeleton */}
+          <div className="animate-pulse space-y-6">
+            <div className="h-12 bg-white/10 rounded-lg w-1/3"></div>
+            <div className="grid md:grid-cols-4 gap-4">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-32 bg-white/5 rounded-lg"></div>
+              ))}
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="h-64 bg-white/5 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
