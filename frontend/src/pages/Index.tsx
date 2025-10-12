@@ -33,16 +33,16 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Navigation />
-      <div className="pt-24 pb-12">
+      <div className="pt-20 pb-8">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-8rem)]">
+          <div className="grid lg:grid-cols-2 gap-8 items-start max-w-7xl mx-auto">
             {/* Hero Section */}
-            <div className="space-y-8">
+            <div className="space-y-6 lg:pt-12">
               <Hero />
             </div>
             
             {/* Auth Form */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-start justify-center lg:sticky lg:top-24">
               <AuthForm />
             </div>
           </div>

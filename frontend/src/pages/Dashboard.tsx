@@ -11,10 +11,9 @@ import apiClient from '@/lib/api';
 import CapsuleCard from '@/components/CapsuleCard';
 import CapsuleModal from '@/components/CapsuleModal';
 import Navigation from '@/components/Navigation';
-import StreakWidget from '@/components/StreakWidget';
-import LotteryWidget from '@/components/LotteryWidget';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import PageTitle from '@/components/ui/PageTitle';
+import DailyInsight from '@/components/DailyInsight';
 
 const Dashboard = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -27,11 +26,6 @@ const Dashboard = () => {
     lockedCapsules: 0,
     unlockedCapsules: 0,
     sharedCapsules: 0
-  });
-  const [journalStats, setJournalStats] = useState({
-    streakCount: 0,
-    totalEntries: 0,
-    lastEntryDate: null
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,24 +41,34 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  // Load all data in parallel for faster performance
+  // Load data only when filter/search changes (not on initial mount)
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Only reload when filter/search changes, not on initial mount
+      if (filterStatus !== 'all' || searchTerm !== '') {
+        loadCapsules();
+      }
+    }
+  }, [isAuthenticated, filterStatus, searchTerm]);
+
+  // Load initial data once on mount
   useEffect(() => {
     if (isAuthenticated) {
       loadAllData();
     }
-  }, [isAuthenticated, filterStatus, searchTerm]);
+  }, [isAuthenticated]);
 
   const loadAllData = async () => {
     try {
       setLoading(true);
       
-      // Make all API calls in parallel for much faster loading!
-      const [capsulesResponse, statsResponse, journalResponse] = await Promise.all([
+      // Make only essential API calls in parallel
+      const [capsulesResponse, statsResponse] = await Promise.all([
         apiClient.getCapsules({
-          status: filterStatus,
-          search: searchTerm,
+          status: 'all',
+          search: '',
           page: 1,
-          limit: 50
+          limit: 20 // Reduced from 50 for faster loading
         }).catch(err => {
           console.error('Failed to load capsules:', err);
           return { success: false, data: { capsules: [] } };
@@ -72,22 +76,15 @@ const Dashboard = () => {
         apiClient.getCapsuleStats().catch(err => {
           console.error('Failed to load stats:', err);
           return { success: false, data: { stats: { totalCapsules: 0, lockedCapsules: 0, unlockedCapsules: 0, sharedCapsules: 0 } } };
-        }),
-        apiClient.getJournalStreak().catch(err => {
-          console.error('Failed to load journal stats:', err);
-          return { success: false, data: { streakCount: 0, totalEntries: 0, lastEntryDate: null } };
         })
       ]);
 
-      // Update all states at once
+      // Update states
       if (capsulesResponse.success) {
         setCapsules(capsulesResponse.data.capsules);
       }
       if (statsResponse.success) {
         setStats(statsResponse.data.stats);
-      }
-      if (journalResponse.success) {
-        setJournalStats(journalResponse.data);
       }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
@@ -130,16 +127,6 @@ const Dashboard = () => {
     }
   };
 
-  const loadJournalStats = async () => {
-    try {
-      const response = await apiClient.getJournalStreak();
-      if (response.success) {
-        setJournalStats(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load journal stats:', error);
-    }
-  };
 
   const handleCapsuleUnlock = () => {
     // Refresh capsules after unlock (no page reload)
@@ -173,36 +160,15 @@ const Dashboard = () => {
     return matchesSearch;
   });
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-lg text-muted-foreground">Welcome back...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show dashboard skeleton while loading data (much better UX!)
-  if (loading) {
+  // Show quick loading only on initial page load
+  if (authLoading || (loading && capsules.length === 0 && stats.totalCapsules === 0)) {
     return (
       <div className="min-h-screen">
         <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          {/* Quick loading skeleton */}
-          <div className="animate-pulse space-y-6">
-            <div className="h-12 bg-white/10 rounded-lg w-1/3"></div>
-            <div className="grid md:grid-cols-4 gap-4">
-              {[1,2,3,4].map(i => (
-                <div key={i} className="h-32 bg-white/5 rounded-lg"></div>
-              ))}
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="h-64 bg-white/5 rounded-lg"></div>
-              ))}
-            </div>
+        <div className="container mx-auto px-4 pt-32">
+          <div className="flex flex-col items-center justify-center">
+            <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+            <p className="text-lg text-muted-foreground">Loading your dashboard...</p>
           </div>
         </div>
       </div>
@@ -222,7 +188,7 @@ const Dashboard = () => {
           />
 
           {/* Stats Cards */}
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <div className="grid md:grid-cols-3 gap-4 mb-8">
             <div className="glass-card-enhanced p-4 text-center">
               <AnimatedCounter 
                 value={stats.totalCapsules} 
@@ -244,65 +210,52 @@ const Dashboard = () => {
               />
               <div className="text-sm text-muted-foreground">Unlocked</div>
             </div>
-            <div className="glass-card-enhanced p-4 text-center">
-              <AnimatedCounter 
-                value={stats.sharedCapsules} 
-                className="text-2xl font-bold text-gradient"
-              />
-              <div className="text-sm text-muted-foreground">Shared</div>
-            </div>
           </div>
 
-          {/* Fun Features Widgets */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <StreakWidget />
-            <LotteryWidget />
-            
-            {/* Mini Journal Summary */}
+          {/* Quick Actions - Removed heavy widgets for faster loading */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Streak Card */}
             <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl hover:bg-background/95 transition-all duration-300">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-full bg-gradient-to-r from-green-500 to-blue-500">
-                      <BookOpen className="w-4 h-4 text-white" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500">
+                      <Flame className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">Journal Streak</h3>
-                      <p className="text-sm text-gray-300">Daily writing</p>
+                      <h3 className="text-lg font-semibold text-white">Your Streak</h3>
+                      <p className="text-sm text-gray-300">Keep it going!</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-green-400">
-                      {journalStats.streakCount}
+                    <div className="text-3xl font-bold text-orange-400">🔥</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Journal Quick Access */}
+            <Card className="glass-card border-white/10 bg-background/90 backdrop-blur-xl hover:bg-background/95 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full bg-gradient-to-r from-green-500 to-blue-500">
+                      <BookOpen className="w-6 h-6 text-white" />
                     </div>
-                    <div className="text-xs text-gray-400">days</div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Daily Journal</h3>
+                      <p className="text-sm text-gray-300">Write your thoughts</p>
+                    </div>
                   </div>
+                  <Button 
+                    onClick={() => navigate('/journal')}
+                    className="btn-glow"
+                    size="sm"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Write
+                  </Button>
                 </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-300">Total Entries</span>
-                    <span className="text-white font-medium">{journalStats.totalEntries}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-300">Last Entry</span>
-                    <span className="text-white font-medium">
-                      {journalStats.lastEntryDate 
-                        ? new Date(journalStats.lastEntryDate).toLocaleDateString()
-                        : 'Never'
-                      }
-                    </span>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={() => navigate('/journal')}
-                  className="w-full mt-3 btn-glow"
-                  size="sm"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  View Journal
-                </Button>
               </CardContent>
             </Card>
           </div>
@@ -377,9 +330,18 @@ const Dashboard = () => {
             </Link>
           </div>
 
+          {/* Loading Indicator */}
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mr-3" />
+              <p className="text-muted-foreground">Loading your capsules...</p>
+            </div>
+          )}
+
           {/* Capsules Grid */}
-          <div className={`grid ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
-            {filteredCapsules.map((capsule) => (
+          {!loading && (
+            <div className={`grid ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
+              {filteredCapsules.map((capsule) => (
               <CapsuleCard
                 key={capsule._id}
                 id={capsule._id}
@@ -397,10 +359,11 @@ const Dashboard = () => {
                 onUnlock={handleCapsuleUnlock}
                 media={capsule.media}
               />
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {filteredCapsules.length === 0 && (
+          {!loading && filteredCapsules.length === 0 && (
             <div className="text-center py-12">
               <div className="glass-card p-8 max-w-md mx-auto">
                 <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -408,13 +371,20 @@ const Dashboard = () => {
                 <p className="text-muted-foreground mb-4">
                   {searchTerm ? 'Try adjusting your search terms' : 'Create your first time capsule to get started'}
                 </p>
-                <Button className="btn-glow">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Capsule
-                </Button>
+                <Link to="/create">
+                  <Button className="btn-glow">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Capsule
+                  </Button>
+                </Link>
               </div>
             </div>
           )}
+
+          {/* Daily Insight Widget */}
+          <div className="mt-12 max-w-3xl mx-auto">
+            <DailyInsight />
+          </div>
         </div>
       </div>
 

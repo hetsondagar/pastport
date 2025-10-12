@@ -21,20 +21,28 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (token) {
-          const response = await apiClient.getCurrentUser();
-          if (response.success) {
-            setUser(response.data.user);
-          } else {
-            // Token is invalid, remove it
-            apiClient.logout();
-          }
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        // Fast-track: Set loading false immediately if token exists
+        // This allows dashboard to render while we verify in background
+        setLoading(false);
+
+        // Verify token in background (don't block UI)
+        const response = await apiClient.getCurrentUser();
+        if (response.success) {
+          setUser(response.data.user);
+        } else {
+          // Token is invalid, remove it
+          apiClient.logout();
+          setUser(null);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
         apiClient.logout();
-      } finally {
-        setLoading(false);
+        setUser(null);
       }
     };
 
