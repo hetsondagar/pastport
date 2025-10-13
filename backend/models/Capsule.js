@@ -266,7 +266,11 @@ capsuleSchema.virtual('commentCount').get(function() {
 // Check if user can view capsule
 capsuleSchema.methods.canView = function(userId) {
   const userIdStr = userId.toString();
-  const creatorIdStr = this.creator.toString();
+  
+  // Handle both populated and non-populated creator field
+  const creatorIdStr = this.creator._id 
+    ? this.creator._id.toString() 
+    : this.creator.toString();
   
   // Creator can always view
   if (creatorIdStr === userIdStr) {
@@ -279,8 +283,13 @@ capsuleSchema.methods.canView = function(userId) {
 
 // Check if user can edit capsule
 capsuleSchema.methods.canEdit = function(userId) {
+  // Handle both populated and non-populated creator field
+  const creatorIdStr = this.creator._id 
+    ? this.creator._id.toString() 
+    : this.creator.toString();
+  
   // Only creator can edit
-  return this.creator.toString() === userId.toString();
+  return creatorIdStr === userId.toString();
 };
 
 // Add view to capsule

@@ -366,7 +366,11 @@ export const deleteCapsule = async (req, res, next) => {
     }
 
     // Only creator can delete
-    if (capsule.creator.toString() !== req.user._id.toString()) {
+    const creatorId = capsule.creator._id 
+      ? capsule.creator._id.toString() 
+      : capsule.creator.toString();
+    
+    if (creatorId !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'You can only delete your own capsules'
@@ -578,9 +582,13 @@ export const addComment = async (req, res, next) => {
     await capsule.addComment(req.user._id, text);
 
     // Create notification for capsule creator
-    if (capsule.creator.toString() !== req.user._id.toString()) {
+    const creatorId = capsule.creator._id 
+      ? capsule.creator._id.toString() 
+      : capsule.creator.toString();
+    
+    if (creatorId !== req.user._id.toString()) {
       await Notification.createNotification(
-        capsule.creator,
+        capsule.creator._id || capsule.creator,
         'comment_added',
         'New Comment',
         `${req.user.name} commented on your capsule "${capsule.title}"`,
