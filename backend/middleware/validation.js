@@ -21,17 +21,17 @@ export const validate = (schema, property = 'body') => {
         value: detail.context?.value
       }));
 
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
         errors: errorDetails
-    });
-  }
+      });
+    }
 
     // Replace the original property with the validated and sanitized value
     req[property] = value;
-  next();
-};
+    next();
+  };
 };
 
 /**

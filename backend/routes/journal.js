@@ -8,7 +8,7 @@ import {
   getJournalStreak
 } from '../controllers/journalController.js';
 import { protect } from '../middleware/auth.js';
-import { validateBody, validateParams } from '../middleware/validation.js';
+import { validateBody, validateObjectId } from '../middleware/validation.js';
 import { 
   createJournalEntrySchema, 
   updateJournalEntrySchema,
@@ -24,8 +24,8 @@ router.use(protect);
 router.get('/streak', getJournalStreak);
 router.get('/:userId/month/:year/:month', getMonthEntries);
 router.post('/', validateBody(createJournalEntrySchema), createJournalEntry);
-router.put('/:id', validateParams({ id: 'string' }), validateBody(updateJournalEntrySchema), updateJournalEntry);
-router.delete('/:id', validateParams({ id: 'string' }), deleteJournalEntry);
-router.patch('/:id/unlock', validateParams({ id: 'string' }), validateBody(unlockJournalEntrySchema), unlockJournalEntry);
+router.put('/:id', validateObjectId('id'), validateBody(updateJournalEntrySchema), updateJournalEntry);
+router.delete('/:id', validateObjectId('id'), deleteJournalEntry);
+router.patch('/:id/unlock', validateObjectId('id'), validateBody(unlockJournalEntrySchema), unlockJournalEntry);
 
 export default router;
