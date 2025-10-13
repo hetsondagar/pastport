@@ -139,7 +139,7 @@ const Dashboard = () => {
       // Fetch the full capsule data
       const response = await apiClient.getCapsule(id);
       if (response.success) {
-        setSelectedCapsule(response.data);
+        setSelectedCapsule(response.data.capsule);
         setShowCapsuleModal(true);
       }
     } catch (error) {

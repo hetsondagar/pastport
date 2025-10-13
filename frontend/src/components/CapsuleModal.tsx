@@ -124,7 +124,7 @@ const CapsuleModal = ({ capsule, isOpen, onClose }: CapsuleModalProps) => {
                       <Lock className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
                       <h3 className="text-lg font-semibold text-white mb-2">This Capsule is Locked</h3>
                       <p className="text-gray-300">
-                        {lockType === 'riddle' 
+                        {capsule.lockType === 'riddle' 
                           ? 'Solve the riddle to unlock this capsule'
                           : `This capsule will unlock on ${formatDate(capsule.unlockDate)}`
                         }
