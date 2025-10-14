@@ -24,6 +24,14 @@ interface JournalEntry {
   riddleQuestion?: string;
   riddleAnswer?: string;
   date: string;
+  media?: Array<{
+    url: string;
+    type: 'image' | 'video' | 'audio';
+    caption?: string;
+    format?: string;
+    size?: number;
+    duration?: number;
+  }>;
 }
 
 interface CreateEditJournalModalProps {
@@ -84,8 +92,8 @@ const CreateEditJournalModal = ({ entry, date, isOpen, onClose, onSave }: Create
   const loadEntryMedia = async (entryId: string) => {
     try {
       const response = await apiClient.getEntryMedia('journal', entryId);
-      if (response.success && response.data) {
-        setExistingMedia(response.data);
+      if (response.success && response.data && response.data.media) {
+        setExistingMedia(response.data.media);
       }
     } catch (error) {
       console.error('Failed to load media:', error);

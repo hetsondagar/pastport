@@ -128,10 +128,22 @@ const Dashboard = () => {
   };
 
 
-  const handleCapsuleUnlock = () => {
+  const handleCapsuleUnlock = async () => {
     // Refresh capsules after unlock (no page reload)
-    loadCapsules();
-    loadStats(); // Also refresh stats
+    await loadCapsules();
+    await loadStats(); // Also refresh stats
+    
+    // If a capsule is currently open in the modal, refresh it to show media
+    if (selectedCapsule && selectedCapsule._id) {
+      try {
+        const response = await apiClient.getCapsule(selectedCapsule._id);
+        if (response.success) {
+          setSelectedCapsule(response.data.capsule);
+        }
+      } catch (error) {
+        console.error('Failed to refresh capsule after unlock:', error);
+      }
+    }
   };
 
   const handleCapsuleClick = async (id: string) => {

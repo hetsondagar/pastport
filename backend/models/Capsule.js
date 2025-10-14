@@ -407,6 +407,7 @@ capsuleSchema.methods.getPreview = function() {
     lockType: this.lockType,
     riddleQuestion: this.riddleQuestion,
     hasRiddle: this.hasRiddle,
+    media: this.media, // Include media even in preview
     tags: this.tags,
     category: this.category,
     daysUntilUnlock: this.daysUntilUnlock,
@@ -425,6 +426,8 @@ capsuleSchema.methods.getFullData = function() {
     title: this.title,
     message: this.message,
     emoji: this.emoji,
+    mood: this.mood,
+    lockType: this.lockType,
     unlockDate: this.unlockDate,
     isUnlocked: this.isUnlocked,
     unlockedAt: this.unlockedAt,

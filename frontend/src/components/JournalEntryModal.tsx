@@ -16,6 +16,14 @@ interface JournalEntry {
   position: { x: number; y: number; z: number };
   dayOfMonth: number;
   isCapsule: boolean;
+  media?: Array<{
+    url: string;
+    type: 'image' | 'video' | 'audio';
+    caption?: string;
+    format?: string;
+    size?: number;
+    duration?: number;
+  }>;
 }
 
 interface JournalEntryModalProps {
@@ -251,6 +259,14 @@ const JournalEntryModal = ({ entry, onClose, onUpdate }: JournalEntryModalProps)
                   </div>
                 )}
               </div>
+
+              {/* Media Attachments */}
+              {!isEditing && entry.media && entry.media.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-white mb-2">Media Attachments</h4>
+                  <MediaDisplay media={entry.media} layout="grid" showCaptions={true} />
+                </div>
+              )}
 
             </CardContent>
           </Card>

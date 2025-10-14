@@ -20,6 +20,14 @@ interface JournalEntry {
   isUnlocked: boolean;
   unlockDate?: string;
   date: string;
+  media?: Array<{
+    url: string;
+    type: 'image' | 'video' | 'audio';
+    caption?: string;
+    format?: string;
+    size?: number;
+    duration?: number;
+  }>;
 }
 
 const DailyJournal = () => {
