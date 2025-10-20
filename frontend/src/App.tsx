@@ -14,6 +14,7 @@ import DailyJournal from "./pages/DailyJournal";
 import MemoryConstellationPage from "./pages/MemoryConstellationPage";
 import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
+import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
           <BrowserRouter>
             <div style={{ position: 'relative', zIndex: 1 }}>
               <AppRoutes />
+              <Footer />
             </div>
           </BrowserRouter>
         </TooltipProvider>
