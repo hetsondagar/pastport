@@ -5,7 +5,12 @@ const Footer = () => {
     <footer className="mt-16 border-t border-white/10 bg-background/60 backdrop-blur-xl">
       <div className="container mx-auto px-4 py-8 text-center">
         <p className="text-sm text-muted-foreground">
-          Crafted with time-traveling pixels by <span className="font-semibold text-white">Het Sondagar</span> — because memories deserve a glow-up ✨
+          Crafted with time‑traveling pixels by
+          {" "}
+          <span className="font-semibold tracking-tight bg-gradient-to-r from-purple-400 to-fuchsia-400 text-transparent bg-clip-text">
+            Het Sondagar
+          </span>
+          — packing nostalgia with extra sparkle ✨
         </p>
         <div className="mt-3 flex items-center justify-center gap-4">
           <a
@@ -30,9 +35,7 @@ const Footer = () => {
             <span>LinkedIn</span>
           </a>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Developed by <span className="font-semibold text-white">Het Sondagar</span>
-        </p>
+        {/* Intentionally no trailing developer credit line per request */}
       </div>
     </footer>
   );
