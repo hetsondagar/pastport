@@ -21,7 +21,7 @@ const capsuleSchema = new mongoose.Schema({
   },
   mood: {
     type: String,
-    enum: ['happy', 'sad', 'excited', 'angry', 'calm', 'neutral'],
+    enum: ['happy', 'sad', 'excited', 'angry', 'calm', 'anxious', 'grateful', 'neutral'],
     default: 'neutral'
   },
   lockType: {
