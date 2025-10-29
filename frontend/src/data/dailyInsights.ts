@@ -113,7 +113,7 @@ export const dailyInsights: DailyInsight[] = [
   { type: 'fact', content: 'Looking at old photos can create false memories of events you don\'t actually remember.' },
   { type: 'fact', content: 'Your brain creates about 700 new neural connections per second!' },
   { type: 'fact', content: 'The average person has about 6,200 thoughts per day.' },
-  { type: 'fact', content: 'Journaling can improve memory by up to 25%!' },
+  { type: 'fact', content: 'Journaling can improve memory up to 25%!' },
   { type: 'fact', content: 'Your memories are more vivid when you recall them in the same place they were formed.' },
   { type: 'fact', content: 'Babies can form memories in the womb as early as week 30!' },
   { type: 'fact', content: 'The "Google Effect" means we remember less because we know we can search for it.' },

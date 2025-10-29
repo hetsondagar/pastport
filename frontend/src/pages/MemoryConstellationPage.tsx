@@ -472,13 +472,6 @@ const MemoryConstellationPage = () => {
           onUpdate={loadMonthEntries}
         />
       )}
-      
-      {/* Debug info */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 left-4 z-50 text-xs bg-black/50 text-white p-2 rounded">
-          Modal: {showModal ? 'SHOWING' : 'HIDDEN'} | Entry: {selectedEntry?.title || 'None'}
-        </div>
-      )}
     </div>
   );
 };

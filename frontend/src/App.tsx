@@ -44,7 +44,6 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/journal" element={<PageTransition><DailyJournal /></PageTransition>} />
         <Route path="/memories/constellation" element={<PageTransition><MemoryConstellationPage /></PageTransition>} />
-        {/* constellation-test (temporary) removed */}
         <Route path="/create" element={<PageTransition><CreateCapsule /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
@@ -53,24 +52,38 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <div className="min-h-screen bg-nebula bg-stars animate-gradient-shift animate-nebula-float animate-star-twinkle relative">
-    <GlobalBackground />
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <AppRoutes />
-              <Footer />
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </AuthProvider>
-  </div>
-);
+// Conditional footer component that excludes constellation page
+const ConditionalFooter = () => {
+  const location = useLocation();
+  
+  // Don't render footer on constellation page
+  if (location.pathname === '/memories/constellation') {
+    return null;
+  }
+  
+  return <Footer />;
+};
+
+const App = () => {
+  return (
+    <div className="min-h-screen bg-nebula bg-stars animate-gradient-shift animate-nebula-float animate-star-twinkle relative">
+      <GlobalBackground />
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <AppRoutes />
+                <ConditionalFooter />
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </AuthProvider>
+    </div>
+  );
+};
 
 export default App;
