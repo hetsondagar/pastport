@@ -47,16 +47,9 @@ const ConditionalFooter = () => {
 };
 
 const AppShell = () => {
-  const location = useLocation();
-  const isConstellationPage = location.pathname === '/memories/constellation';
-
-  const appClassName = isConstellationPage
-    ? "min-h-screen bg-nebula bg-stars animate-gradient-shift animate-nebula-float animate-star-twinkle relative"
-    : "min-h-screen bg-black relative";
-
   return (
-    <div className={appClassName}>
-      {isConstellationPage ? <GlobalBackground /> : null}
+    <div className="min-h-screen bg-black relative">
+      <GlobalBackground />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <AppRoutes />
         <ConditionalFooter />
