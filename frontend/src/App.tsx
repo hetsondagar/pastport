@@ -14,6 +14,7 @@ import DailyJournal from "./pages/DailyJournal";
 import MemoryConstellationPage from "./pages/MemoryConstellationPage";
 import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
+import TimeChat from "./pages/TimeChat";
 import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const AppRoutes = () => {
         <Route path="/memories/constellation" element={<PageTransition><MemoryConstellationPage /></PageTransition>} />
         <Route path="/create" element={<PageTransition><CreateCapsule /></PageTransition>} />
         <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+        <Route path="/time-chat" element={<PageTransition><TimeChat /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

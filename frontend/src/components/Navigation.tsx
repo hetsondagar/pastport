@@ -63,6 +63,9 @@ const Navigation = () => {
                 <Link to="/memories/constellation" className="text-foreground hover:text-primary transition-colors">
                   Constellation
                 </Link>
+                <Link to="/time-chat" className="text-foreground hover:text-primary transition-colors">
+                  Time Chat
+                </Link>
                 <Link to="/create" className="text-foreground hover:text-primary transition-colors">
                   Create
                 </Link>
@@ -159,6 +162,9 @@ const Navigation = () => {
                   </Link>
                   <Link to="/memories/constellation" className="text-foreground hover:text-primary transition-colors">
                     Constellation
+                  </Link>
+                  <Link to="/time-chat" className="text-foreground hover:text-primary transition-colors">
+                    Time Chat
                   </Link>
                   <Link to="/create" className="text-foreground hover:text-primary transition-colors">
                     Create

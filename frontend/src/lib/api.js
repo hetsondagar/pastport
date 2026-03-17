@@ -388,6 +388,18 @@ class ApiClient {
     });
   }
 
+  // AI endpoints
+  async aiChat({ userId, mode, timestamp, message }) {
+    return this.request('/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ userId, mode, timestamp, message }),
+    });
+  }
+
+  async getAiAnalytics() {
+    return this.request('/ai/analytics');
+  }
+
   // Memory API methods
   async getMemories() {
     return this.request('/memories', 'GET');

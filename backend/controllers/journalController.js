@@ -1,5 +1,6 @@
 import JournalEntry from '../models/JournalEntry.js';
 import User from '../models/User.js';
+import { processJournalEntryEmbedding } from '../services/aiService.js';
 
 // @desc    Get journal entries for a specific month
 // @route   GET /api/journal/:userId/month/:year/:month
@@ -104,6 +105,17 @@ export const createJournalEntry = async (req, res, next) => {
 
     // Update user streak
     await updateUserStreak(userId);
+
+    // AI pipeline (non-blocking): embeddings + sentiment/emotion/topics + personality snapshot
+    setImmediate(async () => {
+      try {
+        await processJournalEntryEmbedding(journalEntry);
+      } catch (e) {
+        // Don't fail user request if ML service is down
+        // eslint-disable-next-line no-console
+        console.error('AI processJournalEntryEmbedding failed:', e?.message || e);
+      }
+    });
 
     res.status(201).json({
       success: true,

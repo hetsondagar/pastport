@@ -2,6 +2,7 @@ import Capsule from '../models/Capsule.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { getCurrentIST, getTimeUntilUnlockIST, formatIST } from '../utils/timezone.js';
+import { processCapsuleEmbedding } from '../services/aiService.js';
 
 // @desc    Get all capsules for user
 // @route   GET /api/capsules
@@ -254,6 +255,16 @@ export const createCapsule = async (req, res, next) => {
     
     user.lastCapsuleDate = todayStart;
     await user.save();
+
+    // AI pipeline (non-blocking): embeddings + sentiment/emotion/topics + personality snapshot
+    setImmediate(async () => {
+      try {
+        await processCapsuleEmbedding(capsule);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('AI processCapsuleEmbedding failed:', e?.message || e);
+      }
+    });
 
     // Add creation badge if first capsule
     if (user.stats.capsulesCreated === 1) {
