@@ -285,6 +285,44 @@ const HowItWorks = () => {
                 <span>Email and in-app notifications</span>
               </div>
             </motion.div>
+
+            {/* Time Chat */}
+            <motion.div variants={itemVariants} className="glass-card p-8 glow-hover md:col-span-2">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-semibold mb-3">Time Chat</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Have a calm conversation with your past, present, or future perspective. Ask meaningful questions,
+                    reflect on your journey, and get thoughtful responses that feel personal.
+                  </p>
+                  <div className="grid md:grid-cols-3 gap-3">
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span>Pick a mode: Past, Present, or Future</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span>Ask from the heart and get clear guidance</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span>Use it daily for reflection and clarity</span>
+                    </div>
+                  </div>
+                  <div className="mt-5">
+                    <Link to="/time-chat">
+                      <Button className="btn-glow">
+                        <Send className="w-4 h-4 mr-2" />
+                        Open Time Chat
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </section>
 
