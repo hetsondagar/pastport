@@ -1,5 +1,10 @@
 ## PastPort ML Service (FastAPI)
 
+### Render Deploy Note
+
+This service is pinned to Python 3.11 via `runtime.txt` and `.python-version`.
+If Render still uses another version, set `PYTHON_VERSION=3.11.10` in Render environment variables.
+
 ### Setup
 
 From repo root:
