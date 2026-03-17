@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { AuthProvider } from "./contexts/AuthContext";
 import GlobalBackground from "./components/GlobalBackground";
 import Index from "./pages/Index";
@@ -19,38 +18,19 @@ import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
-// Page transition wrapper
-const PageTransition = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: "easeInOut" }}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-// App routes with transitions
 const AppRoutes = () => {
-  const location = useLocation();
-  
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/how-it-works" element={<PageTransition><HowItWorks /></PageTransition>} />
-        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-        <Route path="/journal" element={<PageTransition><DailyJournal /></PageTransition>} />
-        <Route path="/memories/constellation" element={<PageTransition><MemoryConstellationPage /></PageTransition>} />
-        <Route path="/create" element={<PageTransition><CreateCapsule /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
-        <Route path="/time-chat" element={<PageTransition><TimeChat /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/journal" element={<DailyJournal />} />
+      <Route path="/memories/constellation" element={<MemoryConstellationPage />} />
+      <Route path="/create" element={<CreateCapsule />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/time-chat" element={<TimeChat />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
@@ -66,25 +46,38 @@ const ConditionalFooter = () => {
   return <Footer />;
 };
 
+const AppShell = () => {
+  const location = useLocation();
+  const isConstellationPage = location.pathname === '/memories/constellation';
+
+  const appClassName = isConstellationPage
+    ? "min-h-screen bg-nebula bg-stars animate-gradient-shift animate-nebula-float animate-star-twinkle relative"
+    : "min-h-screen bg-black relative";
+
+  return (
+    <div className={appClassName}>
+      {isConstellationPage ? <GlobalBackground /> : null}
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <AppRoutes />
+        <ConditionalFooter />
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   return (
-    <div className="min-h-screen bg-nebula bg-stars animate-gradient-shift animate-nebula-float animate-star-twinkle relative">
-      <GlobalBackground />
-      <AuthProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <AppRoutes />
-                <ConditionalFooter />
-              </div>
-            </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </AuthProvider>
-    </div>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppShell />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 };
 
