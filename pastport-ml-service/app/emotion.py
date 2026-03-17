@@ -1,25 +1,55 @@
 from __future__ import annotations
 
 from typing import Tuple, Literal
+import re
 
 from .models import get_emotion_pipeline
 
 EmotionLabel = Literal["joy", "sadness", "anger", "fear", "surprise", "neutral"]
 
 
-def classify_emotion(text: str) -> Tuple[EmotionLabel, float]:
-    pipe = get_emotion_pipeline()
-    # top_k=None returns list of dicts for all labels
-    raw = pipe(text[:4000])
-    # transformers returns [[{label, score}, ...]] for top_k=None
-    candidates = raw[0] if raw and isinstance(raw[0], list) else raw
-    best = max(candidates, key=lambda x: x["score"])
-    label = best["label"].lower()
-    score = float(best["score"])
+EMOTION_LEXICON = {
+    "joy": {"happy", "joy", "grateful", "excited", "delighted", "peaceful", "hopeful"},
+    "sadness": {"sad", "down", "lonely", "hurt", "cry", "heartbroken"},
+    "anger": {"angry", "mad", "furious", "annoyed", "frustrated"},
+    "fear": {"anxious", "afraid", "scared", "worried", "panic", "nervous"},
+    "surprise": {"surprised", "shocked", "unexpected", "amazed"},
+}
 
-    # Map to required set (the model already uses these labels)
-    if label not in ("joy", "sadness", "anger", "fear", "surprise", "neutral"):
-        label = "neutral"
-    return label, score
+
+def _heuristic_emotion(text: str) -> Tuple[EmotionLabel, float]:
+    tokens = re.findall(r"[a-zA-Z']+", (text or "").lower())
+    if not tokens:
+        return "neutral", 0.55
+
+    scores = {k: 0 for k in EMOTION_LEXICON.keys()}
+    for tok in tokens:
+        for emo, words in EMOTION_LEXICON.items():
+            if tok in words:
+                scores[emo] += 1
+
+    best = max(scores.items(), key=lambda x: x[1])
+    if best[1] == 0:
+        return "neutral", 0.55
+
+    label = best[0]
+    strength = min(0.95, 0.6 + (best[1] / max(1, len(tokens))) * 4)
+    return label, float(strength)
+
+
+def classify_emotion(text: str) -> Tuple[EmotionLabel, float]:
+    try:
+        pipe = get_emotion_pipeline()
+        raw = pipe(text[:4000])
+        candidates = raw[0] if raw and isinstance(raw[0], list) else raw
+        best = max(candidates, key=lambda x: x["score"])
+        label = best["label"].lower()
+        score = float(best["score"])
+
+        if label not in ("joy", "sadness", "anger", "fear", "surprise", "neutral"):
+            label = "neutral"
+        return label, score
+    except Exception:
+        return _heuristic_emotion(text)
 
 

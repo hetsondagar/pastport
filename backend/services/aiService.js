@@ -31,17 +31,33 @@ function monthStartUTC(d) {
 async function callMl(endpoint, body) {
   const mlBase = (process.env.ML_SERVICE_URL || DEFAULT_ML_URL).replace(/\/$/, '');
   const f = await getFetch();
-  const resp = await f(`${mlBase}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeoutMs = Number(process.env.ML_SERVICE_TIMEOUT_MS || 60000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  let resp;
+  try {
+    resp = await f(`${mlBase}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    const err = new Error('ML service unreachable');
+    err.statusCode = e?.name === 'AbortError' ? 504 : 502;
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+
   let data = null;
   try {
     data = await resp.json();
   } catch (_) {}
   if (!resp.ok) {
     const err = new Error(`ML service error (${resp.status})`);
+    err.statusCode = resp.status >= 500 ? 502 : resp.status;
     err.data = data;
     throw err;
   }
