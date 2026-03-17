@@ -66,7 +66,7 @@ Instructions:
 
 def _generate_text(prompt: str) -> str:
     gen = get_generation_pipeline()
-    out = gen(prompt, max_new_tokens=220, do_sample=False)[0]["generated_text"]
+    out = gen(prompt, max_new_tokens=128, do_sample=False, clean_up_tokenization_spaces=False)[0]["generated_text"]
     return out.strip()
 
 

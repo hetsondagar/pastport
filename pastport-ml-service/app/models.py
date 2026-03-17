@@ -26,8 +26,7 @@ def get_emotion_pipeline():
 
 @lru_cache(maxsize=1)
 def get_generation_pipeline():
-    # Lightweight instruction-ish generator; deterministic-ish with low temperature.
-    # (Not specified by prompt; but required to generate an actual chat response.)
-    return pipeline("text2text-generation", model="google/flan-t5-base")
+    # Use a smaller text2text model to keep memory/latency manageable on Render.
+    return pipeline("text2text-generation", model="google/flan-t5-small")
 
 

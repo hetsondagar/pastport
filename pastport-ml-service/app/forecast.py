@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from typing import Dict, Any, List
 
-import pandas as pd
-from prophet import Prophet
-
-
 TRAITS = ["optimismScore", "ambitionScore", "anxietyScore", "reflectionScore", "socialFocusScore"]
 
 
@@ -17,6 +13,19 @@ def forecast_personality(history: List[Dict[str, Any]], years: int = 3) -> Dict[
     if not history or len(history) < 4:
         # Not enough history; return neutral-ish defaults
         return {t: 0.5 for t in TRAITS}
+
+    # Lazy import heavy dependencies to avoid startup overhead on requests that
+    # do not need forecasting (most present/past chats and process-entry calls).
+    try:
+        import pandas as pd
+        from prophet import Prophet
+    except Exception:
+        # Graceful fallback when Prophet stack is unavailable in constrained envs.
+        out: Dict[str, float] = {}
+        for trait in TRAITS:
+            vals = [row.get(trait) for row in history if isinstance(row.get(trait), (int, float))]
+            out[trait] = float(sum(vals) / len(vals)) if vals else 0.5
+        return out
 
     df = pd.DataFrame(history).copy()
     if "ds" not in df.columns:
