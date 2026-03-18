@@ -9,6 +9,15 @@ from .schemas import MemoryForRetrieval
 
 
 def cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
+    # Gracefully handle historic embeddings with different dimensions.
+    if a.size == 0 or b.size == 0:
+        return 0.0
+    if a.shape != b.shape:
+        n = min(a.size, b.size)
+        if n == 0:
+            return 0.0
+        a = a[:n]
+        b = b[:n]
     denom = (np.linalg.norm(a) * np.linalg.norm(b)) + 1e-12
     return float(np.dot(a, b) / denom)
 

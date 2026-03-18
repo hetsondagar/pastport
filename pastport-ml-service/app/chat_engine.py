@@ -70,6 +70,32 @@ def _generate_text(prompt: str) -> str:
     return out.strip()
 
 
+def _fallback_text(mode: str, ranked: List[Tuple[MemoryForRetrieval, float]], user_msg: str) -> str:
+    mode_voice = {
+        "past": "From your past self's perspective",
+        "present": "From your present self's perspective",
+        "future": "From your future self's perspective",
+    }.get(mode, "From your own perspective")
+
+    if ranked:
+        memory_summaries = []
+        for m, _ in ranked[:3]:
+            memory_summaries.append(f"- {m.createdAt.date().isoformat()} ({m.sourceType}): {_excerpt(m.text, 120)}")
+        memory_block = "\n".join(memory_summaries)
+        return (
+            f"{mode_voice}, here's a grounded response to your question: \"{user_msg}\".\n\n"
+            "I am currently running in a simplified response mode, so I will stay concise and practical.\n"
+            "What stands out from your related memories:\n"
+            f"{memory_block}\n\n"
+            "Suggested next step: choose one small action you can take in the next 24 hours and write one sentence about why it matters."
+        )
+
+    return (
+        f"{mode_voice}, I hear your question: \"{user_msg}\". "
+        "I cannot access full generation right now, but a strong next step is to identify one concrete priority for today and one feeling you want to carry into tomorrow."
+    )
+
+
 def generate_chat_response(payload: ChatRequest) -> ChatResponse:
     ts = payload.timestamp
 
@@ -85,7 +111,10 @@ def generate_chat_response(payload: ChatRequest) -> ChatResponse:
 
     # Prompt + generation
     prompt = _build_prompt(payload.mode, ts, used_personality, ranked, payload.message)
-    response_text = _generate_text(prompt)
+    try:
+        response_text = _generate_text(prompt)
+    except Exception:
+        response_text = _fallback_text(payload.mode, ranked, payload.message)
 
     # Citations
     citations: List[Citation] = []
