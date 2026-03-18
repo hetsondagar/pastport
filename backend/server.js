@@ -192,6 +192,8 @@ const server = app.listen(PORT, () => {
   logger.info(`🚀 PastPort API Server running on port ${PORT}`);
   logger.info(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+  logger.info(`🤖 ML Service URL: ${process.env.ML_SERVICE_URL || 'http://localhost:8000'}`);
+  logger.info(`⏱️ ML Timeout/Retry: ${process.env.ML_SERVICE_TIMEOUT_MS || '120000'}ms / ${process.env.ML_SERVICE_RETRIES || '1'} retry`);
   logger.info(`📊 Health check: http://localhost:${PORT}/health`);
   
   // Start scheduler for notifications and reminders

@@ -28,6 +28,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 - Set `WEB_CONCURRENCY=1`.
 - Use Python 3.11 (`runtime.txt` / `.python-version` already pinned).
 - This service uses CPU-only torch wheels via `requirements.txt`.
+- For free/low-memory instances, set `PASTPORT_ML_FAST_MODE=1` to force lightweight heuristics and avoid cold-start 504s.
 
 ### Endpoints
 

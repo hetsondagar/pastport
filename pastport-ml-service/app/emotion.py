@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Tuple, Literal
 import re
+import os
 
 from .models import get_emotion_pipeline
 
@@ -15,7 +16,6 @@ EMOTION_LEXICON = {
     "fear": {"anxious", "afraid", "scared", "worried", "panic", "nervous"},
     "surprise": {"surprised", "shocked", "unexpected", "amazed"},
 }
-
 
 def _heuristic_emotion(text: str) -> Tuple[EmotionLabel, float]:
     tokens = re.findall(r"[a-zA-Z']+", (text or "").lower())
@@ -38,6 +38,11 @@ def _heuristic_emotion(text: str) -> Tuple[EmotionLabel, float]:
 
 
 def classify_emotion(text: str) -> Tuple[EmotionLabel, float]:
+    val = (os.getenv("PASTPORT_ML_FAST_MODE") or "").strip().lower()
+    render = (os.getenv("RENDER") or "").strip().lower() == "true"
+    if val in {"1", "true", "yes", "on"} or (render and val not in {"0", "false", "no", "off"}):
+        return _heuristic_emotion(text)
+
     try:
         pipe = get_emotion_pipeline()
         raw = pipe(text[:4000])

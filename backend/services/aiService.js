@@ -31,24 +31,41 @@ function monthStartUTC(d) {
 async function callMl(endpoint, body) {
   const mlBase = (process.env.ML_SERVICE_URL || DEFAULT_ML_URL).replace(/\/$/, '');
   const f = await getFetch();
-  const controller = new AbortController();
-  const timeoutMs = Number(process.env.ML_SERVICE_TIMEOUT_MS || 60000);
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutMs = Number(process.env.ML_SERVICE_TIMEOUT_MS || 120000);
+  const retries = Number(process.env.ML_SERVICE_RETRIES || 1);
 
   let resp;
-  try {
-    resp = await f(`${mlBase}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } catch (e) {
-    const err = new Error('ML service unreachable');
-    err.statusCode = e?.name === 'AbortError' ? 504 : 502;
+  let lastErr = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      resp = await f(`${mlBase}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      lastErr = null;
+      clearTimeout(timeout);
+      break;
+    } catch (e) {
+      clearTimeout(timeout);
+      lastErr = e;
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 800));
+      }
+    }
+  }
+
+  if (!resp && lastErr) {
+    const isTimeout = lastErr?.name === 'AbortError';
+    const err = new Error(`ML service unreachable (${isTimeout ? 'timeout' : 'network'})`);
+    err.statusCode = isTimeout ? 504 : 502;
+    err.meta = { endpoint, mlBase, timeoutMs, retries };
     throw err;
-  } finally {
-    clearTimeout(timeout);
   }
 
   let data = null;
@@ -59,6 +76,7 @@ async function callMl(endpoint, body) {
     const err = new Error(`ML service error (${resp.status})`);
     err.statusCode = resp.status >= 500 ? 502 : resp.status;
     err.data = data;
+    err.meta = { endpoint, mlBase, timeoutMs, retries };
     throw err;
   }
   return data;
