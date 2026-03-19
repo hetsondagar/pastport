@@ -68,9 +68,6 @@ const Navigation = () => {
                 <Link to="/time-chat" className="text-foreground hover:text-primary transition-colors">
                   Time Chat
                 </Link>
-                <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
-                  Profile
-                </Link>
               </>
             )}
           </div>
@@ -166,9 +163,6 @@ const Navigation = () => {
                   </Link>
                   <Link to="/time-chat" className="text-foreground hover:text-primary transition-colors">
                     Time Chat
-                  </Link>
-                  <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
-                    Profile
                   </Link>
                   <div className="flex items-center space-x-3 pt-4 border-t border-white/10">
                     <Avatar className="w-8 h-8">

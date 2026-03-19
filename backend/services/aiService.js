@@ -95,6 +95,61 @@ function personalityToneHint(personality) {
   return 'warm, reflective, and practical';
 }
 
+function tokenize(text = '') {
+  return compactText(text)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3);
+}
+
+function lexicalOverlapScore(question, memoryText) {
+  const stopWords = new Set([
+    'what', 'which', 'when', 'where', 'should', 'could', 'would', 'have', 'this', 'that', 'your', 'with',
+    'from', 'into', 'about', 'been', 'were', 'they', 'them', 'then', 'than', 'also', 'very', 'just', 'will',
+    'focus', 'week', 'year', 'next', 'habit', 'movie', 'watch'
+  ]);
+  const q = tokenize(question).filter((w) => !stopWords.has(w));
+  const mSet = new Set(tokenize(memoryText));
+  if (!q.length || !mSet.size) return 0;
+  let overlap = 0;
+  for (const t of q) {
+    if (mSet.has(t)) overlap += 1;
+  }
+  return overlap / Math.max(1, q.length);
+}
+
+function memoryQualityPenalty(memoryText = '') {
+  const t = compactText(memoryText).toLowerCase();
+  let penalty = 0;
+  if (t.length < 24) penalty += 0.2;
+  if (/\b(test|dummy|sample|attachment|media attachment|hello test|hey test)\b/.test(t)) penalty += 0.45;
+  return Math.min(0.8, penalty);
+}
+
+function intentBoost(question = '', memory = {}) {
+  const q = question.toLowerCase();
+  const topics = memory.topics || [];
+  const text = (memory.text || '').toLowerCase();
+
+  if (/movie|film|series|watch/.test(q)) {
+    if (topics.includes('entertainment')) return 0.2;
+    if (/movie|film|music|weekend|relax/.test(text)) return 0.1;
+  }
+  if (/habit|improve|routine|discipline/.test(q)) {
+    if (topics.includes('personal_growth')) return 0.18;
+    if (/habit|routine|consisten|discipline|plan|goal/.test(text)) return 0.1;
+  }
+  if (/how far|progress|come this year|growth/.test(q)) {
+    if (/job|improve|learn|growth|milestone|achievement/.test(text)) return 0.14;
+  }
+  if (/focus this week|what should i focus/.test(q)) {
+    if (/work|study|goal|project|interview|health|sleep/.test(text)) return 0.14;
+  }
+
+  return 0;
+}
+
 function buildPersonalizedFallback({ mode, question, memories = [], personality }) {
   const modePrefix = mode === 'past'
     ? 'Looking back at your earlier self,'
@@ -112,8 +167,24 @@ function buildPersonalizedFallback({ mode, question, memories = [], personality 
   const topDate = new Date(top.createdAt).toISOString().slice(0, 10);
 
   if (/movie|film|series|watch/i.test(question)) {
-    const refs = [top, second].filter(Boolean).map((m) => shortText(m.text, 110));
-    return `${modePrefix} based on your recent notes (${refs.join(' | ')}), pick a film that matches your current energy: one reflective, one feel-good, and one high-momentum option. Your strongest signal comes from ${topDate}, so start with the reflective option tonight and see how it lands.`;
+    const mood = personality?.optimismScore >= 0.65 ? 'uplifting' : 'grounding';
+    const refs = [top, second].filter(Boolean).map((m) => shortText(m.text, 90));
+    const picks = mood === 'uplifting'
+      ? 'The Secret Life of Walter Mitty, The Pursuit of Happyness, and Chef'
+      : 'Good Will Hunting, Her, and The Martian';
+    return `${modePrefix} based on your memory cues (${refs.join(' | ')}), your taste currently leans ${mood}. Try ${picks}. Start with the first one tonight, and if you want I can narrow this down by genre next.`;
+  }
+
+  if (/how far have i come|come this year|progress/i.test(question)) {
+    const older = memories[memories.length - 1] || top;
+    const a = shortText(older.text, 95);
+    const b = shortText(top.text, 95);
+    return `${modePrefix} you have moved from "${a}" to "${b}", which shows real progress in momentum and confidence this year. Keep this trajectory by protecting one non-negotiable weekly habit that supports your next milestone.`;
+  }
+
+  if (/habit.*improve|what habit should i improve|habit should/i.test(question)) {
+    const hint = personality?.anxietyScore >= 0.6 ? 'sleep + planning routine' : 'weekly planning + focused deep-work block';
+    return `${modePrefix} the next high-impact habit to improve is your ${hint}. From your memory pattern (${shortText(top.text, 120)}), consistency will help more than intensity right now. Set one repeatable time slot and keep it for 14 days.`;
   }
 
   const firstLine = shortText(top.text, 150);
@@ -144,10 +215,18 @@ async function retrieveRelevantMemories({ userId, question, candidateMemories = 
       const similarity = queryEmbedding
         ? cosineSimilarity(queryEmbedding, memory.embedding)
         : 0;
-      return { ...memory, similarity };
+      const lexical = lexicalOverlapScore(question, memory.text || '');
+      const boost = intentBoost(question, memory);
+      const penalty = memoryQualityPenalty(memory.text || '');
+      const createdAtMs = new Date(memory.createdAt).getTime() || 0;
+      const ageDays = Math.max(0, (Date.now() - createdAtMs) / (1000 * 60 * 60 * 24));
+      const recency = Math.max(0, 1 - (ageDays / 365));
+      const finalScore = (similarity * 0.62) + (lexical * 0.28) + (recency * 0.1) + boost - penalty;
+      return { ...memory, similarity, lexical, penalty, score: finalScore };
     })
+    .filter((memory) => memory.penalty < 0.7)
     .sort((a, b) => {
-      if (b.similarity !== a.similarity) return b.similarity - a.similarity;
+      if (b.score !== a.score) return b.score - a.score;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
@@ -468,12 +547,14 @@ export async function chatWithTemporalSelf({ userId, mode, timestamp, message })
   });
 
   let response = '';
+  let responseSource = 'groq';
   try {
     response = await generateLLMResponse(prompt);
     if (!response || response.trim().length < 20) {
       throw new Error('LLM response too short or empty');
     }
   } catch (err) {
+    responseSource = 'fallback';
     logger.warn(`Groq response failed in chatWithTemporalSelf: ${err?.message || 'unknown error'}`);
     response = buildPersonalizedFallback({
       mode,
@@ -482,6 +563,10 @@ export async function chatWithTemporalSelf({ userId, mode, timestamp, message })
       personality: usedPersonality,
     });
   }
+
+  logger.info(
+    `[AI_CHAT] source=${responseSource} user=${userId} mode=${mode} memories=${memories.length} topScore=${memories[0]?.score?.toFixed?.(3) ?? 'na'}`
+  );
 
   return {
     mode,
