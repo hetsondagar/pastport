@@ -158,12 +158,10 @@ nav img[src*="logo_main.png"] {
 .btn-glow {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, 
-    rgba(120, 60, 255, 0.8) 0%,
-    rgba(200, 100, 255, 0.6) 100%);
+  background: var(--gradient-primary);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 
-    0 4px 15px rgba(120, 60, 255, 0.3),
+    0 4px 15px hsl(var(--primary-glow) / 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
 }
@@ -171,8 +169,8 @@ nav img[src*="logo_main.png"] {
 .btn-glow:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 25px rgba(120, 60, 255, 0.4),
-    0 0 20px rgba(120, 60, 255, 0.3),
+    0 8px 25px hsl(var(--primary-glow) / 0.4),
+    0 0 20px hsl(var(--primary-glow) / 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
@@ -206,10 +204,15 @@ nav img[src*="logo_main.png"] {
 
 .btn-glass:hover {
   transform: translateY(-1px) rotate(1deg);
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.16) 0%,
+    hsl(var(--secondary) / 0.14) 100%
+  );
+  border-color: hsl(var(--primary) / 0.35);
   box-shadow: 
     0 4px 15px rgba(0, 0, 0, 0.2),
-    0 0 10px rgba(255, 255, 255, 0.1);
+    0 0 12px hsl(var(--primary-glow) / 0.22);
 }
 
 .btn-glass::after {
@@ -219,7 +222,7 @@ nav img[src*="logo_main.png"] {
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, hsl(var(--primary-glow) / 0.28) 0%, transparent 70%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: all 0.3s ease;
@@ -528,7 +531,7 @@ nav img[src*="logo_main.png"] {
   }
   
   .btn-glass {
-    @apply glass-card text-foreground hover:bg-white/5;
+    @apply glass-card text-foreground hover:bg-primary/10 hover:border-primary/30;
     @apply px-6 py-3 font-medium transition-all duration-300;
   }
   

@@ -474,7 +474,7 @@ const AuthForm = () => {
                   type="submit" 
                   className={`w-full transition-all duration-200 ${
                     isFormValid() 
-                      ? 'btn-glow bg-primary hover:bg-primary/90' 
+                      ? 'btn-glow' 
                       : 'bg-muted text-muted-foreground cursor-not-allowed'
                   }`}
                   disabled={loading || !isFormValid()}
