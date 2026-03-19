@@ -59,12 +59,11 @@ const FloatingCreateButton = () => {
   return (
     <Link
       to="/create"
-      className="fixed bottom-6 right-6 z-50 btn-glow rounded-full h-12 px-4 flex items-center gap-2 text-primary-foreground shadow-lg hover:scale-[1.02] transition-transform"
+      className="fixed bottom-6 right-6 z-50 btn-glow rounded-full h-14 w-14 flex items-center justify-center text-primary-foreground shadow-lg hover:scale-105 transition-transform"
       aria-label="Create time capsule"
       title="Create"
     >
-      <Plus className="w-4 h-4" />
-      <span className="hidden sm:inline">Create</span>
+      <Plus className="w-5 h-5" />
     </Link>
   );
 };
