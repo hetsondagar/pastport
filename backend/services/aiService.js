@@ -87,110 +87,157 @@ function shortText(text = '', maxLen = 220) {
   return `${clean.slice(0, maxLen - 1)}...`;
 }
 
-function personalityToneHint(personality) {
-  if (!personality) return 'balanced and grounded';
-  if (personality.anxietyScore >= 0.65) return 'calm, reassuring, and practical';
-  if (personality.ambitionScore >= 0.7) return 'focused, goal-oriented, and direct';
-  if (personality.optimismScore >= 0.72) return 'encouraging and upbeat without overpromising';
-  return 'warm, reflective, and practical';
+function normalizeMemory(memory) {
+  return {
+    ...memory,
+    content: compactText(memory?.content || memory?.text || ''),
+    date: memory?.createdAt,
+  };
 }
 
-function tokenize(text = '') {
-  return compactText(text)
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((w) => w.length >= 3);
+function filterMemories(memories = []) {
+  return memories
+    .map(normalizeMemory)
+    .filter((m) => {
+      const text = m.content.toLowerCase();
+      if (!text || text.length < 15) return false;
+      if (text.includes('test')) return false;
+      if (text.includes('dummy')) return false;
+      if (text.includes('media attachment')) return false;
+      return true;
+    });
 }
 
-function lexicalOverlapScore(question, memoryText) {
-  const stopWords = new Set([
-    'what', 'which', 'when', 'where', 'should', 'could', 'would', 'have', 'this', 'that', 'your', 'with',
-    'from', 'into', 'about', 'been', 'were', 'they', 'them', 'then', 'than', 'also', 'very', 'just', 'will',
-    'focus', 'week', 'year', 'next', 'habit', 'movie', 'watch'
-  ]);
-  const q = tokenize(question).filter((w) => !stopWords.has(w));
-  const mSet = new Set(tokenize(memoryText));
-  if (!q.length || !mSet.size) return 0;
-  let overlap = 0;
-  for (const t of q) {
-    if (mSet.has(t)) overlap += 1;
-  }
-  return overlap / Math.max(1, q.length);
+function rankMemories(memories = [], question = '') {
+  const q = question.toLowerCase().trim();
+  const qTerms = q.split(/\s+/).filter((w) => w.length > 2);
+
+  return memories
+    .map((m) => {
+      const text = m.content.toLowerCase();
+      let score = 0;
+
+      if (q && text.includes(q)) score += 2;
+
+      const overlap = qTerms.reduce((acc, term) => (text.includes(term) ? acc + 1 : acc), 0);
+      score += overlap * 0.35;
+      score += m.content.length / 100;
+
+      if (/job|breakup|family|health|career|habit|goal|study|focus|anxious|grateful/.test(text)) {
+        score += 0.4;
+      }
+
+      if (Array.isArray(m.topics) && m.topics.length > 0) {
+        score += 0.2;
+      }
+
+      return { ...m, score };
+    })
+    .sort((a, b) => b.score - a.score);
 }
 
-function memoryQualityPenalty(memoryText = '') {
-  const t = compactText(memoryText).toLowerCase();
-  let penalty = 0;
-  if (t.length < 24) penalty += 0.2;
-  if (/\b(test|dummy|sample|attachment|media attachment|hello test|hey test)\b/.test(t)) penalty += 0.45;
-  return Math.min(0.8, penalty);
-}
-
-function intentBoost(question = '', memory = {}) {
+function detectQuestionType(question = '') {
   const q = question.toLowerCase();
-  const topics = memory.topics || [];
-  const text = (memory.text || '').toLowerCase();
 
-  if (/movie|film|series|watch/.test(q)) {
-    if (topics.includes('entertainment')) return 0.2;
-    if (/movie|film|music|weekend|relax/.test(text)) return 0.1;
-  }
-  if (/habit|improve|routine|discipline/.test(q)) {
-    if (topics.includes('personal_growth')) return 0.18;
-    if (/habit|routine|consisten|discipline|plan|goal/.test(text)) return 0.1;
-  }
-  if (/how far|progress|come this year|growth/.test(q)) {
-    if (/job|improve|learn|growth|milestone|achievement/.test(text)) return 0.14;
-  }
-  if (/focus this week|what should i focus/.test(q)) {
-    if (/work|study|goal|project|interview|health|sleep/.test(text)) return 0.14;
+  if (q.includes('should') || q.includes('focus') || q.includes('improve')) {
+    return 'advice';
   }
 
-  return 0;
+  if (q.includes('movie') || q.includes('eat') || q.includes('suggest')) {
+    return 'casual';
+  }
+
+  if (q.includes('what') || q.includes('did') || q.includes('when') || q.includes('am i')) {
+    return 'factual';
+  }
+
+  return 'reflective';
 }
 
-function buildPersonalizedFallback({ mode, question, memories = [], personality }) {
-  const modePrefix = mode === 'past'
-    ? 'Looking back at your earlier self,'
-    : mode === 'future'
-      ? 'From your future-self perspective,'
-      : 'From your present-self perspective,';
+function behaviorInstruction(type) {
+  if (type === 'factual') return 'Answer clearly and directly.';
+  if (type === 'advice') return 'Give practical and helpful advice.';
+  if (type === 'casual') return 'Respond naturally and casually.';
+  return 'Respond thoughtfully and reflectively.';
+}
 
-  if (!memories.length) {
-    return `${modePrefix} I do not have enough memory context yet for a specific recommendation about "${question}". Share one recent event you care about, and I will give a more personalized answer.`;
-  }
+function timeModeInstruction(mode) {
+  if (mode === 'past') return 'Only use knowledge available at that time.';
+  if (mode === 'future') return 'Answer as a future version of the user.';
+  return 'Answer as the user in the present moment.';
+}
 
+function shouldUseMemories(questionType, memories) {
+  if (!memories.length) return false;
+  const topScore = memories[0].score || 0;
+  if (questionType === 'casual') return topScore >= 2.2;
+  if (questionType === 'factual') return topScore >= 1.4;
+  return topScore >= 1.0;
+}
+
+function buildSmartPrompt({ question, memories, personality, mode, questionType, timestamp }) {
+  const memoryText = memories
+    .slice(0, 4)
+    .map((m) => `(${new Date(m.date).toISOString().slice(0, 10)}) ${shortText(m.content, 220)}`)
+    .join('\n');
+
+  const personalityText = [
+    `Optimism: ${clamp01(personality?.optimismScore ?? 0).toFixed(2)}`,
+    `Anxiety: ${clamp01(personality?.anxietyScore ?? 0).toFixed(2)}`,
+    `Ambition: ${clamp01(personality?.ambitionScore ?? 0).toFixed(2)}`,
+  ].join('\n');
+
+  const systemPrompt = [
+    'You are the user\'s inner voice.',
+    'Think clearly, naturally, and personally.',
+    'Do not use repetitive templates.',
+    'Do not force reflection tone for casual or factual questions.',
+    'Use memory only when it is helpful to answer the user question.',
+    'Avoid formulaic meta-language and robotic scaffolding.',
+  ].join('\n');
+
+  const userPrompt = [
+    `You are the user\'s ${mode} self.`,
+    timestamp ? `Anchor timestamp: ${new Date(timestamp).toISOString()}` : null,
+    '',
+    'Personality:',
+    personalityText,
+    '',
+    'Relevant memories (use only if helpful):',
+    memoryText || '(none selected)',
+    '',
+    'User question:',
+    `"${question}"`,
+    '',
+    'Instructions:',
+    `- ${behaviorInstruction(questionType)}`,
+    '- Speak naturally like inner thoughts.',
+    '- Avoid irrelevant references.',
+    '- Be concise (2-4 lines max).',
+    `- ${timeModeInstruction(mode)}`,
+  ].filter(Boolean).join('\n');
+
+  return { systemPrompt, userPrompt };
+}
+
+function buildSafeFallback({ questionType, question, memories }) {
   const top = memories[0];
-  const second = memories[1];
-  const tone = personalityToneHint(personality);
-  const topDate = new Date(top.createdAt).toISOString().slice(0, 10);
-
-  if (/movie|film|series|watch/i.test(question)) {
-    const mood = personality?.optimismScore >= 0.65 ? 'uplifting' : 'grounding';
-    const refs = [top, second].filter(Boolean).map((m) => shortText(m.text, 90));
-    const picks = mood === 'uplifting'
-      ? 'The Secret Life of Walter Mitty, The Pursuit of Happyness, and Chef'
-      : 'Good Will Hunting, Her, and The Martian';
-    return `${modePrefix} based on your memory cues (${refs.join(' | ')}), your taste currently leans ${mood}. Try ${picks}. Start with the first one tonight, and if you want I can narrow this down by genre next.`;
+  if (!top) {
+    if (questionType === 'casual') return 'Go with something light and enjoyable tonight. If you share your mood, I can suggest better options.';
+    if (questionType === 'factual') return 'I need one more concrete detail to answer this accurately.';
+    return 'Pick one small next step you can do today, and I will help you refine it.';
   }
 
-  if (/how far have i come|come this year|progress/i.test(question)) {
-    const older = memories[memories.length - 1] || top;
-    const a = shortText(older.text, 95);
-    const b = shortText(top.text, 95);
-    return `${modePrefix} you have moved from "${a}" to "${b}", which shows real progress in momentum and confidence this year. Keep this trajectory by protecting one non-negotiable weekly habit that supports your next milestone.`;
+  if (questionType === 'factual') {
+    return `A relevant point from your timeline: ${shortText(top.content, 140)}`;
   }
-
-  if (/habit.*improve|what habit should i improve|habit should/i.test(question)) {
-    const hint = personality?.anxietyScore >= 0.6 ? 'sleep + planning routine' : 'weekly planning + focused deep-work block';
-    return `${modePrefix} the next high-impact habit to improve is your ${hint}. From your memory pattern (${shortText(top.text, 120)}), consistency will help more than intensity right now. Set one repeatable time slot and keep it for 14 days.`;
+  if (questionType === 'casual') {
+    return `You seem to be in the mood for something easy and positive right now. Start with one feel-good pick tonight.`;
   }
-
-  const firstLine = shortText(top.text, 150);
-  const secondLine = second ? shortText(second.text, 120) : '';
-  const bridge = secondLine ? ` and also from ${secondLine}` : '';
-  return `${modePrefix} in a ${tone} tone, the clearest theme from your memories is: ${firstLine}${bridge}. Focus this week on one concrete step tied to that theme, then review progress in 3 days.`;
+  if (questionType === 'advice') {
+    return `A practical focus now: ${shortText(top.content, 120)}. Convert that into one concrete action for this week.`;
+  }
+  return `One meaningful thread right now is ${shortText(top.content, 130)}. Stay with that and take one clear step today.`;
 }
 
 async function retrieveRelevantMemories({ userId, question, candidateMemories = [], topK = 5 }) {
@@ -215,66 +262,54 @@ async function retrieveRelevantMemories({ userId, question, candidateMemories = 
       const similarity = queryEmbedding
         ? cosineSimilarity(queryEmbedding, memory.embedding)
         : 0;
-      const lexical = lexicalOverlapScore(question, memory.text || '');
-      const boost = intentBoost(question, memory);
-      const penalty = memoryQualityPenalty(memory.text || '');
-      const createdAtMs = new Date(memory.createdAt).getTime() || 0;
-      const ageDays = Math.max(0, (Date.now() - createdAtMs) / (1000 * 60 * 60 * 24));
-      const recency = Math.max(0, 1 - (ageDays / 365));
-      const finalScore = (similarity * 0.62) + (lexical * 0.28) + (recency * 0.1) + boost - penalty;
-      return { ...memory, similarity, lexical, penalty, score: finalScore };
+      return { ...memory, similarity };
     })
-    .filter((memory) => memory.penalty < 0.7)
     .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
+      if (b.similarity !== a.similarity) return b.similarity - a.similarity;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
   return scored.slice(0, topK);
 }
 
-function buildRagPrompt({ mode, timestamp, question, personality, memories }) {
-  const ts = timestamp ? new Date(timestamp) : null;
-  const modeLabel = mode === 'past'
-    ? 'Past Self'
-    : mode === 'future'
-      ? 'Future Self'
-      : 'Present Self';
+async function handleChat({ question, memories, personality, mode, timestamp }) {
+  let cleanMemories = filterMemories(memories);
+  cleanMemories = rankMemories(cleanMemories, question).slice(0, 8);
 
-  const memoryBlock = memories.length
-    ? memories.map((m, i) => (
-      `${i + 1}. [${new Date(m.createdAt).toISOString().slice(0, 10)}] (${m.sourceType}) similarity=${(m.similarity || 0).toFixed(3)} topics=${(m.topics || []).join(', ') || 'none'} emotion=${m.emotionLabel || 'unknown'}\n${shortText(m.text, 260)}`
-    )).join('\n')
-    : 'No directly relevant memories found.';
+  const questionType = detectQuestionType(question);
+  const selectedMemories = shouldUseMemories(questionType, cleanMemories)
+    ? cleanMemories.slice(0, 4)
+    : [];
 
-  const systemPrompt = [
-    'You are PastPort Guide, an emotionally intelligent RAG assistant.',
-    `You must answer as the user\'s ${modeLabel}.`,
-    'Always personalize using provided memory snippets and personality signals.',
-    'Never output generic coaching templates if memory context exists.',
-    'If asked for recommendations (movies/books/etc.), infer taste from memories and provide specific options with short reasons.',
-    'Do not invent events that are not grounded in memory snippets.',
-    'Response length target: 4-8 sentences.',
-    'Tone: warm, clear, practical.',
-  ].join('\n');
+  const prompt = buildSmartPrompt({
+    question,
+    memories: selectedMemories,
+    personality: personality || {},
+    mode,
+    questionType,
+    timestamp,
+  });
 
-  const userPrompt = [
-    ts ? `Anchor timestamp: ${ts.toISOString()}` : null,
-    'Personality profile (0 to 1):',
-    formatPersonalityForPrompt(personality),
-    '',
-    'Retrieved memory context:',
-    memoryBlock,
-    '',
-    `User question: ${question}`,
-    '',
-    'Output constraints:',
-    '- Reference at least 1 memory detail directly if available.',
-    '- End with one concrete, immediate next step.',
-    '- Avoid vague statements such as "focus on one concrete next step" unless you specify what it is.',
-  ].filter(Boolean).join('\n');
-
-  return { systemPrompt, userPrompt };
+  try {
+    const response = await generateLLMResponse(prompt);
+    if (response && response.trim().length > 8) {
+      return {
+        response,
+        source: 'groq',
+        questionType,
+        usedMemories: selectedMemories,
+      };
+    }
+    throw new Error('empty llm response');
+  } catch (err) {
+    logger.warn(`Groq response failed in handleChat: ${err?.message || 'unknown error'}`);
+    return {
+      response: buildSafeFallback({ questionType, question, memories: selectedMemories }),
+      source: 'fallback',
+      questionType,
+      usedMemories: selectedMemories,
+    };
+  }
 }
 
 async function callMl(endpoint, body) {
@@ -531,51 +566,33 @@ export async function buildChatPayload({ userId, mode, timestamp, message }) {
 export async function chatWithTemporalSelf({ userId, mode, timestamp, message }) {
   const payload = await buildChatPayload({ userId, mode, timestamp, message });
   const usedPersonality = payload.personality || derivePersonalityFromHistory(payload.personalityHistory);
-  const memories = await retrieveRelevantMemories({
+  const retrieved = await retrieveRelevantMemories({
     userId,
     question: message,
     candidateMemories: payload.candidateMemories,
-    topK: 5,
+    topK: 20,
   });
 
-  const prompt = buildRagPrompt({
+  const chat = await handleChat({
+    question: message,
+    memories: retrieved,
+    personality: usedPersonality,
     mode,
     timestamp,
-    question: message,
-    personality: usedPersonality,
-    memories,
   });
 
-  let response = '';
-  let responseSource = 'groq';
-  try {
-    response = await generateLLMResponse(prompt);
-    if (!response || response.trim().length < 20) {
-      throw new Error('LLM response too short or empty');
-    }
-  } catch (err) {
-    responseSource = 'fallback';
-    logger.warn(`Groq response failed in chatWithTemporalSelf: ${err?.message || 'unknown error'}`);
-    response = buildPersonalizedFallback({
-      mode,
-      question: message,
-      memories,
-      personality: usedPersonality,
-    });
-  }
-
   logger.info(
-    `[AI_CHAT] source=${responseSource} user=${userId} mode=${mode} memories=${memories.length} topScore=${memories[0]?.score?.toFixed?.(3) ?? 'na'}`
+    `[AI_CHAT] source=${chat.source} type=${chat.questionType} user=${userId} mode=${mode} retrieved=${retrieved.length} used=${chat.usedMemories.length} topScore=${chat.usedMemories[0]?.score?.toFixed?.(3) ?? 'na'}`
   );
 
   return {
     mode,
-    response,
-    citations: memories.map((m) => ({
+    response: chat.response,
+    citations: chat.usedMemories.map((m) => ({
       id: m.id,
       sourceType: m.sourceType,
       createdAt: m.createdAt,
-      excerpt: (m.text || '').slice(0, 240),
+      excerpt: (m.content || m.text || '').slice(0, 240),
       similarity: m.similarity || 0,
     })),
     usedPersonality,
