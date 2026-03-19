@@ -3,6 +3,7 @@ import CapsuleEmbedding from '../models/CapsuleEmbedding.js';
 import JournalEntry from '../models/JournalEntry.js';
 import Capsule from '../models/Capsule.js';
 import PersonalityState from '../models/PersonalityState.js';
+import { generateLLMResponse } from './llmService.js';
 
 const DEFAULT_ML_URL = 'http://localhost:8000';
 
@@ -26,6 +27,120 @@ function positivityFromSentiment(label, score) {
 function monthStartUTC(d) {
   const dt = new Date(d);
   return new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), 1));
+}
+
+function cosineSimilarity(a = [], b = []) {
+  if (!Array.isArray(a) || !Array.isArray(b)) return 0;
+  if (!a.length || !b.length || a.length !== b.length) return 0;
+
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    const x = Number(a[i]) || 0;
+    const y = Number(b[i]) || 0;
+    dot += x * y;
+    normA += x * x;
+    normB += y * y;
+  }
+  if (!normA || !normB) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+function derivePersonalityFromHistory(history = []) {
+  if (!Array.isArray(history) || history.length === 0) return null;
+
+  const recent = history.slice(-6);
+  const avg = (key) => {
+    const total = recent.reduce((sum, item) => sum + clamp01(item?.[key]), 0);
+    return total / recent.length;
+  };
+
+  return {
+    optimismScore: avg('optimismScore'),
+    ambitionScore: avg('ambitionScore'),
+    anxietyScore: avg('anxietyScore'),
+    reflectionScore: avg('reflectionScore'),
+    socialFocusScore: avg('socialFocusScore'),
+  };
+}
+
+function formatPersonalityForPrompt(personality) {
+  if (!personality) return 'No personality snapshot available.';
+  return [
+    `Optimism: ${clamp01(personality.optimismScore).toFixed(2)}`,
+    `Anxiety: ${clamp01(personality.anxietyScore).toFixed(2)}`,
+    `Ambition: ${clamp01(personality.ambitionScore).toFixed(2)}`,
+    `Reflection: ${clamp01(personality.reflectionScore).toFixed(2)}`,
+    `Social Focus: ${clamp01(personality.socialFocusScore).toFixed(2)}`,
+  ].join('\n');
+}
+
+async function retrieveRelevantMemories({ userId, question, candidateMemories = [], topK = 5 }) {
+  if (!candidateMemories.length) return [];
+
+  let queryEmbedding = null;
+  try {
+    const features = await callMl('/process-entry', {
+      userId: userId.toString(),
+      sourceType: 'journal',
+      sourceId: `chat-${Date.now()}`,
+      text: question,
+      createdAt: new Date(),
+    });
+    queryEmbedding = features?.embedding;
+  } catch (_) {
+    queryEmbedding = null;
+  }
+
+  const scored = candidateMemories
+    .map((memory) => {
+      const similarity = queryEmbedding
+        ? cosineSimilarity(queryEmbedding, memory.embedding)
+        : 0;
+      return { ...memory, similarity };
+    })
+    .sort((a, b) => {
+      if (b.similarity !== a.similarity) return b.similarity - a.similarity;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+  return scored.slice(0, topK);
+}
+
+function buildRagPrompt({ mode, timestamp, question, personality, memories }) {
+  const ts = timestamp ? new Date(timestamp) : null;
+  const modeLabel = mode === 'past'
+    ? 'Past Self'
+    : mode === 'future'
+      ? 'Future Self'
+      : 'Present Self';
+
+  const memoryBlock = memories.length
+    ? memories.map((m, i) => (
+      `${i + 1}. [${new Date(m.createdAt).toISOString().slice(0, 10)}] (${m.sourceType}) ${m.text}`
+    )).join('\n')
+    : 'No directly relevant memories found.';
+
+  return [
+    'You are a reflective assistant in the PastPort app.',
+    `Respond as the user\'s ${modeLabel}.`,
+    ts ? `Anchor timestamp: ${ts.toISOString()}` : null,
+    '',
+    'Personality profile (0 to 1):',
+    formatPersonalityForPrompt(personality),
+    '',
+    'Retrieved memory context:',
+    memoryBlock,
+    '',
+    `User question: ${question}`,
+    '',
+    'Rules:',
+    '- Stay grounded in provided memories and personality.',
+    '- Do not invent specific events not present in memory context.',
+    '- If context is weak, be transparent and give a practical next step.',
+    '- Keep answer concise and empathetic (3-6 sentences).',
+  ].filter(Boolean).join('\n');
 }
 
 async function callMl(endpoint, body) {
@@ -281,7 +396,41 @@ export async function buildChatPayload({ userId, mode, timestamp, message }) {
 
 export async function chatWithTemporalSelf({ userId, mode, timestamp, message }) {
   const payload = await buildChatPayload({ userId, mode, timestamp, message });
-  return callMl('/chat', payload);
+  const usedPersonality = payload.personality || derivePersonalityFromHistory(payload.personalityHistory);
+  const memories = await retrieveRelevantMemories({
+    userId,
+    question: message,
+    candidateMemories: payload.candidateMemories,
+    topK: 5,
+  });
+
+  const prompt = buildRagPrompt({
+    mode,
+    timestamp,
+    question: message,
+    personality: usedPersonality,
+    memories,
+  });
+
+  let response = '';
+  try {
+    response = await generateLLMResponse(prompt);
+  } catch (err) {
+    response = 'I can see important patterns in your memories. Focus on one concrete next step this week and check in with how it changes your momentum.';
+  }
+
+  return {
+    mode,
+    response,
+    citations: memories.map((m) => ({
+      id: m.id,
+      sourceType: m.sourceType,
+      createdAt: m.createdAt,
+      excerpt: (m.text || '').slice(0, 240),
+      similarity: m.similarity || 0,
+    })),
+    usedPersonality,
+  };
 }
 
 export async function getAiAnalytics(userId) {

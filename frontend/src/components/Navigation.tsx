@@ -49,9 +49,11 @@ const Navigation = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors">
-              How It Works
-            </Link>
+            {!isAuthenticated && (
+              <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors">
+                How It Works
+              </Link>
+            )}
             {isAuthenticated && (
               <>
                 <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
@@ -65,9 +67,6 @@ const Navigation = () => {
                 </Link>
                 <Link to="/time-chat" className="text-foreground hover:text-primary transition-colors">
                   Time Chat
-                </Link>
-                <Link to="/create" className="text-foreground hover:text-primary transition-colors">
-                  Create
                 </Link>
                 <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
                   Profile
@@ -149,9 +148,11 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pt-4 border-t border-white/10">
             <div className="flex flex-col space-y-4">
-              <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors">
-                How It Works
-              </Link>
+              {!isAuthenticated && (
+                <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors">
+                  How It Works
+                </Link>
+              )}
               {isAuthenticated ? (
                 <>
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
@@ -165,9 +166,6 @@ const Navigation = () => {
                   </Link>
                   <Link to="/time-chat" className="text-foreground hover:text-primary transition-colors">
                     Time Chat
-                  </Link>
-                  <Link to="/create" className="text-foreground hover:text-primary transition-colors">
-                    Create
                   </Link>
                   <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
                     Profile

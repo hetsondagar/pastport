@@ -13,11 +13,11 @@ export const createJournalEntrySchema = Joi.object({
       'string.max': 'Content cannot exceed 5000 characters'
     }),
   mood: Joi.string()
-    .valid('happy', 'sad', 'excited', 'angry', 'calm', 'neutral')
+    .valid('happy', 'sad', 'excited', 'angry', 'calm', 'anxious', 'grateful', 'neutral')
     .optional()
     .default('neutral')
     .messages({
-      'any.only': 'Mood must be one of: happy, sad, excited, angry, calm, neutral'
+      'any.only': 'Mood must be one of: happy, sad, excited, angry, calm, anxious, grateful, neutral'
     }),
   date: Joi.date()
     .optional()
@@ -81,10 +81,10 @@ export const updateJournalEntrySchema = Joi.object({
       'string.max': 'Content cannot exceed 5000 characters'
     }),
   mood: Joi.string()
-    .valid('happy', 'sad', 'excited', 'angry', 'calm', 'neutral')
+    .valid('happy', 'sad', 'excited', 'angry', 'calm', 'anxious', 'grateful', 'neutral')
     .optional()
     .messages({
-      'any.only': 'Mood must be one of: happy, sad, excited, angry, calm, neutral'
+      'any.only': 'Mood must be one of: happy, sad, excited, angry, calm, anxious, grateful, neutral'
     }),
   tags: Joi.array()
     .items(Joi.string().trim().max(30))
