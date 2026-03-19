@@ -49,9 +49,9 @@ const DailyInsight = () => {
   const getTypeColor = () => {
     switch (insight.type) {
       case 'quote':
-        return 'from-purple-500 to-pink-500';
+        return 'from-purple-500 to-purple-500';
       case 'fact':
-        return 'from-blue-500 to-cyan-500';
+        return 'from-purple-500 to-purple-500';
       case 'riddle':
         return 'from-orange-500 to-yellow-500';
       case 'joke':
@@ -64,7 +64,7 @@ const DailyInsight = () => {
       case 'quote':
         return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
       case 'fact':
-        return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
       case 'riddle':
         return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
       case 'joke':

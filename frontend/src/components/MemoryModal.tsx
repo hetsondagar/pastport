@@ -50,7 +50,7 @@ const MemoryModal = ({ memory, onClose, onUpdate }: MemoryModalProps) => {
   }
 
   const categoryColors = {
-    Travel: 'bg-blue-500',
+    Travel: 'bg-purple-500',
     Learning: 'bg-green-500',
     Growth: 'bg-yellow-500',
     Fun: 'bg-purple-500'

@@ -33,11 +33,11 @@ const StreakCelebration = ({ streakCount, isVisible, onComplete }: StreakCelebra
   const getStreakMessage = (count: number) => {
     if (count === 1) return { message: "First Entry!", icon: "🌟", color: "text-yellow-400" };
     if (count === 3) return { message: "Getting Started!", icon: "🔥", color: "text-orange-400" };
-    if (count === 7) return { message: "Week Warrior!", icon: "⚡", color: "text-blue-400" };
+    if (count === 7) return { message: "Week Warrior!", icon: "⚡", color: "text-purple-400" };
     if (count === 14) return { message: "Two Week Champion!", icon: "🏆", color: "text-purple-400" };
     if (count === 30) return { message: "Monthly Master!", icon: "💎", color: "text-green-400" };
-    if (count === 100) return { message: "Century Club!", icon: "👑", color: "text-pink-400" };
-    if (count % 7 === 0) return { message: "Streak Milestone!", icon: "⭐", color: "text-cyan-400" };
+    if (count === 100) return { message: "Century Club!", icon: "👑", color: "text-purple-400" };
+    if (count % 7 === 0) return { message: "Streak Milestone!", icon: "⭐", color: "text-purple-400" };
     return { message: "Keep Going!", icon: "🔥", color: "text-orange-400" };
   };
 

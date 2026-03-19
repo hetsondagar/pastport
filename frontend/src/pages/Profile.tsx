@@ -340,7 +340,7 @@ const Profile = () => {
                   <div className="flex items-center gap-6">
                     <Avatar className="w-20 h-20 border-2 border-white/20">
                       <AvatarImage src={profileData.avatar} />
-                      <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-purple-500 to-blue-500">
+                      <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-purple-500 to-purple-500">
                         {getInitials(profileData.name || 'User')}
                       </AvatarFallback>
                     </Avatar>
@@ -365,7 +365,7 @@ const Profile = () => {
                             ? 'border-red-500/50 focus:border-red-500' 
                             : profileData.name && !validationErrors.name 
                               ? 'border-green-500/50 focus:border-green-500' 
-                              : 'focus:border-blue-500'
+                              : 'focus:border-purple-500'
                         }`}
                       />
                       {profileData.name && (
@@ -397,7 +397,7 @@ const Profile = () => {
                         className={`w-full min-h-[100px] px-3 py-2 glass-card border-white/10 bg-background/50 text-white placeholder:text-gray-400 rounded-md resize-none transition-all duration-200 ${
                           validationErrors.bio 
                             ? 'border-red-500/50 focus:border-red-500' 
-                            : 'focus:border-blue-500'
+                            : 'focus:border-purple-500'
                         }`}
                         placeholder="Tell us about yourself..."
                       />
@@ -537,7 +537,7 @@ const Profile = () => {
                             ? 'border-red-500/50 focus:border-red-500' 
                             : passwordData.newPassword && !validationErrors.newPassword 
                               ? 'border-green-500/50 focus:border-green-500' 
-                              : 'focus:border-blue-500'
+                              : 'focus:border-purple-500'
                         }`}
                         placeholder="Enter your new password"
                       />
@@ -579,7 +579,7 @@ const Profile = () => {
                             ? 'border-red-500/50 focus:border-red-500' 
                             : passwordData.confirmPassword && !validationErrors.confirmPassword 
                               ? 'border-green-500/50 focus:border-green-500' 
-                              : 'focus:border-blue-500'
+                              : 'focus:border-purple-500'
                         }`}
                         placeholder="Confirm your new password"
                       />

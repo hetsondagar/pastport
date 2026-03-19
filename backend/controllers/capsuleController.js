@@ -1,8 +1,31 @@
 import Capsule from '../models/Capsule.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
+import Media from '../models/Media.js';
 import { getCurrentIST, getTimeUntilUnlockIST, formatIST } from '../utils/timezone.js';
 import { processCapsuleEmbedding } from '../services/aiService.js';
+
+const resolveCapsuleMedia = async (capsuleData) => {
+  if (!capsuleData || !capsuleData._id) {
+    return capsuleData;
+  }
+
+  if (Array.isArray(capsuleData.media) && capsuleData.media.length > 0) {
+    return capsuleData;
+  }
+
+  const fallbackMedia = await Media.find({
+    entryType: 'capsule',
+    entryId: capsuleData._id
+  })
+    .sort({ createdAt: 1 })
+    .select('url publicId type format resourceType width height size duration caption createdAt');
+
+  return {
+    ...capsuleData,
+    media: fallbackMedia
+  };
+};
 
 // @desc    Get all capsules for user
 // @route   GET /api/capsules
@@ -73,13 +96,17 @@ export const getCapsules = async (req, res, next) => {
     const total = await Capsule.countDocuments(query);
 
     // Format response based on unlock status
-    const formattedCapsules = capsules.map(capsule => {
+    const formattedCapsulesRaw = capsules.map(capsule => {
       if (capsule.isUnlocked) {
         return capsule.getFullData();
       } else {
         return capsule.getPreview();
       }
     });
+
+    const formattedCapsules = await Promise.all(
+      formattedCapsulesRaw.map((capsuleData) => resolveCapsuleMedia(capsuleData))
+    );
 
     res.json({
       success: true,
@@ -142,9 +169,11 @@ export const getCapsule = async (req, res, next) => {
     await capsule.addView(req.user._id);
 
     // Return appropriate data based on unlock status
-    const capsuleData = capsule.isUnlocked ? 
+    const capsuleDataRaw = capsule.isUnlocked ? 
       capsule.getFullData() : 
       capsule.getPreview();
+
+    const capsuleData = await resolveCapsuleMedia(capsuleDataRaw);
 
     res.json({
       success: true,
@@ -431,10 +460,11 @@ export const unlockCapsule = async (req, res, next) => {
 
     // Check if capsule is already unlocked
     if (capsule.isUnlocked) {
+      const capsuleData = await resolveCapsuleMedia(capsule.getFullData());
       return res.json({
         success: true,
         message: 'Capsule is already unlocked',
-        data: { capsule: capsule.getFullData() }
+        data: { capsule: capsuleData }
       });
     }
 
@@ -506,10 +536,12 @@ export const unlockCapsule = async (req, res, next) => {
       { capsuleId: capsule._id }
     );
 
+    const unlockedCapsuleData = await resolveCapsuleMedia(capsule.getFullData());
+
     res.json({
       success: true,
       message: 'Capsule unlocked successfully!',
-      data: { capsule: capsule.getFullData() }
+      data: { capsule: unlockedCapsuleData }
     });
   } catch (error) {
     next(error);

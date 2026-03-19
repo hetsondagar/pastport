@@ -226,7 +226,7 @@ const HowItWorks = () => {
                   <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mt-4">
                     <p className="text-sm text-muted-foreground">
                       💡 <strong>Pro Tip:</strong> Use drag to rotate, scroll to zoom, and right-click to pan. 
-                      Each mood has its own color: Happy (Green), Sad (Blue), Excited (Orange), Calm (Purple), 
+                      Each mood has its own color: Happy (Green), Sad (Purple), Excited (Orange), Calm (Purple), 
                       Anxious (Red), Grateful (Deep Orange), Neutral (Gray). The constellation resets monthly, 
                       so each month is a new sky full of memories!
                     </p>
@@ -254,7 +254,7 @@ const HowItWorks = () => {
 
             {/* Rich Media Support */}
             <motion.div variants={itemVariants} className="glass-card p-8 glow-hover">
-              <Upload className="w-12 h-12 text-blue-500 mb-4" />
+              <Upload className="w-12 h-12 text-purple-500 mb-4" />
               <h3 className="text-2xl font-semibold mb-3">Rich Media Support</h3>
               <p className="text-muted-foreground mb-4">
                 Upload and store all types of memories - photos, videos, audio recordings, and text. Your memories deserve to be preserved in full color!
@@ -410,10 +410,10 @@ const HowItWorks = () => {
                     </div>
                     <div className="flex items-center justify-between p-2 rounded bg-black/20">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full" style={{background: '#3B82F6'}}></div>
+                        <div className="w-6 h-6 rounded-full" style={{background: '#8B5CF6'}}></div>
                         <span className="font-medium">Sad</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">Soft Blue</span>
+                      <span className="text-sm text-muted-foreground">Soft Purple</span>
                     </div>
                     <div className="flex items-center justify-between p-2 rounded bg-black/20">
                       <div className="flex items-center gap-2">
@@ -462,8 +462,8 @@ const HowItWorks = () => {
                 Ultra-Smooth Navigation Controls
               </h3>
               <div className="grid md:grid-cols-3 gap-6">
-                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-3">
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/10 border border-purple-500/20">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
                     <span className="text-2xl">🖱️</span>
                   </div>
                   <h4 className="font-semibold mb-2">Mouse Controls</h4>
@@ -474,7 +474,7 @@ const HowItWorks = () => {
                     <li>• <strong>Click star</strong> - Read entry</li>
                   </ul>
                 </div>
-                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/10 border border-purple-500/20">
                   <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
                     <span className="text-2xl">📱</span>
                   </div>
@@ -505,7 +505,7 @@ const HowItWorks = () => {
             <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-6">
               <div className="glass-card p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Eye className="w-8 h-8 text-cyan-500" />
+                  <Eye className="w-8 h-8 text-purple-500" />
                   <h4 className="text-xl font-semibold">Visual Experience</h4>
                 </div>
                 <ul className="space-y-2 text-sm text-muted-foreground">
@@ -601,7 +601,7 @@ const HowItWorks = () => {
             </motion.div>
 
             <motion.div variants={itemVariants} className="glass-card p-6 text-center">
-              <Send className="w-10 h-10 text-blue-500 mx-auto mb-4" />
+              <Send className="w-10 h-10 text-purple-500 mx-auto mb-4" />
               <h4 className="text-xl font-semibold mb-2">Future Self</h4>
               <p className="text-sm text-muted-foreground">
                 Write letters to your future self with advice, dreams, and reflections.
@@ -617,7 +617,7 @@ const HowItWorks = () => {
             </motion.div>
 
             <motion.div variants={itemVariants} className="glass-card p-6 text-center">
-              <Globe className="w-10 h-10 text-cyan-500 mx-auto mb-4" />
+              <Globe className="w-10 h-10 text-purple-500 mx-auto mb-4" />
               <h4 className="text-xl font-semibold mb-2">Travel Memories</h4>
               <p className="text-sm text-muted-foreground">
                 Store vacation memories and open them on the anniversary of your trip.
@@ -648,7 +648,7 @@ const HowItWorks = () => {
                 <div className="text-muted-foreground">Your data is always encrypted</div>
               </div>
               <div className="flex flex-col items-center">
-                <Shield className="w-8 h-8 text-blue-500 mb-2" />
+                <Shield className="w-8 h-8 text-purple-500 mb-2" />
                 <div className="font-semibold">Private by Default</div>
                 <div className="text-muted-foreground">Only you can access your capsules</div>
               </div>

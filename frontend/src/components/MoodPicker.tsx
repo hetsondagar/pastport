@@ -9,8 +9,8 @@ interface MoodPickerProps {
 
 const moods = [
   { value: 'happy', emoji: '🌞', label: 'Happy', color: 'bg-yellow-400' },
-  { value: 'sad', emoji: '😢', label: 'Sad', color: 'bg-blue-400' },
-  { value: 'excited', emoji: '🎉', label: 'Excited', color: 'bg-pink-400' },
+  { value: 'sad', emoji: '😢', label: 'Sad', color: 'bg-purple-400' },
+  { value: 'excited', emoji: '🎉', label: 'Excited', color: 'bg-purple-400' },
   { value: 'angry', emoji: '😡', label: 'Angry', color: 'bg-red-400' },
   { value: 'calm', emoji: '🌙', label: 'Calm', color: 'bg-purple-400' },
   { value: 'neutral', emoji: '😐', label: 'Neutral', color: 'bg-gray-400' }

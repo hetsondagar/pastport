@@ -147,7 +147,7 @@ const MonthlyCardView = ({ onEntryClick }: MonthlyCardViewProps) => {
           return { type: 'locked-capsule', color: 'bg-purple-500/20 border-purple-500/50' };
         }
       } else {
-        return { type: 'journal-entry', color: 'bg-blue-500/20 border-blue-500/50' };
+        return { type: 'journal-entry', color: 'bg-purple-500/20 border-purple-500/50' };
       }
     } else if (isPast && !isToday) {
       return { type: 'missed', color: 'bg-red-500/20 border-red-500/50 animate-pulse' };
@@ -282,7 +282,7 @@ const MonthlyCardView = ({ onEntryClick }: MonthlyCardViewProps) => {
       {/* Legend */}
       <div className="flex flex-wrap gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-500/20 border border-blue-500/50 rounded"></div>
+          <div className="w-3 h-3 bg-purple-500/20 border border-purple-500/50 rounded"></div>
           <span className="text-gray-300">Journal Entry</span>
         </div>
         <div className="flex items-center gap-2">

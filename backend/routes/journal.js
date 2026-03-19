@@ -5,7 +5,8 @@ import {
   updateJournalEntry,
   deleteJournalEntry,
   unlockJournalEntry,
-  getJournalStreak
+  getJournalStreak,
+  getJournalStats
 } from '../controllers/journalController.js';
 import { protect } from '../middleware/auth.js';
 import { validateBody, validateObjectId } from '../middleware/validation.js';
@@ -22,6 +23,7 @@ router.use(protect);
 
 // Journal routes
 router.get('/streak', getJournalStreak);
+router.get('/stats', getJournalStats);
 router.get('/:userId/month/:year/:month', getMonthEntries);
 router.post('/', validateBody(createJournalEntrySchema), createJournalEntry);
 router.put('/:id', validateObjectId('id'), validateBody(updateJournalEntrySchema), updateJournalEntry);

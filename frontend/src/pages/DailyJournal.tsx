@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, Flame, BookOpen, Lock } from 'lucide-react';
+import { Plus, Calendar, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import Navigation from '@/components/Navigation';
@@ -10,6 +9,7 @@ import MonthlyCardView from '@/components/MonthlyCardView';
 import CreateEditJournalModal from '@/components/CreateEditJournalModal';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import PageTitle from '@/components/ui/PageTitle';
+import apiClient from '@/lib/api';
 
 interface JournalEntry {
   _id: string;
@@ -36,6 +36,54 @@ const DailyJournal = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [journalStats, setJournalStats] = useState({
+    streakCount: 0,
+    totalEntries: 0,
+    totalCapsules: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?._id) {
+      loadJournalStats();
+    }
+  }, [user?._id, refreshKey]);
+
+  const loadJournalStats = async () => {
+    setStatsLoading(true);
+    try {
+      const [streakResponse, statsResponse] = await Promise.all([
+        apiClient.getJournalStreak(),
+        apiClient.getJournalStats(),
+      ]);
+
+      setJournalStats({
+        streakCount: streakResponse?.success ? (streakResponse.data?.streakCount || 0) : 0,
+        totalEntries: statsResponse?.success ? (statsResponse.data?.totalEntries || 0) : 0,
+        totalCapsules: statsResponse?.success ? (statsResponse.data?.totalCapsules || 0) : 0,
+      });
+    } catch (error) {
+      console.error('Failed to load journal stats:', error);
+      setJournalStats({
+        streakCount: 0,
+        totalEntries: 0,
+        totalCapsules: 0,
+      });
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const StatCard = ({ value, label, colorClass }: { value: number; label: string; colorClass: string }) => (
+    <div className="glass-card-enhanced p-4 text-center">
+      {statsLoading ? (
+        <div className="h-8 w-16 mx-auto mb-1 rounded bg-white/10 animate-pulse" />
+      ) : (
+        <AnimatedCounter value={value} className={`text-2xl font-bold ${colorClass}`} />
+      )}
+      <div className="text-sm text-muted-foreground">{label}</div>
+    </div>
+  );
 
   const handleEntryClick = (entry: JournalEntry | null, date: Date) => {
     setSelectedEntry(entry);
@@ -96,27 +144,9 @@ const DailyJournal = () => {
             transition={{ delay: 0.1 }}
             className="grid md:grid-cols-4 gap-4 mb-8"
           >
-            <div className="glass-card-enhanced p-4 text-center">
-              <AnimatedCounter 
-                value={0} 
-                className="text-2xl font-bold text-primary"
-              />
-              <div className="text-sm text-muted-foreground">Day Streak</div>
-            </div>
-            <div className="glass-card-enhanced p-4 text-center">
-              <AnimatedCounter 
-                value={0} 
-                className="text-2xl font-bold text-accent"
-              />
-              <div className="text-sm text-muted-foreground">Total Entries</div>
-            </div>
-            <div className="glass-card-enhanced p-4 text-center">
-              <AnimatedCounter 
-                value={0} 
-                className="text-2xl font-bold text-secondary"
-              />
-              <div className="text-sm text-muted-foreground">Time Capsules</div>
-            </div>
+            <StatCard value={journalStats.streakCount} label="Day Streak" colorClass="text-primary" />
+            <StatCard value={journalStats.totalEntries} label="Total Entries" colorClass="text-accent" />
+            <StatCard value={journalStats.totalCapsules} label="Time Capsules" colorClass="text-secondary" />
             <div className="glass-card-enhanced p-4 text-center">
               <Button
                 onClick={handleNewEntry}

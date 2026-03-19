@@ -123,12 +123,12 @@ const CreateEditJournalModal = ({ entry, date, isOpen, onClose, onSave }: Create
 
   const moods = [
     { value: 'happy', label: '😊 Happy', color: 'bg-green-500' },
-    { value: 'sad', label: '😢 Sad', color: 'bg-blue-500' },
+    { value: 'sad', label: '😢 Sad', color: 'bg-purple-500' },
     { value: 'excited', label: '🎉 Excited', color: 'bg-yellow-500' },
     { value: 'angry', label: '😡 Angry', color: 'bg-red-500' },
     { value: 'calm', label: '🌙 Calm', color: 'bg-purple-500' },
     { value: 'anxious', label: '😰 Anxious', color: 'bg-orange-500' },
-    { value: 'grateful', label: '🙏 Grateful', color: 'bg-pink-500' },
+    { value: 'grateful', label: '🙏 Grateful', color: 'bg-purple-500' },
     { value: 'neutral', label: '😐 Neutral', color: 'bg-gray-500' }
   ];
 

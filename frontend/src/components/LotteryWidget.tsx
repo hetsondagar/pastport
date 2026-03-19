@@ -124,7 +124,7 @@ const LotteryWidget = () => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'quote': return 'bg-blue-500';
+      case 'quote': return 'bg-purple-500';
       case 'surprise': return 'bg-purple-500';
       default: return 'bg-yellow-500';
     }
@@ -175,7 +175,7 @@ const LotteryWidget = () => {
 
         {lotteryCapsule?.isUnlocked ? (
           <div className="space-y-3">
-            <div className="p-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg border border-green-500/30">
+            <div className="p-3 bg-gradient-to-r from-green-500/20 to-purple-500/20 rounded-lg border border-green-500/30">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-green-400" />
                 <span className="text-green-400 font-medium">Unlocked!</span>

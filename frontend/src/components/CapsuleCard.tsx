@@ -205,12 +205,12 @@ const CapsuleCard = ({
                   <img src={item.url} alt="" className="w-full h-full object-cover" />
                 )}
                 {item.type === 'video' && (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-                    <Video className="w-6 h-6 text-blue-400" />
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-purple-500/20">
+                    <Video className="w-6 h-6 text-purple-400" />
                   </div>
                 )}
                 {item.type === 'audio' && (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-pink-500/20">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-purple-500/20">
                     <Music className="w-6 h-6 text-purple-400" />
                   </div>
                 )}

@@ -7,7 +7,7 @@ const Footer = () => {
         <p className="text-sm text-muted-foreground">
           Crafted with time‑traveling pixels by
           {" "}
-          <span className="font-semibold tracking-tight bg-gradient-to-r from-purple-400 to-fuchsia-400 text-transparent bg-clip-text">
+          <span className="font-semibold tracking-tight bg-gradient-to-r from-purple-400 to-purple-400 text-transparent bg-clip-text">
             Het Sondagar
           </span>
           — packing nostalgia with extra sparkle ✨

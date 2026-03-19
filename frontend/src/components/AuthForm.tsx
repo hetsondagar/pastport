@@ -250,7 +250,7 @@ const AuthForm = () => {
                       placeholder="Enter your email"
                       value={loginData.email}
                       onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      className="pl-10 glass-card border-white/10 focus:border-blue-500 transition-all duration-200"
+                      className="pl-10 glass-card border-white/10 focus:border-purple-500 transition-all duration-200"
                       required
                     />
                   </div>
@@ -266,7 +266,7 @@ const AuthForm = () => {
                       placeholder="Enter your password"
                       value={loginData.password}
                       onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      className="pl-10 glass-card border-white/10 focus:border-blue-500 transition-all duration-200"
+                      className="pl-10 glass-card border-white/10 focus:border-purple-500 transition-all duration-200"
                       required
                     />
                   </div>
@@ -306,7 +306,7 @@ const AuthForm = () => {
                           ? 'border-red-500/50 focus:border-red-500' 
                           : registerData.name && !validationErrors.name 
                             ? 'border-green-500/50 focus:border-green-500' 
-                            : 'focus:border-blue-500'
+                            : 'focus:border-purple-500'
                       }`}
                       required
                     />
@@ -343,7 +343,7 @@ const AuthForm = () => {
                           ? 'border-red-500/50 focus:border-red-500' 
                           : registerData.email && !validationErrors.email 
                             ? 'border-green-500/50 focus:border-green-500' 
-                            : 'focus:border-blue-500'
+                            : 'focus:border-purple-500'
                       }`}
                       required
                     />
@@ -380,7 +380,7 @@ const AuthForm = () => {
                           ? 'border-red-500/50 focus:border-red-500' 
                           : registerData.password && !validationErrors.password 
                             ? 'border-green-500/50 focus:border-green-500' 
-                            : 'focus:border-blue-500'
+                            : 'focus:border-purple-500'
                       }`}
                       required
                     />
@@ -441,7 +441,7 @@ const AuthForm = () => {
                           ? 'border-red-500/50 focus:border-red-500' 
                           : registerData.confirmPassword && !validationErrors.confirmPassword 
                             ? 'border-green-500/50 focus:border-green-500' 
-                            : 'focus:border-blue-500'
+                            : 'focus:border-purple-500'
                       }`}
                       required
                     />

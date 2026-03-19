@@ -109,9 +109,9 @@ const MediaDisplay = ({ media, layout = 'grid', showCaptions = true, onDelete, s
                   )}
 
                   {item.type === 'audio' && (
-                    <div className="p-6 bg-gradient-to-br from-purple-500/20 via-pink-500/20 to-blue-500/20">
+                    <div className="p-6 bg-gradient-to-br from-purple-500/20 via-purple-500/20 to-purple-500/20">
                       <div className="flex items-center justify-center mb-4">
-                        <div className="p-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500">
+                        <div className="p-4 rounded-full bg-gradient-to-br from-purple-500 to-purple-500">
                           <Music className="w-8 h-8 text-white" />
                         </div>
                       </div>

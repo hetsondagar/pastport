@@ -126,7 +126,7 @@ const RiddleUnlock = ({ capsuleId, riddleQuestion, onSuccess, onClose }: RiddleU
                   <p className="text-white/90 text-sm">You successfully solved the riddle and unlocked the capsule!</p>
                 </div>
                 
-                <div className="p-5 bg-gradient-to-r from-blue-500/40 to-purple-500/40 rounded-lg border border-blue-500/50 backdrop-blur-sm shadow-lg">
+                <div className="p-5 bg-gradient-to-r from-purple-500/40 to-purple-500/40 rounded-lg border border-purple-500/50 backdrop-blur-sm shadow-lg">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-3xl">{unlockedCapsule?.emoji}</span>
                     <h3 className="text-white font-bold text-lg">{unlockedCapsule?.title}</h3>
@@ -159,7 +159,7 @@ const RiddleUnlock = ({ capsuleId, riddleQuestion, onSuccess, onClose }: RiddleU
               </div>
             ) : (
               <>
-                <div className="p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
+                <div className="p-4 bg-gradient-to-r from-purple-500/20 to-purple-500/20 rounded-lg border border-purple-500/30">
                   <p className="text-white font-medium mb-2">Riddle:</p>
                   <p className="text-white/90">{riddleQuestion}</p>
                 </div>

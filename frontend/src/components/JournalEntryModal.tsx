@@ -49,12 +49,12 @@ const JournalEntryModal = ({ entry, onClose, onUpdate }: JournalEntryModalProps)
 
   const moodColors = {
     happy: 'bg-green-500',
-    sad: 'bg-blue-500',
+    sad: 'bg-purple-500',
     excited: 'bg-yellow-500',
     angry: 'bg-red-500',
     calm: 'bg-purple-500',
     anxious: 'bg-orange-500',
-    grateful: 'bg-pink-500',
+    grateful: 'bg-purple-500',
     neutral: 'bg-gray-500'
   };
 

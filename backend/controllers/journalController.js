@@ -298,6 +298,33 @@ export const getJournalStreak = async (req, res, next) => {
   }
 };
 
+// @desc    Get journal stats
+// @route   GET /api/journal/stats
+// @access  Private
+export const getJournalStats = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const [totalEntries, totalCapsules, unlockedCapsules] = await Promise.all([
+      JournalEntry.countDocuments({ userId }),
+      JournalEntry.countDocuments({ userId, isCapsule: true }),
+      JournalEntry.countDocuments({ userId, isCapsule: true, isUnlocked: true }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalEntries,
+        totalCapsules,
+        unlockedCapsules,
+        lockedCapsules: Math.max(0, totalCapsules - unlockedCapsules),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Helper function to update user streak
 const updateUserStreak = async (userId) => {
   const streakData = await JournalEntry.getStreakData(userId);

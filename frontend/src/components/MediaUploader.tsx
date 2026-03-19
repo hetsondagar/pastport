@@ -260,7 +260,7 @@ const MediaUploader = ({ entryId, entryType, onMediaUploaded, maxFiles = 5 }: Me
                           />
                         )}
                         {media.type === 'audio' && (
-                          <div className="flex items-center justify-center h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20">
+                          <div className="flex items-center justify-center h-32 bg-gradient-to-br from-purple-500/20 to-purple-500/20">
                             <Music className="w-12 h-12 text-purple-400" />
                           </div>
                         )}

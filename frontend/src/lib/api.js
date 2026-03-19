@@ -357,6 +357,10 @@ class ApiClient {
     return this.request('/journal/streak');
   }
 
+  async getJournalStats() {
+    return this.request('/journal/stats');
+  }
+
   async getMonthEntries(userId, year, month) {
     return this.request(`/journal/${userId}/month/${year}/${month}`);
   }

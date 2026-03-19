@@ -344,15 +344,15 @@ nav img[src*="logo_main.png"] {
     --primary-foreground: 210 40% 98%;
     --primary-glow: 262 100% 75%;
     
-    /* Secondary Tech Blue */
-    --secondary: 217 91% 60%;
+    /* Secondary Tech Purple */
+    --secondary: 271 88% 63%;
     --secondary-foreground: 210 40% 98%;
-    --secondary-glow: 217 100% 75%;
+    --secondary-glow: 271 100% 78%;
     
-    /* Accent Cyan */
-    --accent: 189 85% 53%;
+    /* Accent Purple */
+    --accent: 285 82% 62%;
     --accent-foreground: 210 40% 98%;
-    --accent-glow: 189 100% 70%;
+    --accent-glow: 285 100% 78%;
 
     /* Muted Elements */
     --muted: 220 20% 15%;

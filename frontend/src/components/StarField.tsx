@@ -282,7 +282,7 @@ const StarField = ({ entries, onEntryClick, onCameraFocus }: StarFieldProps) => 
   const getMoodColor = (mood: string): string => {
     const moodColors: { [key: string]: string } = {
       happy: '#10B981',
-      sad: '#3B82F6',
+      sad: '#8B5CF6',
       excited: '#F59E0B',
       calm: '#8B5CF6',
       anxious: '#EF4444',
@@ -297,8 +297,8 @@ const StarField = ({ entries, onEntryClick, onCameraFocus }: StarFieldProps) => 
     switch (mood) {
       case 'happy': 
         return {
-          color: '#4A90E2', // Earth blue
-          emissive: '#2E5B8A',
+          color: '#8B5CF6', // Earth purple
+          emissive: '#5B2E8A',
           roughness: 0.8,
           metalness: 0.1,
           name: 'Earth-like'
@@ -321,8 +321,8 @@ const StarField = ({ entries, onEntryClick, onCameraFocus }: StarFieldProps) => 
         };
       case 'calm': 
         return {
-          color: '#E6E6FA', // Neptune blue
-          emissive: '#B0B0D6',
+          color: '#C4B5FD', // Neptune purple
+          emissive: '#A88FD1',
           roughness: 0.6,
           metalness: 0.3,
           name: 'Neptune-like'
