@@ -4,6 +4,7 @@ import JournalEntry from '../models/JournalEntry.js';
 import Capsule from '../models/Capsule.js';
 import PersonalityState from '../models/PersonalityState.js';
 import { generateLLMResponse } from './llmService.js';
+import logger from '../config/logger.js';
 
 const DEFAULT_ML_URL = 'http://localhost:8000';
 
@@ -76,6 +77,51 @@ function formatPersonalityForPrompt(personality) {
   ].join('\n');
 }
 
+function compactText(text = '') {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function shortText(text = '', maxLen = 220) {
+  const clean = compactText(text);
+  if (clean.length <= maxLen) return clean;
+  return `${clean.slice(0, maxLen - 1)}...`;
+}
+
+function personalityToneHint(personality) {
+  if (!personality) return 'balanced and grounded';
+  if (personality.anxietyScore >= 0.65) return 'calm, reassuring, and practical';
+  if (personality.ambitionScore >= 0.7) return 'focused, goal-oriented, and direct';
+  if (personality.optimismScore >= 0.72) return 'encouraging and upbeat without overpromising';
+  return 'warm, reflective, and practical';
+}
+
+function buildPersonalizedFallback({ mode, question, memories = [], personality }) {
+  const modePrefix = mode === 'past'
+    ? 'Looking back at your earlier self,'
+    : mode === 'future'
+      ? 'From your future-self perspective,'
+      : 'From your present-self perspective,';
+
+  if (!memories.length) {
+    return `${modePrefix} I do not have enough memory context yet for a specific recommendation about "${question}". Share one recent event you care about, and I will give a more personalized answer.`;
+  }
+
+  const top = memories[0];
+  const second = memories[1];
+  const tone = personalityToneHint(personality);
+  const topDate = new Date(top.createdAt).toISOString().slice(0, 10);
+
+  if (/movie|film|series|watch/i.test(question)) {
+    const refs = [top, second].filter(Boolean).map((m) => shortText(m.text, 110));
+    return `${modePrefix} based on your recent notes (${refs.join(' | ')}), pick a film that matches your current energy: one reflective, one feel-good, and one high-momentum option. Your strongest signal comes from ${topDate}, so start with the reflective option tonight and see how it lands.`;
+  }
+
+  const firstLine = shortText(top.text, 150);
+  const secondLine = second ? shortText(second.text, 120) : '';
+  const bridge = secondLine ? ` and also from ${secondLine}` : '';
+  return `${modePrefix} in a ${tone} tone, the clearest theme from your memories is: ${firstLine}${bridge}. Focus this week on one concrete step tied to that theme, then review progress in 3 days.`;
+}
+
 async function retrieveRelevantMemories({ userId, question, candidateMemories = [], topK = 5 }) {
   if (!candidateMemories.length) return [];
 
@@ -118,15 +164,23 @@ function buildRagPrompt({ mode, timestamp, question, personality, memories }) {
 
   const memoryBlock = memories.length
     ? memories.map((m, i) => (
-      `${i + 1}. [${new Date(m.createdAt).toISOString().slice(0, 10)}] (${m.sourceType}) ${m.text}`
+      `${i + 1}. [${new Date(m.createdAt).toISOString().slice(0, 10)}] (${m.sourceType}) similarity=${(m.similarity || 0).toFixed(3)} topics=${(m.topics || []).join(', ') || 'none'} emotion=${m.emotionLabel || 'unknown'}\n${shortText(m.text, 260)}`
     )).join('\n')
     : 'No directly relevant memories found.';
 
-  return [
-    'You are a reflective assistant in the PastPort app.',
-    `Respond as the user\'s ${modeLabel}.`,
+  const systemPrompt = [
+    'You are PastPort Guide, an emotionally intelligent RAG assistant.',
+    `You must answer as the user\'s ${modeLabel}.`,
+    'Always personalize using provided memory snippets and personality signals.',
+    'Never output generic coaching templates if memory context exists.',
+    'If asked for recommendations (movies/books/etc.), infer taste from memories and provide specific options with short reasons.',
+    'Do not invent events that are not grounded in memory snippets.',
+    'Response length target: 4-8 sentences.',
+    'Tone: warm, clear, practical.',
+  ].join('\n');
+
+  const userPrompt = [
     ts ? `Anchor timestamp: ${ts.toISOString()}` : null,
-    '',
     'Personality profile (0 to 1):',
     formatPersonalityForPrompt(personality),
     '',
@@ -135,12 +189,13 @@ function buildRagPrompt({ mode, timestamp, question, personality, memories }) {
     '',
     `User question: ${question}`,
     '',
-    'Rules:',
-    '- Stay grounded in provided memories and personality.',
-    '- Do not invent specific events not present in memory context.',
-    '- If context is weak, be transparent and give a practical next step.',
-    '- Keep answer concise and empathetic (3-6 sentences).',
+    'Output constraints:',
+    '- Reference at least 1 memory detail directly if available.',
+    '- End with one concrete, immediate next step.',
+    '- Avoid vague statements such as "focus on one concrete next step" unless you specify what it is.',
   ].filter(Boolean).join('\n');
+
+  return { systemPrompt, userPrompt };
 }
 
 async function callMl(endpoint, body) {
@@ -415,8 +470,17 @@ export async function chatWithTemporalSelf({ userId, mode, timestamp, message })
   let response = '';
   try {
     response = await generateLLMResponse(prompt);
+    if (!response || response.trim().length < 20) {
+      throw new Error('LLM response too short or empty');
+    }
   } catch (err) {
-    response = 'I can see important patterns in your memories. Focus on one concrete next step this week and check in with how it changes your momentum.';
+    logger.warn(`Groq response failed in chatWithTemporalSelf: ${err?.message || 'unknown error'}`);
+    response = buildPersonalizedFallback({
+      mode,
+      question: message,
+      memories,
+      personality: usedPersonality,
+    });
   }
 
   return {
