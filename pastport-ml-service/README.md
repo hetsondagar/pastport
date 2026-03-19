@@ -29,6 +29,8 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 - Use Python 3.11 (`runtime.txt` / `.python-version` already pinned).
 - This service uses CPU-only torch wheels via `requirements.txt`.
 - For free/low-memory instances, set `PASTPORT_ML_FAST_MODE=1` to force lightweight heuristics and avoid cold-start 504s.
+- If `PASTPORT_ML_FAST_MODE` is not set, the service auto-enables fast mode on Render and on low-memory cgroup limits.
+- To explicitly allow full model loading, set `PASTPORT_ML_FORCE_FULL_MODE=1`.
 
 ### Endpoints
 

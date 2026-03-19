@@ -8,6 +8,7 @@ from .embedding import embed_text
 from .retrieval import rank_memories
 from .forecast import forecast_personality
 from .models import get_generation_pipeline
+from .runtime import fast_mode_enabled
 
 
 def _mode_header(mode: str, ts: datetime | None) -> str:
@@ -112,6 +113,8 @@ def generate_chat_response(payload: ChatRequest) -> ChatResponse:
     # Prompt + generation
     prompt = _build_prompt(payload.mode, ts, used_personality, ranked, payload.message)
     try:
+        if fast_mode_enabled():
+            raise RuntimeError("Generation disabled in fast mode")
         response_text = _generate_text(prompt)
     except Exception:
         response_text = _fallback_text(payload.mode, ranked, payload.message)

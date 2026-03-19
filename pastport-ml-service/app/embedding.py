@@ -2,22 +2,14 @@ from __future__ import annotations
 
 from typing import List
 import re
-import os
 
 import numpy as np
 
 from .models import get_embedding_model
+from .runtime import fast_mode_enabled
 
 
 EMBED_DIM = 384
-
-
-def _fast_mode_enabled() -> bool:
-    val = (os.getenv("PASTPORT_ML_FAST_MODE") or "").strip().lower()
-    if val in {"1", "true", "yes", "on"}:
-        return True
-    # Render free instances can be slow on first model load; default fast mode there.
-    return (os.getenv("RENDER") or "").strip().lower() == "true"
 
 
 def _lightweight_embed(text: str, dim: int = EMBED_DIM) -> List[float]:
@@ -37,7 +29,7 @@ def _lightweight_embed(text: str, dim: int = EMBED_DIM) -> List[float]:
 
 
 def embed_text(text: str) -> List[float]:
-    if _fast_mode_enabled():
+    if fast_mode_enabled():
         return _lightweight_embed(text)
 
     try:

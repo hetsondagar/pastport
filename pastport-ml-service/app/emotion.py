@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Tuple, Literal
 import re
-import os
 
 from .models import get_emotion_pipeline
+from .runtime import fast_mode_enabled
 
 EmotionLabel = Literal["joy", "sadness", "anger", "fear", "surprise", "neutral"]
 
@@ -38,9 +38,7 @@ def _heuristic_emotion(text: str) -> Tuple[EmotionLabel, float]:
 
 
 def classify_emotion(text: str) -> Tuple[EmotionLabel, float]:
-    val = (os.getenv("PASTPORT_ML_FAST_MODE") or "").strip().lower()
-    render = (os.getenv("RENDER") or "").strip().lower() == "true"
-    if val in {"1", "true", "yes", "on"} or (render and val not in {"0", "false", "no", "off"}):
+    if fast_mode_enabled():
         return _heuristic_emotion(text)
 
     try:
