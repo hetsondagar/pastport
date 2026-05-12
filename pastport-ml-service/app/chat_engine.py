@@ -99,8 +99,7 @@ def generate_chat_response(payload: ChatRequest) -> ChatResponse:
     used_personality = payload.personality or PersonalityVector()
     if payload.mode == "future" and payload.personalityHistory:
         forecast = forecast_personality(payload.personalityHistory, years=max(1, min(5, payload.forecastYears)))
-        used_persona as e:
-        print(f"[WARNING] Chat generation failed for user {payload.userId}, using fallback. Error: {e}", file=sys.stderr)ity = PersonalityVector(**forecast)
+        used_personality = PersonalityVector(**forecast)
 
     # Retrieval
     q_emb = embed_text(payload.message)
@@ -110,7 +109,8 @@ def generate_chat_response(payload: ChatRequest) -> ChatResponse:
     prompt = _build_prompt(payload.mode, ts, used_personality, ranked, payload.message)
     try:
         response_text = _generate_text(prompt)
-    except Exception:
+    except Exception as e:
+        print(f"[WARNING] Chat generation failed for user {payload.userId}, using fallback. Error: {e}", file=sys.stderr)
         response_text = _safe_recovery_response(ranked, payload.message)
 
     # Citations
