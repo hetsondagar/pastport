@@ -3,6 +3,12 @@ import logger from '../config/logger.js';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_MODEL = process.env.GROQ_MODEL || 'mixtral-8x7b-32768';
+const DEPRECATED_MODELS = new Set([
+  'llama3-70b-8192',
+  'llama3-8b-8192',
+  'llama-3.1-70b-versatile',
+]);
+const FALLBACK_MODELS = ['mixtral-8x7b-32768', 'llama-3.1-8b-instant'];
 let hasLoggedGroqConfig = false;
 
 function diagnosticsEnabled() {
@@ -18,14 +24,17 @@ function maskApiKey(key = '') {
 
 function getModelCandidates() {
   const raw = process.env.GROQ_MODEL_CANDIDATES;
-  if (!raw) return [DEFAULT_MODEL, 'llama-3.1-70b-versatile', 'llama-3.1-8b-instant'];
-  const parsed = raw
+  const parsed = (raw ? raw : FALLBACK_MODELS.join(','))
     .split(',')
     .map((m) => m.trim())
-    .filter(Boolean);
-  if (!parsed.length) return [DEFAULT_MODEL];
-  if (!parsed.includes(DEFAULT_MODEL)) parsed.unshift(DEFAULT_MODEL);
-  return parsed;
+    .filter(Boolean)
+    .filter((m) => !DEPRECATED_MODELS.has(m));
+
+  const candidates = parsed.length ? parsed : FALLBACK_MODELS;
+  if (!candidates.includes(DEFAULT_MODEL) && !DEPRECATED_MODELS.has(DEFAULT_MODEL)) {
+    candidates.unshift(DEFAULT_MODEL);
+  }
+  return [...new Set(candidates)];
 }
 
 export async function generateLLMResponse({ userPrompt, systemPrompt }) {
