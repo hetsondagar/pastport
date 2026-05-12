@@ -2,13 +2,29 @@ import axios from 'axios';
 import logger from '../config/logger.js';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_MODEL = process.env.GROQ_MODEL || 'mixtral-8x7b-32768';
-const DEPRECATED_MODELS = new Set([
+
+/** When GROQ_MODEL is unset, or set to a removed ID — see console.groq.com/docs/models */
+const DEFAULT_MODEL_FALLBACK = 'openai/gpt-oss-120b';
+
+/**
+ * Ordered fallbacks: GPT-OSS production first (Groq’s recommended replacements),
+ * then smaller OSS, then Qwen; Llama 3.3 last for accounts where Llama 3.1 fails.
+ */
+const FALLBACK_MODELS = [
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'qwen/qwen3-32b',
+  'llama-3.3-70b-versatile',
+];
+
+/** Stripped from GROQ_MODEL / GROQ_MODEL_CANDIDATES so old env vars cannot resurrect broken IDs */
+const LEGACY_MODEL_IDS = new Set([
+  'mixtral-8x7b-32768',
   'llama3-70b-8192',
   'llama3-8b-8192',
   'llama-3.1-70b-versatile',
 ]);
-const FALLBACK_MODELS = ['mixtral-8x7b-32768', 'llama-3.1-8b-instant'];
+
 let hasLoggedGroqConfig = false;
 
 function diagnosticsEnabled() {
@@ -22,17 +38,24 @@ function maskApiKey(key = '') {
   return `${trimmed.slice(0, 6)}***${trimmed.slice(-4)}`;
 }
 
+function resolvePrimaryModel() {
+  const fromEnv = (process.env.GROQ_MODEL || '').trim();
+  if (fromEnv && !LEGACY_MODEL_IDS.has(fromEnv)) return fromEnv;
+  return DEFAULT_MODEL_FALLBACK;
+}
+
 function getModelCandidates() {
   const raw = process.env.GROQ_MODEL_CANDIDATES;
   const parsed = (raw ? raw : FALLBACK_MODELS.join(','))
     .split(',')
     .map((m) => m.trim())
     .filter(Boolean)
-    .filter((m) => !DEPRECATED_MODELS.has(m));
+    .filter((m) => !LEGACY_MODEL_IDS.has(m));
 
-  const candidates = parsed.length ? parsed : FALLBACK_MODELS;
-  if (!candidates.includes(DEFAULT_MODEL) && !DEPRECATED_MODELS.has(DEFAULT_MODEL)) {
-    candidates.unshift(DEFAULT_MODEL);
+  const primary = resolvePrimaryModel();
+  let candidates = parsed.length ? parsed : [...FALLBACK_MODELS];
+  if (!candidates.includes(primary)) {
+    candidates.unshift(primary);
   }
   return [...new Set(candidates)];
 }
