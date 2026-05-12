@@ -95,12 +95,13 @@ function normalizeMemory(memory) {
   };
 }
 
-function filterMemories(memories = []) {
+function filterMemories(memories = [], opts = {}) {
+  const minLen = opts.minLen ?? 15;
   return memories
     .map(normalizeMemory)
     .filter((m) => {
       const text = m.content.toLowerCase();
-      if (!text || text.length < 15) return false;
+      if (!text || text.length < minLen) return false;
       if (text.includes('test')) return false;
       if (text.includes('dummy')) return false;
       if (text.includes('media attachment')) return false;
@@ -147,11 +148,134 @@ function detectQuestionType(question = '') {
     return 'casual';
   }
 
-  if (q.includes('what') || q.includes('did') || q.includes('when') || q.includes('am i')) {
+  if (
+    q.includes('what')
+    || q.includes('did')
+    || q.includes('when')
+    || q.includes('am i')
+    || /\btell me about\b/.test(q)
+    || /\bwhat\s+(happened|went)\b/.test(q)
+  ) {
     return 'factual';
   }
 
   return 'reflective';
+}
+
+/** Start of UTC calendar day for `d`. */
+function startOfUtcDay(d) {
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return null;
+  return new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
+}
+
+/**
+ * Detect phrases like "last month" / "last week" and map them to [start, end) in UTC.
+ * Windows are interpreted relative to `anchor` (chat timestamp): e.g. past-self at Jan 1 2026 → "last month" is Dec 2025.
+ */
+function parseRecallTimeRange(question = '', anchorRaw = new Date()) {
+  const q = question.toLowerCase();
+  const anchor = new Date(anchorRaw);
+  if (Number.isNaN(anchor.getTime())) return null;
+
+  const dayStart = startOfUtcDay(anchor);
+  if (!dayStart) return null;
+
+  if (/\b(last|past|previous)\s+month\b/.test(q) || /\bover\s+(the\s+)?last\s+month\b/.test(q)) {
+    const end = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
+    const start = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() - 1, 1));
+    return {
+      start,
+      end,
+      label: 'the calendar month before your anchor date',
+    };
+  }
+
+  if (/\bthis\s+month\b/.test(q)) {
+    const start = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
+    const end = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 1));
+    return { start, end, label: 'this calendar month (relative to your anchor date)' };
+  }
+
+  if (/\b(last|past|previous)\s+week\b/.test(q)) {
+    const end = dayStart;
+    const start = new Date(end.getTime() - 7 * 86400000);
+    return {
+      start,
+      end,
+      label: 'the seven days ending at the start of your anchor calendar day (UTC)',
+    };
+  }
+
+  if (/\bthis\s+week\b/.test(q)) {
+    const end = dayStart;
+    const start = new Date(end.getTime() - 7 * 86400000);
+    return {
+      start,
+      end,
+      label: 'the last seven days before your anchor calendar day (UTC)',
+    };
+  }
+
+  if (/\byesterday\b/.test(q)) {
+    const end = dayStart;
+    const start = new Date(end.getTime() - 86400000);
+    return { start, end, label: 'yesterday (UTC)' };
+  }
+
+  return null;
+}
+
+function memoryInstant(m) {
+  const raw = m?.date || m?.createdAt;
+  const d = raw ? new Date(raw) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+}
+
+async function fetchRecallFallbackFromDb(userId, recallRange) {
+  const range = { $gte: recallRange.start, $lt: recallRange.end };
+  const [journals, capsules] = await Promise.all([
+    JournalEntry.find({ userId, date: range }).sort({ date: -1 }).limit(18).lean(),
+    Capsule.find({ creator: userId, createdAt: range }).sort({ createdAt: -1 }).limit(18).lean(),
+  ]);
+
+  const out = [];
+  for (const e of journals) {
+    out.push({
+      id: e._id.toString(),
+      sourceType: 'journal',
+      createdAt: e.date || e.createdAt,
+      text: e.content,
+      topics: e.tags || [],
+    });
+  }
+  for (const c of capsules) {
+    out.push({
+      id: c._id.toString(),
+      sourceType: 'capsule',
+      createdAt: c.createdAt,
+      text: `${c.title}\n\n${c.message}`,
+      topics: [],
+    });
+  }
+
+  return out.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function dedupeMemoriesById(primary, secondary) {
+  const seen = new Set();
+  const out = [];
+  for (const m of [...primary, ...secondary]) {
+    const id = m?.id?.toString?.();
+    const key = id || `${m?.createdAt}-${String(m?.text || m?.content || '').slice(0, 48)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      ...m,
+      content: m.content || m.text || '',
+    });
+  }
+  return out;
 }
 
 function behaviorInstruction(type) {
@@ -175,11 +299,24 @@ function shouldUseMemories(questionType, memories) {
   return topScore >= 0.7;
 }
 
-function buildSmartPrompt({ question, memories, personality, mode, questionType, timestamp }) {
-  const memoryText = memories
-    .slice(0, 4)
-    .map((m) => `(${new Date(m.date).toISOString().slice(0, 10)}) ${shortText(m.content, 220)}`)
-    .join('\n');
+function buildSmartPrompt({
+  question,
+  memories,
+  personality,
+  mode,
+  questionType,
+  timestamp,
+  recallEmpty,
+  recallRangeLabel,
+  recallRange,
+}) {
+  const memoryLines = memories.slice(0, 8).map((m) => {
+    const inst = memoryInstant(m);
+    const day = inst ? inst.toISOString().slice(0, 10) : '(unknown date)';
+    const body = shortText(m.content || m.text || '', 260);
+    return `(${day}) ${body}`;
+  });
+  const memoryText = memoryLines.join('\n');
 
   const personalityText = [
     `Optimism: ${clamp01(personality?.optimismScore ?? 0).toFixed(2)}`,
@@ -196,17 +333,25 @@ function buildSmartPrompt({ question, memories, personality, mode, questionType,
     'Avoid formulaic meta-language and robotic scaffolding.',
     'If relevant memories are provided, answer from those memories instead of making vague general statements.',
     'Never say that nothing happened, that you were blank, or that time has not passed if concrete memories are available.',
+    'When the user asks about a specific time window and logs are provided, summarize what actually appears in those logs.',
   ].join('\n');
 
   const userPrompt = [
     `You are the user\'s ${mode} self.`,
     timestamp ? `Anchor timestamp: ${new Date(timestamp).toISOString()}` : null,
+    recallEmpty && recallRangeLabel
+      ? `No journal entries or capsules exist in PastPort for ${recallRangeLabel}. Acknowledge that warmly without inventing events or generic \"I don't remember\" filler.`
+      : null,
     '',
     'Personality:',
     personalityText,
     '',
-    'Relevant memories (use only if helpful):',
-    memoryText || '(none selected)',
+    recallRange
+      ? recallEmpty
+        ? 'Logged memories in that period:'
+        : 'Memories from that period (summarize honestly):'
+      : 'Relevant memories (use only if helpful):',
+    memoryText || '(none)',
     '',
     'User question:',
     `"${question}"`,
@@ -222,7 +367,11 @@ function buildSmartPrompt({ question, memories, personality, mode, questionType,
   return { systemPrompt, userPrompt };
 }
 
-function buildSafeFallback({ questionType, question, memories }) {
+function buildSafeFallback({ questionType, question, memories, recallEmpty, recallRangeLabel }) {
+  if (recallEmpty && recallRangeLabel) {
+    return `There aren't any PastPort logs saved for ${recallRangeLabel}. Add a journal note or capsule for that stretch and ask again—I’ll mirror it back here.`;
+  }
+
   const top = memories[0];
   if (!top) {
     if (questionType === 'casual') return 'Go with something light and enjoyable tonight. If you share your mood, I can suggest better options.';
@@ -274,14 +423,30 @@ async function retrieveRelevantMemories({ userId, question, candidateMemories = 
   return scored.slice(0, topK);
 }
 
-async function handleChat({ question, memories, personality, mode, timestamp }) {
-  let cleanMemories = filterMemories(memories);
-  cleanMemories = rankMemories(cleanMemories, question).slice(0, 8);
+async function handleChat({ question, memories, personality, mode, timestamp, recallRange }) {
+  const recallFilterOpts = recallRange ? { minLen: 3 } : {};
+  let cleanMemories = filterMemories(memories, recallFilterOpts);
+  cleanMemories = rankMemories(cleanMemories, question).slice(0, 16);
 
   const questionType = detectQuestionType(question);
-  const selectedMemories = shouldUseMemories(questionType, cleanMemories)
-    ? cleanMemories.slice(0, 4)
-    : [];
+
+  let selectedMemories = [];
+  let recallEmpty = false;
+
+  if (recallRange) {
+    const inRange = cleanMemories
+      .filter((m) => {
+        const inst = memoryInstant(m);
+        return inst && inst >= recallRange.start && inst < recallRange.end;
+      })
+      .sort((a, b) => memoryInstant(b) - memoryInstant(a));
+    selectedMemories = inRange.slice(0, 8);
+    recallEmpty = selectedMemories.length === 0;
+  } else {
+    selectedMemories = shouldUseMemories(questionType, cleanMemories)
+      ? cleanMemories.slice(0, 4)
+      : [];
+  }
 
   const prompt = buildSmartPrompt({
     question,
@@ -290,6 +455,9 @@ async function handleChat({ question, memories, personality, mode, timestamp }) 
     mode,
     questionType,
     timestamp,
+    recallEmpty,
+    recallRangeLabel: recallRange?.label,
+    recallRange,
   });
 
   try {
@@ -312,7 +480,13 @@ async function handleChat({ question, memories, personality, mode, timestamp }) 
       `Groq response failed in handleChat: ${reason} (status: ${status}, data: ${errorData})`
     );
     return {
-      response: buildSafeFallback({ questionType, question, memories: selectedMemories }),
+      response: buildSafeFallback({
+        questionType,
+        question,
+        memories: selectedMemories,
+        recallEmpty,
+        recallRangeLabel: recallRange?.label,
+      }),
       source: 'fallback',
       questionType,
       usedMemories: selectedMemories,
@@ -602,6 +776,29 @@ export async function buildChatPayload({ userId, mode, timestamp, message }) {
 export async function chatWithTemporalSelf({ userId, mode, timestamp, message }) {
   const payload = await buildChatPayload({ userId, mode, timestamp, message });
   const usedPersonality = payload.personality || derivePersonalityFromHistory(payload.personalityHistory);
+
+  const anchor = payload.timestamp || new Date();
+  const recallRange = parseRecallTimeRange(message, anchor);
+
+  let recallPinned = [];
+  if (recallRange) {
+    recallPinned = payload.candidateMemories
+      .filter((m) => {
+        const inst = memoryInstant(m);
+        return inst && inst >= recallRange.start && inst < recallRange.end;
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 18)
+      .map((m) => ({
+        ...m,
+        content: m.text || m.content || '',
+      }));
+
+    if (!recallPinned.length) {
+      recallPinned = await fetchRecallFallbackFromDb(userId, recallRange);
+    }
+  }
+
   const retrieved = await retrieveRelevantMemories({
     userId,
     question: message,
@@ -609,12 +806,15 @@ export async function chatWithTemporalSelf({ userId, mode, timestamp, message })
     topK: 20,
   });
 
+  const mergedMemories = dedupeMemoriesById(recallPinned, retrieved);
+
   const chat = await handleChat({
     question: message,
-    memories: retrieved,
+    memories: mergedMemories,
     personality: usedPersonality,
     mode,
-    timestamp,
+    timestamp: anchor,
+    recallRange,
   });
 
   logger.info(
