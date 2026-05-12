@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Tuple, Literal
 import re
+import os
 
 from .models import get_sentiment_pipeline
-from .runtime import fast_mode_enabled
 
 
 POSITIVE_WORDS = {
@@ -33,7 +33,9 @@ def _heuristic_sentiment(text: str) -> Tuple[Literal["positive", "negative"], fl
 
 
 def analyze_sentiment(text: str) -> Tuple[Literal["positive", "negative"], float]:
-    if fast_mode_enabled():
+    val = (os.getenv("PASTPORT_ML_FAST_MODE") or "").strip().lower()
+    render = (os.getenv("RENDER") or "").strip().lower() == "true"
+    if val in {"1", "true", "yes", "on"} or (render and val not in {"0", "false", "no", "off"}):
         return _heuristic_sentiment(text)
 
     try:

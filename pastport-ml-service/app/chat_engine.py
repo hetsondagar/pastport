@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Tuple
+import sys
+import traceback
 
 from .schemas import ChatRequest, ChatResponse, Citation, PersonalityVector, MemoryForRetrieval
 from .embedding import embed_text
@@ -65,9 +67,19 @@ Instructions:
 
 
 def _generate_text(prompt: str) -> str:
-    gen = get_generation_pipeline()
-    out = gen(prompt, max_new_tokens=128, do_sample=False, clean_up_tokenization_spaces=False)[0]["generated_text"]
-    return out.strip()
+    try:
+        gen = get_generation_pipeline()
+        result = gen(prompt, max_new_tokens=128, do_sample=False, clean_up_tokenization_spaces=False)
+        if not result or not isinstance(result, list):
+            raise ValueError(f"Unexpected generation output format: {type(result)}")
+        out = result[0].get("generated_text")
+        if not out:
+            raise ValueError("No 'generated_text' key in model output")
+        return out.strip()
+    except Exception as e:
+        print(f"[ERROR] LLM generation failed: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        raise
 
 
 def _safe_recovery_response(ranked: List[Tuple[MemoryForRetrieval, float]], user_msg: str) -> str:
@@ -87,7 +99,8 @@ def generate_chat_response(payload: ChatRequest) -> ChatResponse:
     used_personality = payload.personality or PersonalityVector()
     if payload.mode == "future" and payload.personalityHistory:
         forecast = forecast_personality(payload.personalityHistory, years=max(1, min(5, payload.forecastYears)))
-        used_personality = PersonalityVector(**forecast)
+        used_persona as e:
+        print(f"[WARNING] Chat generation failed for user {payload.userId}, using fallback. Error: {e}", file=sys.stderr)ity = PersonalityVector(**forecast)
 
     # Retrieval
     q_emb = embed_text(payload.message)
