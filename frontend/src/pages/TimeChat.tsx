@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/lib/api";
 import Navigation from "@/components/Navigation";
@@ -19,7 +19,48 @@ type ChatMsg = {
   content: string;
 };
 
+const STORAGE_VERSION = 1;
+
+type PersistedTimeChat = {
+  v: number;
+  messages: ChatMsg[];
+  mode: Mode;
+  year: number;
+};
+
+const DEFAULT_MESSAGES: ChatMsg[] = [
+  {
+    role: "ai",
+    content: "Pick a time mode and ask what is on your mind. I am here to help you reflect with warmth and clarity.",
+  },
+];
+
 const clampYear = (y: number) => Math.max(2000, Math.min(new Date().getFullYear() + 5, y));
+
+function storageKey(userId: string) {
+  return `pastport:time-chat:v${STORAGE_VERSION}:${userId}`;
+}
+
+function parseStoredChat(raw: string | null): PersistedTimeChat | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<PersistedTimeChat>;
+    if (!parsed || parsed.v !== STORAGE_VERSION || !Array.isArray(parsed.messages)) return null;
+    const messages: ChatMsg[] = [];
+    for (const row of parsed.messages) {
+      if (row && (row.role === "user" || row.role === "ai") && typeof row.content === "string") {
+        messages.push({ role: row.role, content: row.content });
+      }
+    }
+    if (!messages.length) return null;
+    const mode: Mode =
+      parsed.mode === "past" || parsed.mode === "present" || parsed.mode === "future" ? parsed.mode : "present";
+    const year = typeof parsed.year === "number" ? clampYear(parsed.year) : new Date().getFullYear();
+    return { v: STORAGE_VERSION, messages, mode, year };
+  } catch {
+    return null;
+  }
+}
 
 const TimeChat = () => {
   const { user, isAuthenticated } = useAuth();
@@ -27,12 +68,49 @@ const TimeChat = () => {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    {
-      role: "ai",
-      content: "Pick a time mode and ask what is on your mind. I am here to help you reflect with warmth and clarity.",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMsg[]>(DEFAULT_MESSAGES);
+  const [chatHydrated, setChatHydrated] = useState(false);
+
+  /** Restore before paint so the persist effect cannot overwrite storage with defaults when auth resolves after mount. */
+  useLayoutEffect(() => {
+    if (!user?._id) {
+      setMessages(DEFAULT_MESSAGES);
+      setMode("present");
+      setYear(new Date().getFullYear());
+      setChatHydrated(true);
+      return;
+    }
+    try {
+      const restored = parseStoredChat(localStorage.getItem(storageKey(user._id)));
+      if (restored) {
+        setMessages(restored.messages);
+        setMode(restored.mode);
+        setYear(restored.year);
+      } else {
+        setMessages(DEFAULT_MESSAGES);
+        setMode("present");
+        setYear(new Date().getFullYear());
+      }
+    } catch {
+      setMessages(DEFAULT_MESSAGES);
+    }
+    setChatHydrated(true);
+  }, [user?._id]);
+
+  useEffect(() => {
+    if (!chatHydrated || !user?._id) return;
+    try {
+      const payload: PersistedTimeChat = {
+        v: STORAGE_VERSION,
+        messages,
+        mode,
+        year,
+      };
+      localStorage.setItem(storageKey(user._id), JSON.stringify(payload));
+    } catch {
+      /* quota or private mode */
+    }
+  }, [chatHydrated, user?._id, messages, mode, year]);
 
   useEffect(() => {
     const prev = document.title;

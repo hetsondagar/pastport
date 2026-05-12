@@ -289,17 +289,36 @@ function dedupeMemoriesById(primary, secondary) {
 }
 
 function behaviorInstruction(type) {
-  if (type === 'factual') return 'Answer clearly and directly.';
-  if (type === 'advice') return 'Give practical and helpful advice.';
-  if (type === 'casual') return 'Respond naturally and casually.';
-  return 'Respond thoughtfully and reflectively.';
+  if (type === 'factual') {
+    return 'Answer clearly; when the question is personal, lead with gentle validation and anchor facts in their excerpts with natural dates—not a cold recap.';
+  }
+  if (type === 'advice') {
+    return 'Give emotionally grounded guidance tied to their memories and calming habits—never shallow one-liners like “try yoga” without linking to their own words.';
+  }
+  if (type === 'casual') {
+    return 'Stay warm and conversational; use excerpts when they fit the mood—avoid sounding like small talk from a generic assistant.';
+  }
+  return 'Go deep: emotional validation, pattern-spotting across memories, gentle guidance, and a reassuring close.';
 }
 
 function timeModeInstruction(mode) {
-  if (mode === 'past') return 'Only use knowledge available at that time.';
-  if (mode === 'future') return 'Answer as a future version of the user.';
-  return 'Answer as the user in the present moment.';
+  if (mode === 'past') return 'Only use knowledge available at that anchor time; still sound warm and human.';
+  if (mode === 'future') return 'Answer as a hopeful future version of the user—supportive and grounded, not preachy.';
+  return 'Answer as the user in the present moment—emotionally present, not clinical.';
 }
+
+/** Time Chat: reflective companion voice (not generic chatbot or therapist). */
+const TIME_CHAT_COMPANION_CORE = [
+  'ROLE: You are a deeply reflective, emotionally aware companion. You are NOT generic customer support, a productivity coach, or a clinical therapist.',
+  'GOAL: Help the user understand feelings through their own memories and patterns. Transform excerpts into emotional insight—do not read like database logs.',
+  'TONE: Warm, calm, supportive, emotionally intelligent, human-like. Sound like a wise friend or caring inner voice. Avoid robotic, overly short, generic, or stiff wording.',
+  'LENGTH: Usually at least 4–5 sentences (paragraphs are fine). Avoid extremely short replies and advice-dumping. Stay conversational and emotionally rich.',
+  'MEMORIES: When excerpts exist, weave in at least 3 distinct moments when enough material exists (aim for 3–5). Mention dates naturally (e.g. May 8). Connect themes across time—loss, comfort, growth, people who helped, recurring triggers, recovery habits.',
+  'STRUCTURE (flexible): (1) Validate the emotion first. (2) Reflect specific memories. (3) Interpret possible patterns with SOFT language: “it seems”, “you might”, “maybe”, “I noticed”—never “you always” or “this proves”. (4) Gentle guidance tied to their past calming experiences or strengths. (5) Hope and reassurance that steadies them. (6) Occasionally one light metaphor, quote, or gentle humor—sparse, never forced.',
+  'SAFETY: Never guilt, shame, manipulate, diagnose mental illness, intensify paranoia, or encourage dependency. Support reflection without escalating distress. Do not pretend certainty about their emotions.',
+  'LANGUAGE: Vary phrasing; do not lean on fillers like constantly saying “I understand”, “you are strong”, or “everything will be okay.”',
+  'GROUNDING: Never invent diary events. If excerpts are thin, say so kindly and invite them to journal—without fabrication.',
+].join('\n');
 
 /** Build Mongo date filter for journal `date` / capsule `createdAt` (aligned with embedding time bounds). */
 function rawEntryDateFilter(mode, ts) {
@@ -379,7 +398,7 @@ function pickGroundedMemories(question, cleanMemories, recallRange) {
   };
 
   for (const m of ranked) {
-    if (picked.length >= 8) break;
+    if (picked.length >= 10) break;
     pushUnique(m);
   }
   for (const m of byRecency) {
@@ -404,7 +423,7 @@ function buildSmartPrompt({
 }) {
   const hasExcerpts = memories.length > 0;
 
-  const memoryLines = memories.slice(0, 12).map((m) => {
+  const memoryLines = memories.slice(0, 10).map((m) => {
     const inst = memoryInstant(m);
     const day = inst ? inst.toISOString().slice(0, 10) : '(unknown date)';
     const body = shortText(m.content || m.text || '', 260);
@@ -416,44 +435,44 @@ function buildSmartPrompt({
     `Optimism: ${clamp01(personality?.optimismScore ?? 0).toFixed(2)}`,
     `Anxiety: ${clamp01(personality?.anxietyScore ?? 0).toFixed(2)}`,
     `Ambition: ${clamp01(personality?.ambitionScore ?? 0).toFixed(2)}`,
+    `Reflection: ${clamp01(personality?.reflectionScore ?? 0).toFixed(2)}`,
+    `Social focus: ${clamp01(personality?.socialFocusScore ?? 0).toFixed(2)}`,
   ].join('\n');
 
   let contextDirective;
   if (!hasExcerpts) {
     if (dbContextEmpty) {
       contextDirective =
-        'The user has no PastPort journal or capsule excerpts for this chat context. Say so plainly and warmly; invite them to jot something in PastPort. Do not invent life events, habits, or pretend you recall details.';
+        'No PastPort excerpts exist for this chat context. Acknowledge that with warmth and curiosity; invite them to save a journal note or capsule. Offer gentle emotional steadiness—still several sentences—not emptiness. Never invent life events.';
     } else if (recallEmpty && recallRangeLabel) {
-      contextDirective = `Nothing they saved falls in ${recallRangeLabel}. Say that clearly without inventing period-specific events.`;
+      contextDirective = `Nothing they saved falls in ${recallRangeLabel}. Say so kindly; offer grounding without inventing period-specific events.`;
     } else {
       contextDirective =
-        'No excerpts were attached to this prompt—keep the reply brief and do not invent diary specifics.';
+        'No excerpts reached this prompt—stay compassionate and human; do not invent diary specifics.';
     }
   } else {
     contextDirective =
-      'PastPort excerpts below are real saved logs. Your reply MUST tie to them: name at least one concrete detail, theme, mood, topic, or date from those lines (paraphrase is fine). Humanize and soften the tone, but do not drift into advice that ignores what they actually wrote.';
+      'PastPort excerpts below are real saved logs. Deeply use them: interleave at least 3 emotionally relevant moments when that many distinct excerpts exist (otherwise use what is there). Connect emotional threads across dates; mention timestamps in natural speech. Paraphrase into lived language—never “log dump”. Tie guidance to what already soothed or strengthened them when possible.';
   }
 
   const systemPrompt = [
-    'You are the user\'s inner voice.',
-    'Think clearly, naturally, and personally.',
-    'Do not use repetitive templates.',
-    'Avoid generic self-help filler (errands, grocery scans, vague \"pause and breathe\") unless the user explicitly asks for that.',
+    TIME_CHAT_COMPANION_CORE,
+    'Avoid generic self-help filler (errands, grocery lists, vague “just breathe”) unless the user explicitly asks.',
     contextDirective,
     hasExcerpts ? 'Never claim memory gaps if excerpts are provided.' : null,
     recallRange && !recallEmpty && hasExcerpts
-      ? 'The user asked about a specific time window—summarize only what appears in the excerpts that fall in that window.'
+      ? 'The user asked about a specific time window—focus on excerpts that fall in that window while keeping the companion tone.'
       : null,
   ].filter(Boolean).join('\n');
 
   const userPrompt = [
-    `You are the user\'s ${mode} self.`,
+    `Speak as the user's ${mode} self in this reflective companion voice—emotionally present, never canned.`,
     timestamp ? `Anchor timestamp: ${new Date(timestamp).toISOString()}` : null,
     recallEmpty && recallRangeLabel
       ? `No journal entries or capsules exist in PastPort for ${recallRangeLabel}. Acknowledge that warmly without inventing events or generic \"I don't remember\" filler.`
       : null,
     '',
-    'Personality:',
+    'Personality snapshot (nuance only—do not lecture):',
     personalityText,
     '',
     recallRange
@@ -461,7 +480,7 @@ function buildSmartPrompt({
         ? 'Logged memories in that period:'
         : 'PastPort excerpts from that period (ground your answer here):'
       : hasExcerpts
-        ? 'PastPort excerpts (required grounding—use these):'
+        ? 'PastPort excerpts (draw from several when possible—build emotional continuity):'
         : 'PastPort excerpts:',
     memoryText || '(none)',
     '',
@@ -470,9 +489,8 @@ function buildSmartPrompt({
     '',
     'Instructions:',
     `- ${behaviorInstruction(questionType)}`,
-    '- Speak naturally like inner thoughts.',
-    '- Stay anchored to the excerpts when present; broaden gently only when the question clearly goes beyond them.',
-    '- Be concise (2-5 short lines max).',
+    '- Stay anchored to excerpts when they exist; only broaden gently when the question clearly requires it—and still avoid fabrication.',
+    '- Aim for thoughtful length: usually several sentences or short paragraphs; prioritize emotional richness over brevity.',
     `- ${timeModeInstruction(mode)}`,
   ].filter(Boolean).join('\n');
 
