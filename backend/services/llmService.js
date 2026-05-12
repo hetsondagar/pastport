@@ -91,7 +91,7 @@ export async function generateLLMResponse({ userPrompt, systemPrompt }) {
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.7,
-          max_tokens: Number(process.env.GROQ_MAX_TOKENS || 640),
+          max_tokens: Number(process.env.GROQ_MAX_TOKENS || 400),
         },
         {
           headers: {
