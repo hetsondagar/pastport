@@ -170,9 +170,9 @@ function timeModeInstruction(mode) {
 function shouldUseMemories(questionType, memories) {
   if (!memories.length) return false;
   const topScore = memories[0].score || 0;
-  if (questionType === 'casual') return topScore >= 2.2;
-  if (questionType === 'factual') return topScore >= 1.4;
-  return topScore >= 1.0;
+  if (questionType === 'casual') return topScore >= 1.6;
+  if (questionType === 'factual') return topScore >= 0.7;
+  return topScore >= 0.7;
 }
 
 function buildSmartPrompt({ question, memories, personality, mode, questionType, timestamp }) {
@@ -194,6 +194,8 @@ function buildSmartPrompt({ question, memories, personality, mode, questionType,
     'Do not force reflection tone for casual or factual questions.',
     'Use memory only when it is helpful to answer the user question.',
     'Avoid formulaic meta-language and robotic scaffolding.',
+    'If relevant memories are provided, answer from those memories instead of making vague general statements.',
+    'Never say that nothing happened, that you were blank, or that time has not passed if concrete memories are available.',
   ].join('\n');
 
   const userPrompt = [
