@@ -80,6 +80,10 @@ export async function generateLLMResponse({ userPrompt, systemPrompt }) {
     } catch (err) {
       lastError = err;
       const status = err?.response?.status;
+      const errorMsg = err?.response?.data?.error?.message || err?.message || 'unknown';
+      if (diagnosticsEnabled()) {
+        logger.warn(`[AI_DIAGNOSTIC] Model ${model} failed: ${errorMsg} (status: ${status})`);
+      }
       const isModelIssue = status === 400 || status === 404;
       if (!isModelIssue) break;
     }

@@ -302,7 +302,13 @@ async function handleChat({ question, memories, personality, mode, timestamp }) 
     }
     throw new Error('empty llm response');
   } catch (err) {
-    logger.warn(`Groq response failed in handleChat: ${err?.message || 'unknown error'}`);
+    const meta = err?.meta || {};
+    const status = meta.status || 'unknown';
+    const reason = meta.reason || err?.message || 'unknown error';
+    const errorData = meta.data ? JSON.stringify(meta.data).slice(0, 200) : 'no data';
+    logger.warn(
+      `Groq response failed in handleChat: ${reason} (status: ${status}, data: ${errorData})`
+    );
     return {
       response: buildSafeFallback({ questionType, question, memories: selectedMemories }),
       source: 'fallback',
@@ -317,30 +323,58 @@ async function callMl(endpoint, body) {
   const f = await getFetch();
   const timeoutMs = Number(process.env.ML_SERVICE_TIMEOUT_MS || 120000);
   const retries = Number(process.env.ML_SERVICE_RETRIES || 1);
+  const max429Retries = Number(process.env.ML_SERVICE_429_RETRIES || 3); // Specific 429 retries
 
   let resp;
   let lastErr = null;
+  let attempts429 = 0;
 
-  for (let attempt = 0; attempt <= retries; attempt += 1) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  // Exponential backoff for 429s
+  while (attempts429 < max429Retries) {
+    let attempt = 0;
+    while (attempt <= retries) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      resp = await f(`${mlBase}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      lastErr = null;
-      clearTimeout(timeout);
-      break;
-    } catch (e) {
-      clearTimeout(timeout);
-      lastErr = e;
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 800));
+      try {
+        resp = await f(`${mlBase}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+        lastErr = null;
+        clearTimeout(timeout);
+
+        // If got 429, break inner loop and retry with backoff
+        if (resp.status === 429) {
+          clearTimeout(timeout);
+          break;
+        }
+        // Success or other response, exit both loops
+        return resp;
+      } catch (e) {
+        clearTimeout(timeout);
+        lastErr = e;
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 800));
+        }
+        attempt += 1;
       }
+    }
+
+    // If we got a 429, apply exponential backoff and retry
+    if (resp && resp.status === 429) {
+      attempts429 += 1;
+      if (attempts429 < max429Retries) {
+        const backoffMs = Math.min(5000, 500 * Math.pow(2, attempts429 - 1));
+        logger.warn(`ML service rate-limited (429), retrying in ${backoffMs}ms (attempt ${attempts429}/${max429Retries})`);
+        await new Promise((r) => setTimeout(r, backoffMs));
+        resp = null; // Reset for next attempt
+      }
+    } else {
+      // Not a 429, break
+      break;
     }
   }
 

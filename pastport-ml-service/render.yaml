@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: pastport-ml-service
+    runtime: python-3.11
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 5001 --workers 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.10
+      - key: PASTPORT_ML_FAST_MODE
+        value: "0"
+      - key: PORT
+        value: 5001
+    healthCheckPath: /health
+    # Free tier limited resources: 512MB RAM, shared CPU
+    # The service will auto-enable PASTPORT_ML_FAST_MODE when detected on Render

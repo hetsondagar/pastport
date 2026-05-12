@@ -33,11 +33,11 @@ if (isEmailEnabled) {
       console.log('✅ Email service is ready to send messages');
     })
     .catch((error) => {
-      console.log('⚠️ Email service error (non-critical):', error.message);
-      console.log('Email notifications will be disabled. Check EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS');
+      console.warn('⚠️ Email service connection failed:', error.message);
+      console.warn('Email notifications will be unavailable. Please check EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS');
   });
 } else {
-  console.log('📧 Email service disabled (set EMAIL_ENABLED=true and provide EMAIL_HOST/PORT/USER/PASS to enable).');
+  console.log('📧 Email service is disabled. (Set EMAIL_ENABLED=true to enable email notifications)');
 }
 
 // Send email function

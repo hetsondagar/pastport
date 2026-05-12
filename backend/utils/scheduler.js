@@ -16,6 +16,12 @@ const unlockCheckJob = new cron.CronJob('0 * * * *', async () => {
     }).populate('creator', 'name email preferences');
 
     for (const capsule of readyCapsules) {
+      // Skip if creator was deleted
+      if (!capsule.creator) {
+        console.warn(`Capsule ${capsule._id} has no creator, skipping notification`);
+        continue;
+      }
+
       // Create notification for creator
       await Notification.createNotification(
         capsule.creator._id,
@@ -26,8 +32,8 @@ const unlockCheckJob = new cron.CronJob('0 * * * *', async () => {
       );
 
       // Send email reminder if user has email notifications enabled
-      if (capsule.creator.preferences.notifications.email && 
-          capsule.creator.preferences.notifications.unlockReminders) {
+      if (capsule.creator.preferences?.notifications?.email && 
+          capsule.creator.preferences?.notifications?.unlockReminders) {
         const template = emailTemplates.unlockReminder(
           capsule.creator.name,
           capsule.title,
