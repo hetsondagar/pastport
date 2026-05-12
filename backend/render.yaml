@@ -33,6 +33,12 @@ services:
         value: 1
       - key: ML_SERVICE_429_RETRIES
         value: 3
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: mixtral-8x7b-32768
+      - key: GROQ_MODEL_CANDIDATES
+        value: mixtral-8x7b-32768,llama-3.1-70b-versatile,llama-3.1-8b-instant
       - key: RATE_LIMIT_WINDOW_MS
         value: 900000
       - key: RATE_LIMIT_MAX_REQUESTS

@@ -2,7 +2,7 @@ import axios from 'axios';
 import logger from '../config/logger.js';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_MODEL = process.env.GROQ_MODEL || 'llama3-70b-8192';
+const DEFAULT_MODEL = process.env.GROQ_MODEL || 'mixtral-8x7b-32768';
 let hasLoggedGroqConfig = false;
 
 function diagnosticsEnabled() {
@@ -18,7 +18,7 @@ function maskApiKey(key = '') {
 
 function getModelCandidates() {
   const raw = process.env.GROQ_MODEL_CANDIDATES;
-  if (!raw) return [DEFAULT_MODEL, 'llama-3.1-70b-versatile', 'llama3-8b-8192'];
+  if (!raw) return [DEFAULT_MODEL, 'llama-3.1-70b-versatile', 'llama-3.1-8b-instant'];
   const parsed = raw
     .split(',')
     .map((m) => m.trim())
