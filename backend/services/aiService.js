@@ -197,6 +197,16 @@ function parseRecallTimeRange(question = '', anchorRaw = new Date()) {
     return { start, end, label: 'this calendar month (relative to your anchor date)' };
   }
 
+  if (/\bthis\s+year\b/.test(q) || (/\bhow\s+far\b/.test(q) && /\b(year|come)\b/.test(q))) {
+    const start = new Date(Date.UTC(anchor.getUTCFullYear(), 0, 1));
+    const end = new Date(dayStart.getTime() + 86400000);
+    return {
+      start,
+      end,
+      label: 'year to date through your anchor calendar day (UTC)',
+    };
+  }
+
   if (/\b(last|past|previous)\s+week\b/.test(q)) {
     const end = dayStart;
     const start = new Date(end.getTime() - 7 * 86400000);
@@ -291,12 +301,93 @@ function timeModeInstruction(mode) {
   return 'Answer as the user in the present moment.';
 }
 
-function shouldUseMemories(questionType, memories) {
-  if (!memories.length) return false;
-  const topScore = memories[0].score || 0;
-  if (questionType === 'casual') return topScore >= 1.6;
-  if (questionType === 'factual') return topScore >= 0.7;
-  return topScore >= 0.7;
+/** Build Mongo date filter for journal `date` / capsule `createdAt` (aligned with embedding time bounds). */
+function rawEntryDateFilter(mode, ts) {
+  if (mode === 'past' && ts) return { $lt: new Date(ts) };
+  if (mode === 'present' && ts) return { $lte: new Date(ts) };
+  if (mode === 'future') return { $lte: new Date() };
+  return {};
+}
+
+/**
+ * Always load recent journal rows and capsules from the DB so chat is grounded even without embeddings / ML.
+ */
+async function fetchRawMemoriesForChat(userId, mode, ts) {
+  const df = rawEntryDateFilter(mode, ts);
+  const journalQ = { userId, ...(Object.keys(df).length ? { date: df } : {}) };
+  const capsuleQ = { creator: userId, ...(Object.keys(df).length ? { createdAt: df } : {}) };
+
+  const [journals, capsules] = await Promise.all([
+    JournalEntry.find(journalQ).sort({ date: -1 }).limit(45).lean(),
+    Capsule.find(capsuleQ).sort({ createdAt: -1 }).limit(30).lean(),
+  ]);
+
+  const out = [];
+  for (const e of journals) {
+    out.push({
+      id: e._id.toString(),
+      sourceType: 'journal',
+      createdAt: e.date || e.createdAt,
+      text: e.content,
+      topics: e.tags || [],
+      embedding: [],
+    });
+  }
+  for (const c of capsules) {
+    out.push({
+      id: c._id.toString(),
+      sourceType: 'capsule',
+      createdAt: c.createdAt,
+      text: `${c.title}\n\n${c.message}`,
+      topics: c.tags || [],
+      embedding: [],
+    });
+  }
+
+  return out.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+/** Merge semantic ranking with recent excerpts so prompts always carry real timeline material when any exists. */
+function pickGroundedMemories(question, cleanMemories, recallRange) {
+  if (!cleanMemories.length) return [];
+
+  if (recallRange) {
+    return cleanMemories
+      .filter((m) => {
+        const inst = memoryInstant(m);
+        return inst && inst >= recallRange.start && inst < recallRange.end;
+      })
+      .sort((a, b) => memoryInstant(b) - memoryInstant(a))
+      .slice(0, 10);
+  }
+
+  const ranked = rankMemories(cleanMemories, question);
+  const byRecency = [...cleanMemories].sort((a, b) => {
+    const ta = memoryInstant(a)?.getTime() ?? 0;
+    const tb = memoryInstant(b)?.getTime() ?? 0;
+    return tb - ta;
+  });
+
+  const picked = [];
+  const seen = new Set();
+
+  const pushUnique = (m) => {
+    const key = m.id?.toString?.() ?? `${memoryInstant(m)?.toISOString()}-${String(m.content || m.text || '').slice(0, 32)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    picked.push(m);
+  };
+
+  for (const m of ranked) {
+    if (picked.length >= 8) break;
+    pushUnique(m);
+  }
+  for (const m of byRecency) {
+    if (picked.length >= 12) break;
+    pushUnique(m);
+  }
+
+  return picked;
 }
 
 function buildSmartPrompt({
@@ -309,8 +400,11 @@ function buildSmartPrompt({
   recallEmpty,
   recallRangeLabel,
   recallRange,
+  dbContextEmpty,
 }) {
-  const memoryLines = memories.slice(0, 8).map((m) => {
+  const hasExcerpts = memories.length > 0;
+
+  const memoryLines = memories.slice(0, 12).map((m) => {
     const inst = memoryInstant(m);
     const day = inst ? inst.toISOString().slice(0, 10) : '(unknown date)';
     const body = shortText(m.content || m.text || '', 260);
@@ -324,17 +418,33 @@ function buildSmartPrompt({
     `Ambition: ${clamp01(personality?.ambitionScore ?? 0).toFixed(2)}`,
   ].join('\n');
 
+  let contextDirective;
+  if (!hasExcerpts) {
+    if (dbContextEmpty) {
+      contextDirective =
+        'The user has no PastPort journal or capsule excerpts for this chat context. Say so plainly and warmly; invite them to jot something in PastPort. Do not invent life events, habits, or pretend you recall details.';
+    } else if (recallEmpty && recallRangeLabel) {
+      contextDirective = `Nothing they saved falls in ${recallRangeLabel}. Say that clearly without inventing period-specific events.`;
+    } else {
+      contextDirective =
+        'No excerpts were attached to this prompt—keep the reply brief and do not invent diary specifics.';
+    }
+  } else {
+    contextDirective =
+      'PastPort excerpts below are real saved logs. Your reply MUST tie to them: name at least one concrete detail, theme, mood, topic, or date from those lines (paraphrase is fine). Humanize and soften the tone, but do not drift into advice that ignores what they actually wrote.';
+  }
+
   const systemPrompt = [
     'You are the user\'s inner voice.',
     'Think clearly, naturally, and personally.',
     'Do not use repetitive templates.',
-    'Do not force reflection tone for casual or factual questions.',
-    'Use memory only when it is helpful to answer the user question.',
-    'Avoid formulaic meta-language and robotic scaffolding.',
-    'If relevant memories are provided, answer from those memories instead of making vague general statements.',
-    'Never say that nothing happened, that you were blank, or that time has not passed if concrete memories are available.',
-    'When the user asks about a specific time window and logs are provided, summarize what actually appears in those logs.',
-  ].join('\n');
+    'Avoid generic self-help filler (errands, grocery scans, vague \"pause and breathe\") unless the user explicitly asks for that.',
+    contextDirective,
+    hasExcerpts ? 'Never claim memory gaps if excerpts are provided.' : null,
+    recallRange && !recallEmpty && hasExcerpts
+      ? 'The user asked about a specific time window—summarize only what appears in the excerpts that fall in that window.'
+      : null,
+  ].filter(Boolean).join('\n');
 
   const userPrompt = [
     `You are the user\'s ${mode} self.`,
@@ -349,8 +459,10 @@ function buildSmartPrompt({
     recallRange
       ? recallEmpty
         ? 'Logged memories in that period:'
-        : 'Memories from that period (summarize honestly):'
-      : 'Relevant memories (use only if helpful):',
+        : 'PastPort excerpts from that period (ground your answer here):'
+      : hasExcerpts
+        ? 'PastPort excerpts (required grounding—use these):'
+        : 'PastPort excerpts:',
     memoryText || '(none)',
     '',
     'User question:',
@@ -359,17 +471,28 @@ function buildSmartPrompt({
     'Instructions:',
     `- ${behaviorInstruction(questionType)}`,
     '- Speak naturally like inner thoughts.',
-    '- Avoid irrelevant references.',
-    '- Be concise (2-4 lines max).',
+    '- Stay anchored to the excerpts when present; broaden gently only when the question clearly goes beyond them.',
+    '- Be concise (2-5 short lines max).',
     `- ${timeModeInstruction(mode)}`,
   ].filter(Boolean).join('\n');
 
   return { systemPrompt, userPrompt };
 }
 
-function buildSafeFallback({ questionType, question, memories, recallEmpty, recallRangeLabel }) {
+function buildSafeFallback({
+  questionType,
+  question,
+  memories,
+  recallEmpty,
+  recallRangeLabel,
+  dbContextEmpty,
+}) {
   if (recallEmpty && recallRangeLabel) {
     return `There aren't any PastPort logs saved for ${recallRangeLabel}. Add a journal note or capsule for that stretch and ask again—I’ll mirror it back here.`;
+  }
+
+  if (dbContextEmpty) {
+    return 'There’s nothing saved in PastPort for this chat view yet—add a journal entry or capsule first, then I can reflect your own words back to you.';
   }
 
   const top = memories[0];
@@ -410,9 +533,9 @@ async function retrieveRelevantMemories({ userId, question, candidateMemories = 
 
   const scored = candidateMemories
     .map((memory) => {
-      const similarity = queryEmbedding
-        ? cosineSimilarity(queryEmbedding, memory.embedding)
-        : 0;
+      const emb = memory.embedding;
+      const hasEmb = Array.isArray(emb) && emb.length > 0;
+      const similarity = queryEmbedding && hasEmb ? cosineSimilarity(queryEmbedding, emb) : 0;
       return { ...memory, similarity };
     })
     .sort((a, b) => {
@@ -424,29 +547,19 @@ async function retrieveRelevantMemories({ userId, question, candidateMemories = 
 }
 
 async function handleChat({ question, memories, personality, mode, timestamp, recallRange }) {
-  const recallFilterOpts = recallRange ? { minLen: 3 } : {};
-  let cleanMemories = filterMemories(memories, recallFilterOpts);
-  cleanMemories = rankMemories(cleanMemories, question).slice(0, 16);
+  let cleanMemories = filterMemories(memories, { minLen: 3 });
+  cleanMemories = rankMemories(cleanMemories, question).slice(0, 24);
 
   const questionType = detectQuestionType(question);
 
-  let selectedMemories = [];
   let recallEmpty = false;
+  let selectedMemories = pickGroundedMemories(question, cleanMemories, recallRange);
 
   if (recallRange) {
-    const inRange = cleanMemories
-      .filter((m) => {
-        const inst = memoryInstant(m);
-        return inst && inst >= recallRange.start && inst < recallRange.end;
-      })
-      .sort((a, b) => memoryInstant(b) - memoryInstant(a));
-    selectedMemories = inRange.slice(0, 8);
     recallEmpty = selectedMemories.length === 0;
-  } else {
-    selectedMemories = shouldUseMemories(questionType, cleanMemories)
-      ? cleanMemories.slice(0, 4)
-      : [];
   }
+
+  const dbContextEmpty = cleanMemories.length === 0;
 
   const prompt = buildSmartPrompt({
     question,
@@ -458,6 +571,7 @@ async function handleChat({ question, memories, personality, mode, timestamp, re
     recallEmpty,
     recallRangeLabel: recallRange?.label,
     recallRange,
+    dbContextEmpty,
   });
 
   try {
@@ -486,6 +600,7 @@ async function handleChat({ question, memories, personality, mode, timestamp, re
         memories: selectedMemories,
         recallEmpty,
         recallRangeLabel: recallRange?.label,
+        dbContextEmpty,
       }),
       source: 'fallback',
       questionType,
@@ -780,9 +895,12 @@ export async function chatWithTemporalSelf({ userId, mode, timestamp, message })
   const anchor = payload.timestamp || new Date();
   const recallRange = parseRecallTimeRange(message, anchor);
 
+  const rawFromDb = await fetchRawMemoriesForChat(userId, mode, anchor);
+  const augmentedCandidates = dedupeMemoriesById(payload.candidateMemories, rawFromDb);
+
   let recallPinned = [];
   if (recallRange) {
-    recallPinned = payload.candidateMemories
+    recallPinned = augmentedCandidates
       .filter((m) => {
         const inst = memoryInstant(m);
         return inst && inst >= recallRange.start && inst < recallRange.end;
@@ -802,8 +920,8 @@ export async function chatWithTemporalSelf({ userId, mode, timestamp, message })
   const retrieved = await retrieveRelevantMemories({
     userId,
     question: message,
-    candidateMemories: payload.candidateMemories,
-    topK: 20,
+    candidateMemories: augmentedCandidates,
+    topK: 28,
   });
 
   const mergedMemories = dedupeMemoriesById(recallPinned, retrieved);
@@ -818,7 +936,7 @@ export async function chatWithTemporalSelf({ userId, mode, timestamp, message })
   });
 
   logger.info(
-    `[AI_CHAT] source=${chat.source} type=${chat.questionType} user=${userId} mode=${mode} retrieved=${retrieved.length} used=${chat.usedMemories.length} topScore=${chat.usedMemories[0]?.score?.toFixed?.(3) ?? 'na'}`
+    `[AI_CHAT] source=${chat.source} type=${chat.questionType} user=${userId} mode=${mode} rawDb=${rawFromDb.length} candidates=${augmentedCandidates.length} retrieved=${retrieved.length} used=${chat.usedMemories.length}`
   );
 
   return {
