@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
@@ -20,17 +20,23 @@ import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return null;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/journal" element={<DailyJournal />} />
-      <Route path="/memories/constellation" element={<MemoryConstellationPage />} />
-      <Route path="/create" element={<CreateCapsule />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/time-chat" element={<TimeChat />} />
+      <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/journal" element={<PrivateRoute><DailyJournal /></PrivateRoute>} />
+      <Route path="/memories/constellation" element={<PrivateRoute><MemoryConstellationPage /></PrivateRoute>} />
+      <Route path="/create" element={<PrivateRoute><CreateCapsule /></PrivateRoute>} />
+      <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+      <Route path="/time-chat" element={<PrivateRoute><TimeChat /></PrivateRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
