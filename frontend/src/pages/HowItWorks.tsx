@@ -1,17 +1,18 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
-import { 
-  Clock, 
-  Lock, 
-  Upload, 
-  Calendar, 
-  Brain, 
-  Gift, 
-  Star, 
-  BookOpen, 
-  Bell, 
+import {
+  Clock,
+  Lock,
+  Upload,
+  Calendar,
+  Brain,
+  Gift,
+  Star,
+  BookOpen,
+  Bell,
   Sparkles,
   ArrowRight,
   CheckCircle,
@@ -20,8 +21,261 @@ import {
   Heart,
   Zap,
   Shield,
-  Globe
+  Globe,
+  Clock3,
+  MessageSquareText,
+  WandSparkles
 } from 'lucide-react';
+
+type DemoMode = 'past' | 'present' | 'future';
+
+const DEMO_CONVERSATIONS: Record<DemoMode, { user: string; ai: string }[]> = {
+  past: [
+    {
+      user: 'What was I most passionate about back then?',
+      ai: 'Looking back at that time, you were deeply passionate about learning new things and building connections. The excitement of every small win fueled you. Remember how much energy you had when you first started? That same fire is still inside you.',
+    },
+  ],
+  present: [
+    {
+      user: 'What should I focus on this week?',
+      ai: 'Right now, your most valuable focus is completing one important task you have been putting off. Break it into tiny steps and celebrate small wins. Being present today shapes who you become tomorrow.',
+    },
+  ],
+  future: [
+    {
+      user: 'What does my life look like in five years?',
+      ai: 'Five years from now, you will have grown through the challenges you are facing today. The consistency and courage you show right now are laying foundations you cannot fully see yet. Keep going — future you is grateful.',
+    },
+  ],
+};
+
+const MODE_META: Record<DemoMode, { label: string; color: string; description: string; badge: string }> = {
+  past: {
+    label: 'Past',
+    color: 'text-accent',
+    description: 'Reflect on who you were and what you have learned.',
+    badge: 'bg-accent/20 text-accent border-accent/30',
+  },
+  present: {
+    label: 'Present',
+    color: 'text-primary',
+    description: 'Stay grounded in today with honest self-check-ins.',
+    badge: 'bg-primary/20 text-primary border-primary/30',
+  },
+  future: {
+    label: 'Future',
+    color: 'text-secondary',
+    description: 'Envision possibilities and plan your next chapter.',
+    badge: 'bg-secondary/20 text-secondary border-secondary/30',
+  },
+};
+
+const TimeChatSection = () => {
+  const [activeMode, setActiveMode] = useState<DemoMode>('present');
+  const demo = DEMO_CONVERSATIONS[activeMode];
+  const meta = MODE_META[activeMode];
+
+  return (
+    <section className="container mx-auto px-4 mb-20">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="text-center mb-12"
+      >
+        <div className="inline-flex items-center gap-2 glass-card px-6 py-3 rounded-full mb-6">
+          <Clock3 className="w-5 h-5 text-primary" />
+          <span className="text-sm font-medium">AI-Powered Reflection</span>
+        </div>
+        <h2 className="text-4xl md:text-5xl app-name-bold mb-4">
+          How <span className="text-gradient">Time Chat</span> Works
+        </h2>
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          A calm, personal AI conversation across three time perspectives — past, present, and future
+        </p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.1 }}
+        className="grid lg:grid-cols-[1fr_420px] gap-8 items-start max-w-6xl mx-auto"
+      >
+        {/* Left: how it works steps + mode explainers */}
+        <div className="space-y-6">
+          <div className="glass-card p-8">
+            <h3 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+              <WandSparkles className="w-7 h-7 text-primary" />
+              Three Time Modes
+            </h3>
+            <div className="space-y-4">
+              {(['past', 'present', 'future'] as DemoMode[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setActiveMode(m)}
+                  className={`w-full text-left rounded-xl border p-4 transition-all duration-200 ${
+                    activeMode === m
+                      ? 'bg-white/8 border-white/25 shadow-lg shadow-black/20'
+                      : 'bg-white/[0.02] border-white/10 hover:bg-white/5 hover:border-white/18'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className={`text-xs font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${MODE_META[m].badge}`}>
+                      {MODE_META[m].label}
+                    </span>
+                    {activeMode === m && (
+                      <span className="text-xs text-muted-foreground">← active preview</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">{MODE_META[m].description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass-card p-8">
+            <h3 className="text-xl font-semibold mb-5 flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-accent" />
+              How to Use It
+            </h3>
+            <div className="space-y-4">
+              {[
+                { step: '1', title: 'Choose a time mode', desc: 'Select Past, Present, or Future — and pick a year for Past/Future context.' },
+                { step: '2', title: 'Ask from the heart', desc: 'Type a question or reflection. Use the quick prompts for inspiration if you are unsure where to start.' },
+                { step: '3', title: 'Read and reflect', desc: 'The AI responds with warmth and clarity. Use it daily as a private journal companion.' },
+              ].map(({ step, title, desc }) => (
+                <div key={step} className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-primary font-bold text-sm">{step}</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-0.5">{title}</h4>
+                    <p className="text-sm text-muted-foreground">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="glass-card p-5">
+              <CheckCircle className="w-6 h-6 text-green-500 mb-3" />
+              <h4 className="font-semibold text-sm mb-1">Completely Private</h4>
+              <p className="text-xs text-muted-foreground">Your reflections stay personal and are never shared.</p>
+            </div>
+            <div className="glass-card p-5">
+              <CheckCircle className="w-6 h-6 text-green-500 mb-3" />
+              <h4 className="font-semibold text-sm mb-1">Saved Across Sessions</h4>
+              <p className="text-xs text-muted-foreground">Your conversation history is remembered so you can continue where you left off.</p>
+            </div>
+            <div className="glass-card p-5">
+              <CheckCircle className="w-6 h-6 text-green-500 mb-3" />
+              <h4 className="font-semibold text-sm mb-1">Quick Prompt Chips</h4>
+              <p className="text-xs text-muted-foreground">Not sure what to ask? Tap a suggested prompt to get started instantly.</p>
+            </div>
+            <div className="glass-card p-5">
+              <CheckCircle className="w-6 h-6 text-green-500 mb-3" />
+              <h4 className="font-semibold text-sm mb-1">Year Selector</h4>
+              <p className="text-xs text-muted-foreground">Set a specific year for Past or Future mode to anchor your reflection in time.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: accurate chat UI preview */}
+        <motion.div
+          key={activeMode}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="lg:sticky lg:top-28"
+        >
+          <div className="glass-card-enhanced border border-white/10 overflow-hidden rounded-2xl shadow-2xl">
+            {/* Sidebar strip */}
+            <div className="bg-black/30 border-b border-white/10 px-5 py-4 flex items-center gap-3">
+              <Clock3 className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold">Time Chat</span>
+              <span className={`ml-auto text-xs font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${meta.badge}`}>
+                {meta.label} Mode
+              </span>
+            </div>
+
+            {/* Reflection setup strip */}
+            <div className="bg-black/20 border-b border-white/8 px-5 py-3 flex items-center gap-3 text-xs text-muted-foreground">
+              <WandSparkles className="w-3.5 h-3.5 text-primary/70" />
+              <span>{meta.description}</span>
+            </div>
+
+            {/* Messages */}
+            <div className="bg-gradient-to-b from-black/10 to-transparent px-5 py-5 space-y-4 min-h-[280px]">
+              {/* AI greeting */}
+              <div className="flex justify-start">
+                <div className="max-w-[85%]">
+                  <div className="mb-1 text-[11px] text-muted-foreground">PastPort Guide</div>
+                  <div className="rounded-2xl rounded-bl-md px-4 py-3 bg-white/5 border border-white/15 backdrop-blur-sm text-[14px] leading-relaxed">
+                    Pick a time mode and ask what is on your mind. I am here to help you reflect with warmth and clarity.
+                  </div>
+                </div>
+              </div>
+
+              {/* Demo conversation for active mode */}
+              <div className="flex justify-end">
+                <div className="max-w-[85%]">
+                  <div className="mb-1 text-[11px] text-right text-primary/90">You</div>
+                  <div className="rounded-2xl rounded-br-md px-4 py-3 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-[0_8px_25px_rgba(120,60,255,0.35)] text-[14px] leading-relaxed">
+                    {demo[0].user}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-start">
+                <div className="max-w-[85%]">
+                  <div className="mb-1 text-[11px] text-muted-foreground">PastPort Guide</div>
+                  <div className="rounded-2xl rounded-bl-md px-4 py-3 bg-white/5 border border-white/15 backdrop-blur-sm text-[14px] leading-relaxed">
+                    {demo[0].ai}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Prompt chips */}
+            <div className="px-5 pt-3 flex flex-wrap gap-2 border-t border-white/8 bg-black/20">
+              {['What should I focus on?', 'How far have I come?', 'What habit to improve?'].map((p) => (
+                <span
+                  key={p}
+                  className="text-xs px-3 py-1.5 rounded-full border border-white/20 bg-white/5 text-muted-foreground"
+                >
+                  {p}
+                </span>
+              ))}
+            </div>
+
+            {/* Input area */}
+            <div className="px-5 pb-5 pt-3 bg-black/25 space-y-3">
+              <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-muted-foreground min-h-[72px]">
+                Ask anything you want to reflect on...
+              </div>
+              <div className="flex justify-end">
+                <Link to="/time-chat">
+                  <Button size="sm" className="btn-glow px-5">
+                    <Send className="w-3.5 h-3.5 mr-1.5" />
+                    Open Time Chat
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-3">
+            Click the mode buttons on the left to preview each perspective
+          </p>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+};
 
 const HowItWorks = () => {
   const containerVariants = {
@@ -325,6 +579,9 @@ const HowItWorks = () => {
             </motion.div>
           </motion.div>
         </section>
+
+        {/* Time Chat Deep Dive */}
+        <TimeChatSection />
 
         {/* Constellation Deep Dive */}
         <section className="container mx-auto px-4 mb-20">
