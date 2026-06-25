@@ -11,6 +11,7 @@ import { Loader2, Mail, Lock, User, CheckCircle, XCircle, Eye, EyeOff, AlertCirc
 const AuthForm = () => {
   const { login, register, loading, error, clearError } = useAuth();
   const { toast } = useToast();
+  const authInputBaseClass = 'auth-dark-input glass-card border-white/10 transition-all duration-200';
   const [activeTab, setActiveTab] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -250,7 +251,7 @@ const AuthForm = () => {
                       placeholder="Enter your email"
                       value={loginData.email}
                       onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      className="pl-10 glass-card border-white/10 focus:border-purple-500 transition-all duration-200"
+                      className={`pl-10 ${authInputBaseClass} focus:border-purple-500`}
                       required
                     />
                   </div>
@@ -266,7 +267,7 @@ const AuthForm = () => {
                       placeholder="Enter your password"
                       value={loginData.password}
                       onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      className="pl-10 glass-card border-white/10 focus:border-purple-500 transition-all duration-200"
+                      className={`pl-10 ${authInputBaseClass} focus:border-purple-500`}
                       required
                     />
                   </div>
@@ -338,7 +339,7 @@ const AuthForm = () => {
                       placeholder="Enter your email"
                       value={registerData.email}
                       onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
-                      className={`pl-10 pr-10 glass-card border-white/10 transition-all duration-200 ${
+                      className={`pl-10 pr-10 ${authInputBaseClass} ${
                         validationErrors.email 
                           ? 'border-red-500/50 focus:border-red-500' 
                           : registerData.email && !validationErrors.email 
@@ -375,7 +376,7 @@ const AuthForm = () => {
                       placeholder="Create a password"
                       value={registerData.password}
                       onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
-                      className={`pl-10 pr-10 glass-card border-white/10 transition-all duration-200 ${
+                      className={`pl-10 pr-10 ${authInputBaseClass} ${
                         validationErrors.password 
                           ? 'border-red-500/50 focus:border-red-500' 
                           : registerData.password && !validationErrors.password 
@@ -436,7 +437,7 @@ const AuthForm = () => {
                       placeholder="Confirm your password"
                       value={registerData.confirmPassword}
                       onChange={(e) => setRegisterData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      className={`pl-10 pr-10 glass-card border-white/10 transition-all duration-200 ${
+                      className={`pl-10 pr-10 ${authInputBaseClass} ${
                         validationErrors.confirmPassword 
                           ? 'border-red-500/50 focus:border-red-500' 
                           : registerData.confirmPassword && !validationErrors.confirmPassword 

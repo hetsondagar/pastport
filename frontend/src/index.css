@@ -493,6 +493,20 @@ nav img[src*="logo_main.png"] {
     @apply bg-gradient-to-br from-glass/80 to-card/60 backdrop-blur-xl border border-white/10 rounded-2xl;
     box-shadow: var(--shadow-glass);
   }
+
+  .auth-dark-input {
+    @apply bg-slate-950/70 text-slate-100 placeholder:text-slate-400;
+  }
+
+  .auth-dark-input:-webkit-autofill,
+  .auth-dark-input:-webkit-autofill:hover,
+  .auth-dark-input:-webkit-autofill:focus,
+  .auth-dark-input:-webkit-autofill:active {
+    -webkit-text-fill-color: #f1f5f9;
+    -webkit-box-shadow: 0 0 0 1000px rgba(2, 6, 23, 0.88) inset;
+    box-shadow: 0 0 0 1000px rgba(2, 6, 23, 0.88) inset;
+    transition: background-color 9999s ease-out 0s;
+  }
   
   /* Glow Effects */
   .glow-primary {
